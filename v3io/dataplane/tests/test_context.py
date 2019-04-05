@@ -109,6 +109,30 @@ class TextContext(unittest.TestCase):
 
         self._delete_items(self._path, items)
 
+    def test_put_items_with_error(self):
+        items = {
+            'bob': {'age': 42, 'feature': 'mustache'},
+            'linda': {'age': 40, 'feature': 'singing'},
+            'invalid': {'__name': 'foo', 'feature': 'singing'}
+        }
+
+        response = self._context.put_items(self._container_name,
+                                           self._access_key,
+                                           self._path,
+                                           items)
+
+        self.assertFalse(response.success)
+
+        # first two should've passed
+        response.responses[0].raise_for_status()
+        response.responses[1].raise_for_status()
+        self.assertEqual(403, response.responses[2].status_code)
+
+        # remove invalid so we can verify
+        del items['invalid']
+
+        self._verify_items(self._path, items)
+
     def _delete_items(self, path, items):
 
         # delete items
