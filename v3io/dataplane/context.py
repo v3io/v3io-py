@@ -19,6 +19,37 @@ class Context(object):
         # create a tuple of connection pools
         self._connection_pools = self._create_connection_pools(self._endpoints, max_connections)
 
+    def get_object(self, container_name, access_key, path, offset=None, num_bytes=None):
+        method, path, headers, body = self._request_encoder.encode_get_object(container_name,
+                                                                              access_key,
+                                                                              path,
+                                                                              offset,
+                                                                              num_bytes)
+
+        response = self._http_request(method, path, headers, body)
+
+        return self._response_decoder.decode_response(response.status_code, headers, response.text)
+
+    def put_object(self, container_name, access_key, path, offset, body):
+        method, path, headers, body = self._request_encoder.encode_put_object(container_name,
+                                                                              access_key,
+                                                                              path,
+                                                                              offset,
+                                                                              body)
+
+        response = self._http_request(method, path, headers, body)
+
+        return self._response_decoder.decode_response(response.status_code, headers, response.text)
+
+    def delete_object(self, container_name, access_key, path):
+        method, path, headers, body = self._request_encoder.encode_delete_object(container_name,
+                                                                                 access_key,
+                                                                                 path)
+
+        response = self._http_request(method, path, headers, body)
+
+        return self._response_decoder.decode_response(response.status_code, headers, response.text)
+
     def put_item(self, container_name, access_key, path, attributes):
         method, path, headers, body = self._request_encoder.encode_put_item(container_name, access_key, path, attributes)
 
@@ -30,12 +61,12 @@ class Context(object):
         put_items_response = v3io_api.PutItemsResponse()
 
         for item_path, item_attributes in future.utils.viewitems(items):
-            method, path, headers, body = self._request_encoder.encode_put_item(container_name,
-                                                                                access_key,
-                                                                                v3io.common.helpers.url_join(path, item_path),
-                                                                                item_attributes)
+            method, encoded_path, headers, body = self._request_encoder.encode_put_item(container_name,
+                                                                                        access_key,
+                                                                                        v3io.common.helpers.url_join(path, item_path),
+                                                                                        item_attributes)
 
-            put_items_response.add_response(self._http_request(method, path, headers, body))
+            put_items_response.add_response(self._http_request(method, encoded_path, headers, body))
 
         return put_items_response
 

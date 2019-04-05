@@ -10,6 +10,15 @@ class RequestEncoder(object):
     def __init__(self):
         pass
 
+    def encode_get_object(self, container_name, access_key, path, offset=None, num_bytes=None):
+        return self._encode('GET', container_name, access_key, path, None, None)
+
+    def encode_put_object(self, container_name, access_key, path, offset, body):
+        return self._encode('PUT', container_name, access_key, path, None, body)
+
+    def encode_delete_object(self, container_name, access_key, path):
+        return self._encode('DELETE', container_name, access_key, path, None, None)
+
     def encode_put_item(self, container_name, access_key, path, attributes):
 
         # add 'Item' to body
@@ -133,6 +142,7 @@ class RequestEncoder(object):
 
     def _resolve_body_and_headers(self, access_key, headers, body):
         if access_key:
+            headers = headers or {}
             headers['X-v3io-session-key'] = access_key
 
         if not isinstance(body, dict):

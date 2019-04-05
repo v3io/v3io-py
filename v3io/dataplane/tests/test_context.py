@@ -7,11 +7,13 @@ import v3io.common.helpers
 import v3io.dataplane
 import v3io.logger
 
+# initialize logger
+logger = v3io.logger.Client('test', v3io.logger.Severity.Debug).logger
+
 
 class TextContext(unittest.TestCase):
 
     def setUp(self):
-        self._logger = logger = v3io.logger.Client('test', v3io.logger.Severity.Debug).logger
         self._context = v3io.dataplane.Context(logger, [os.environ['V3IO_DATAPLANE_URL']])
         self._access_key = os.environ['V3IO_DATAPLANE_ACCESS_KEY']
         self._container_name = 'bigdata'
@@ -57,15 +59,15 @@ class TextContext(unittest.TestCase):
         self.assertEqual('i can smell fear on you', response.item['quip'])
         self.assertEqual(130, response.item['height'])
 
-        items = v3io.dataplane.ItemsCursor(self._context,
-                                           self._container_name,
-                                           self._access_key,
-                                           self._path + '/',
-                                           attribute_names=['age', 'feature'],
-                                           filter_expression='age > 15').all()
+        received_items = v3io.dataplane.ItemsCursor(self._context,
+                                                    self._container_name,
+                                                    self._access_key,
+                                                    self._path + '/',
+                                                    attribute_names=['age', 'feature'],
+                                                    filter_expression='age > 15').all()
 
-        self.assertEqual(2, len(items))
-        for item in items:
+        self.assertEqual(2, len(received_items))
+        for item in received_items:
             self.assertLess(15, item['age'])
 
         #
@@ -88,10 +90,12 @@ class TextContext(unittest.TestCase):
 
         self.assertEqual(10, response.item['age'])
 
+        self._delete_items(self._path, items)
+
     def test_put_items(self):
         items = {
             'bob': {'age': 42, 'feature': 'mustache'},
-            'linda': {'age': 42, 'feature': 'singing'}
+            'linda': {'age': 40, 'feature': 'singing'}
         }
 
         response = self._context.put_items(self._container_name,
@@ -102,6 +106,25 @@ class TextContext(unittest.TestCase):
         self.assertTrue(response.success)
 
         self._verify_items('/emd0', items)
+
+        self._delete_items(self._path, items)
+
+    def _delete_items(self, path, items):
+
+        # delete items
+        for item_key, _ in future.utils.viewitems(items):
+            response = self._context.delete_object(self._container_name,
+                                                   self._access_key,
+                                                   v3io.common.helpers.url_join(path, item_key))
+
+            response.raise_for_status()
+
+        # delete dir
+        response = self._context.delete_object(self._container_name,
+                                               self._access_key,
+                                               path + '/')
+
+        response.raise_for_status()
 
     def _verify_items(self, path, items):
         items_cursor = v3io.dataplane.ItemsCursor(self._context,
