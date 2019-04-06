@@ -1,5 +1,6 @@
 import os
 import unittest
+import sys
 
 import future.utils
 
@@ -7,14 +8,14 @@ import v3io.common.helpers
 import v3io.dataplane
 import v3io.logger
 
-# initialize logger
-logger = v3io.logger.Client('test', v3io.logger.Severity.Debug).logger
-
 
 class TextContext(unittest.TestCase):
 
     def setUp(self):
-        self._context = v3io.dataplane.Context(logger, [os.environ['V3IO_DATAPLANE_URL']])
+        self._logger = v3io.logger.Logger('DEBUG')
+        self._logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
+
+        self._context = v3io.dataplane.Context(self._logger, [os.environ['V3IO_DATAPLANE_URL']])
         self._access_key = os.environ['V3IO_DATAPLANE_ACCESS_KEY']
         self._container_name = 'bigdata'
         self._path = 'emd0'

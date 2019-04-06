@@ -1,98 +1,87 @@
+# Copyright 2017 The Nuclio Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
-import colorama
 
 
-class Severity(object):
-    Debug = logging.DEBUG
-    Info = logging.INFO
-    Warning = logging.WARNING
-    Error = logging.ERROR
+class HumanReadableFormatter(logging.Formatter):
 
-    @staticmethod
-    def get_level_by_string(severity_string):
-        string_enum_dict = {
-            'debug': Severity.Debug,
-            'info': Severity.Info,
-            'warn': Severity.Warning,
-            'warning': Severity.Warning,
-            'error': Severity.Error,
-        }
+    def __init__(self):
+        super(HumanReadableFormatter, self).__init__()
 
-        return string_enum_dict.get(severity_string, 0)
+    def format(self, record):
+        record_with = getattr(record, 'with', {})
+        if record_with:
+            more = ': {0}'.format(record_with)
+        else:
+            more = ''
 
-
-class Client(object):
-
-    # defaults
-    class Defaults(object):
-
-        class Stdout(object):
-            severity = 'debug'
-            colors = 'on'
-
-        class FileRotated(object):
-            severity = 'debug'
-            max_num_files = 5
-            max_file_size = 5
-
-        class FileTimed(object):
-            severity = 'debug'
-            max_num_files = 56  # To keep our logs under 100GB, we decrease the debug logs to last 14 days
-            period = 6 * 60 * 60  # 6 hours
-
-    def __init__(self, name, initial_severity, outputs=None):
-        import v3io.logger.output
-
-        # by default, only output to stdout
-        outputs = outputs or [
-            v3io.logger.output.Stdout('debug', Client.Defaults.Stdout.colors)
-        ]
-
-        colorama.init()
-
-        # initialize root logger
-        logging.setLoggerClass(_VariableLogging)
-        self.logger = logging.getLogger(name)
-        self.logger.setLevel(initial_severity)
-
-        if not isinstance(outputs, list):
-            outputs = [outputs]
-
-        # tell each output to create the appropriate handler
-        for output in outputs:
-            output.create_handler(self.logger)
-
-    @staticmethod
-    def _get_name(specified_name, name, severity=None):
-        if specified_name:
-            return specified_name
-
-        return '{0}_{1}'.format(name.replace('-', '.'), severity)
+        return '{0} [{1}] {2}{3}'.format(self.formatTime(record, self.datefmt),
+                                         record.levelname.lower(),
+                                         record.getMessage(),
+                                         more)
 
 
-class _VariableLogging(logging.Logger):
-    get_child = logging.Logger.getChild
+class Logger(object):
 
-    def __init__(self, name, level=logging.NOTSET):
-        logging.Logger.__init__(self, name, level)
-        self._bound_variables = {}
+    def __init__(self, level):
+        self._logger = logging.getLogger('root')
+        self._logger.setLevel(level)
+        self._handlers = {}
 
-    def _check_and_log(self, level, msg, args, kw_args):
-        if self.isEnabledFor(level):
-            kw_args.update(self._bound_variables)
-            self._log(level, msg, args, extra={'vars': kw_args})
+    def set_handler(self, handler_name, file, formatter):
 
-    def error_with(self, msg, *args, **kw_args):
-        self._check_and_log(Severity.Error, msg, args, kw_args)
+        # check if there's a handler by this name
+        if handler_name in self._handlers:
 
-    def warn_with(self, msg, *args, **kw_args):
-        self._check_and_log(Severity.Warning, msg, args, kw_args)
+            # log that we're removing it
+            self.info_with('Replacing logger output')
 
-    def info_with(self, msg, *args, **kw_args):
-        self._check_and_log(Severity.Info, msg, args, kw_args)
+            self._logger.removeHandler(self._handlers[handler_name])
 
-    def debug_with(self, msg, *args, **kw_args):
-        self._check_and_log(Severity.Debug, msg, args, kw_args)
+        # create a stream handler from the file
+        stream_handler = logging.StreamHandler(file)
 
-    def bind(self, **kw_args):
-        self._bound_variables.update(kw_args)
+        # set the formatter
+        stream_handler.setFormatter(formatter)
+
+        # add the handler to the logger
+        self._logger.addHandler(stream_handler)
+
+        # save as the named output
+        self._handlers[handler_name] = stream_handler
+
+    def debug(self, message, *args):
+        self._logger.debug(message, *args)
+
+    def info(self, message, *args):
+        self._logger.info(message, *args)
+
+    def warn(self, message, *args):
+        self._logger.warning(message, *args)
+
+    def error(self, message, *args):
+        self._logger.error(message, *args)
+
+    def debug_with(self, message, *args, **kw_args):
+        self._logger.debug(message, *args, extra={'with': kw_args})
+
+    def info_with(self, message, *args, **kw_args):
+        self._logger.info(message, *args, extra={'with': kw_args})
+
+    def warn_with(self, message, *args, **kw_args):
+        self._logger.warning(message, *args, extra={'with': kw_args})
+
+    def error_with(self, message, *args, **kw_args):
+        self._logger.error(message, *args, extra={'with': kw_args})
