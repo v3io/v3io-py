@@ -133,6 +133,47 @@ class TextContext(unittest.TestCase):
 
         self._verify_items(self._path, items)
 
+    def test_object(self):
+        path = '/object.txt'
+        contents = 'vegans are better than everyone'
+
+        response = self._context.get_object(self._container_name,
+                                            self._access_key,
+                                            path)
+
+        self.assertEqual(404, response.status_code)
+
+        # put contents to some object
+        response = self._context.put_object(self._container_name,
+                                            self._access_key,
+                                            path,
+                                            0,
+                                            contents)
+
+        response.raise_for_status()
+
+        # get the contents
+        response = self._context.get_object(self._container_name,
+                                            self._access_key,
+                                            path)
+
+        response.raise_for_status()
+        self.assertEqual(response.body, contents)
+
+        # delete the object
+        response = self._context.delete_object(self._container_name,
+                                               self._access_key,
+                                               path)
+
+        response.raise_for_status()
+
+        # get again
+        response = self._context.get_object(self._container_name,
+                                            self._access_key,
+                                            path)
+
+        self.assertEqual(404, response.status_code)
+
     def _delete_items(self, path, items):
 
         # delete items

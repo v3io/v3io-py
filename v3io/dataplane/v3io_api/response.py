@@ -66,3 +66,7 @@ class PutItemsResponse(object):
 
         if response.status_code != 200:
             self.success = False
+
+    def raise_for_status(self):
+        if not self.success:
+            raise RuntimeError('Failed to put items')
