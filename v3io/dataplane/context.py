@@ -20,42 +20,24 @@ class Context(object):
         self._connection_pools = self._create_connection_pools(self._endpoints, max_connections)
 
     def get_object(self, container_name, access_key, path, offset=None, num_bytes=None):
-        method, path, headers, body = self._request_encoder.encode_get_object(container_name,
-                                                                              access_key,
-                                                                              path,
-                                                                              offset,
-                                                                              num_bytes)
-
-        response = self._http_request(method, path, headers, body)
-
-        return self._response_decoder.decode_response(response.status_code, headers, response.text)
+        return self._encode_and_http_request(locals(),
+                                             self._request_encoder.encode_get_object,
+                                             self._response_decoder.decode_response)
 
     def put_object(self, container_name, access_key, path, offset, body):
-        method, path, headers, body = self._request_encoder.encode_put_object(container_name,
-                                                                              access_key,
-                                                                              path,
-                                                                              offset,
-                                                                              body)
-
-        response = self._http_request(method, path, headers, body)
-
-        return self._response_decoder.decode_response(response.status_code, headers, response.text)
+        return self._encode_and_http_request(locals(),
+                                             self._request_encoder.encode_put_object,
+                                             self._response_decoder.decode_response)
 
     def delete_object(self, container_name, access_key, path):
-        method, path, headers, body = self._request_encoder.encode_delete_object(container_name,
-                                                                                 access_key,
-                                                                                 path)
-
-        response = self._http_request(method, path, headers, body)
-
-        return self._response_decoder.decode_response(response.status_code, headers, response.text)
+        return self._encode_and_http_request(locals(),
+                                             self._request_encoder.encode_delete_object,
+                                             self._response_decoder.decode_response)
 
     def put_item(self, container_name, access_key, path, attributes):
-        method, path, headers, body = self._request_encoder.encode_put_item(container_name, access_key, path, attributes)
-
-        response = self._http_request(method, path, headers, body)
-
-        return self._response_decoder.decode_response(response.status_code, headers, response.text)
+        return self._encode_and_http_request(locals(),
+                                             self._request_encoder.encode_put_item,
+                                             self._response_decoder.decode_response)
 
     def put_items(self, container_name, access_key, path, items):
         put_items_response = v3io_api.PutItemsResponse()
@@ -71,22 +53,14 @@ class Context(object):
         return put_items_response
 
     def update_item(self, container_name, access_key, path, attributes=None, expression=None):
-        method, path, headers, body = self._request_encoder.encode_update_item(container_name,
-                                                                               access_key,
-                                                                               path,
-                                                                               attributes,
-                                                                               expression)
-
-        response = self._http_request(method, path, headers, body)
-
-        return self._response_decoder.decode_response(response.status_code, headers, response.text)
+        return self._encode_and_http_request(locals(),
+                                             self._request_encoder.encode_update_item,
+                                             self._response_decoder.decode_response)
 
     def get_item(self, container_name, access_key, path, attribute_names=None):
-        method, path, headers, body = self._request_encoder.encode_get_item(container_name, access_key, path, attribute_names)
-
-        response = self._http_request(method, path, headers, body)
-
-        return self._response_decoder.decode_get_item(response.status_code, headers, response.text)
+        return self._encode_and_http_request(locals(),
+                                             self._request_encoder.encode_get_item,
+                                             self._response_decoder.decode_get_item)
 
     def get_items(self,
                   container_name,
@@ -99,20 +73,9 @@ class Context(object):
                   limit=None,
                   segment=None,
                   total_segments=None):
-        method, path, headers, body = self._request_encoder.encode_get_items(container_name,
-                                                                             access_key,
-                                                                             path,
-                                                                             attribute_names,
-                                                                             filter_expression,
-                                                                             marker,
-                                                                             sharding_key,
-                                                                             limit,
-                                                                             segment,
-                                                                             total_segments)
-
-        response = self._http_request(method, path, headers, body)
-
-        return self._response_decoder.decode_get_items(response.status_code, headers, response.text)
+        return self._encode_and_http_request(locals(),
+                                             self._request_encoder.encode_get_items,
+                                             self._response_decoder.decode_get_items)
 
     def _http_request(self, method, path, headers=None, body=None):
         endpoint, connection_pool = self._get_next_connection_pool()
@@ -154,3 +117,15 @@ class Context(object):
             self._next_connection_pool = 0
 
         return endpoint, connection_pool
+
+    def _encode_and_http_request(self, args, encoder, decoder):
+        del args['self']
+
+        # get request params with the encoder
+        method, path, headers, body = encoder(**args)
+
+        # call the encoder to get the response
+        response = self._http_request(method, path, headers, body)
+
+        # call the decoder to decode the response
+        return decoder(response.status_code, headers, response.text)
