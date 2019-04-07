@@ -1,5 +1,6 @@
 import os
 import unittest
+import sys
 
 import future.utils
 
@@ -7,14 +8,14 @@ import v3io.common.helpers
 import v3io.dataplane
 import v3io.logger
 
-# initialize logger
-logger = v3io.logger.Client('test', v3io.logger.Severity.Debug).logger
-
 
 class TextContext(unittest.TestCase):
 
     def setUp(self):
-        self._context = v3io.dataplane.Context(logger, [os.environ['V3IO_DATAPLANE_URL']])
+        self._logger = v3io.logger.Logger('DEBUG')
+        self._logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
+
+        self._context = v3io.dataplane.Context(self._logger, [os.environ['V3IO_DATAPLANE_URL']])
         self._access_key = os.environ['V3IO_DATAPLANE_ACCESS_KEY']
         self._container_name = 'bigdata'
         self._path = 'emd0'
@@ -132,6 +133,47 @@ class TextContext(unittest.TestCase):
         del items['invalid']
 
         self._verify_items(self._path, items)
+
+    def test_object(self):
+        path = '/object.txt'
+        contents = 'vegans are better than everyone'
+
+        response = self._context.get_object(self._container_name,
+                                            self._access_key,
+                                            path)
+
+        self.assertEqual(404, response.status_code)
+
+        # put contents to some object
+        response = self._context.put_object(self._container_name,
+                                            self._access_key,
+                                            path,
+                                            0,
+                                            contents)
+
+        response.raise_for_status()
+
+        # get the contents
+        response = self._context.get_object(self._container_name,
+                                            self._access_key,
+                                            path)
+
+        response.raise_for_status()
+        self.assertEqual(response.body, contents)
+
+        # delete the object
+        response = self._context.delete_object(self._container_name,
+                                               self._access_key,
+                                               path)
+
+        response.raise_for_status()
+
+        # get again
+        response = self._context.get_object(self._container_name,
+                                            self._access_key,
+                                            path)
+
+        self.assertEqual(404, response.status_code)
 
     def _delete_items(self, path, items):
 

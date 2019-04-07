@@ -1,0 +1,16 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+flake8 = "*"
+twine = "*"
+
+[packages]
+requests = "==2.21.0"
+future = "==0.17.1"
+ujson = "==1.35"
+
+[requires]
+python_version = "2.7"

@@ -1,1 +1,1 @@
-from v3io.logger.logger import Client, Severity
+from v3io.logger.logger import Logger, HumanReadableFormatter
