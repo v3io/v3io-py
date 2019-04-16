@@ -3,7 +3,7 @@ import os
 import future.utils
 import requests
 
-import v3io_api
+import v3io.dataplane.v3io_api
 import v3io.common.helpers
 
 
@@ -13,7 +13,7 @@ class Context(object):
         self._logger = logger
         self._endpoints = self._get_endpoints(endpoints)
         self._next_connection_pool = 0
-        self._request_encoder = v3io_api.RequestEncoder()
+        self._request_encoder = v3io.dataplane.v3io_api.RequestEncoder()
 
         # create a tuple of connection pools
         self._connection_pools = self._create_connection_pools(self._endpoints, max_connections)
@@ -21,25 +21,25 @@ class Context(object):
     def get_object(self, container_name, access_key, path, offset=None, num_bytes=None):
         return self._encode_and_http_request(locals(),
                                              self._request_encoder.encode_get_object,
-                                             v3io_api.Response)
+                                             v3io.dataplane.v3io_api.Response)
 
     def put_object(self, container_name, access_key, path, offset, body):
         return self._encode_and_http_request(locals(),
                                              self._request_encoder.encode_put_object,
-                                             v3io_api.Response)
+                                             v3io.dataplane.v3io_api.Response)
 
     def delete_object(self, container_name, access_key, path):
         return self._encode_and_http_request(locals(),
                                              self._request_encoder.encode_delete_object,
-                                             v3io_api.Response)
+                                             v3io.dataplane.v3io_api.Response)
 
     def put_item(self, container_name, access_key, path, attributes):
         return self._encode_and_http_request(locals(),
                                              self._request_encoder.encode_put_item,
-                                             v3io_api.Response)
+                                             v3io.dataplane.v3io_api.Response)
 
     def put_items(self, container_name, access_key, path, items):
-        put_items_response = v3io_api.PutItemsResponse()
+        put_items_response = v3io.dataplane.v3io_api.PutItemsResponse()
 
         for item_path, item_attributes in future.utils.viewitems(items):
             method, encoded_path, headers, body = self._request_encoder.encode_put_item(container_name,
@@ -54,12 +54,12 @@ class Context(object):
     def update_item(self, container_name, access_key, path, attributes=None, expression=None):
         return self._encode_and_http_request(locals(),
                                              self._request_encoder.encode_update_item,
-                                             v3io_api.Response)
+                                             v3io.dataplane.v3io_api.Response)
 
     def get_item(self, container_name, access_key, path, attribute_names=None):
         return self._encode_and_http_request(locals(),
                                              self._request_encoder.encode_get_item,
-                                             v3io_api.GetItemResponse)
+                                             v3io.dataplane.v3io_api.GetItemResponse)
 
     def get_items(self,
                   container_name,
@@ -74,7 +74,7 @@ class Context(object):
                   total_segments=None):
         return self._encode_and_http_request(locals(),
                                              self._request_encoder.encode_get_items,
-                                             v3io_api.GetItemsResponse)
+                                             v3io.dataplane.v3io_api.GetItemsResponse)
 
     def _http_request(self, method, path, headers=None, body=None):
         endpoint, connection_pool = self._get_next_connection_pool()
