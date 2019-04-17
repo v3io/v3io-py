@@ -1,13 +1,11 @@
 class ItemsCursor(object):
 
     def __init__(self,
-                 context_or_container,
+                 context,
                  container_name,
                  access_key,
-                 path,
-                 attribute_names,
-                 filter_expression=None):
-        self._context_or_container = context_or_container
+                 request_input):
+        self._context = context
         self._current_response = None
         self._current_items = None
         self._current_item = None
@@ -16,9 +14,7 @@ class ItemsCursor(object):
         # get items params
         self._container_name = container_name
         self._access_key = access_key
-        self._path = path
-        self._attribute_names = attribute_names
-        self._filter_expression = filter_expression
+        self._request_input = request_input
 
     def next_item(self):
         if self._current_item_index < len(self._current_items or []):
@@ -27,24 +23,21 @@ class ItemsCursor(object):
 
             return self._current_item
 
-        if self._current_response and self._current_response.last:
+        if self._current_response and self._current_response.output.last:
             return None
 
-        marker = self._current_response.next_marker if self._current_response else None
+        self._request_input.marker = self._current_response.output.next_marker if self._current_response else None
 
         # get the next batch
-        self._current_response = self._context_or_container.get_items(self._container_name,
-                                                                      self._access_key,
-                                                                      self._path,
-                                                                      self._attribute_names,
-                                                                      self._filter_expression,
-                                                                      marker=marker)
+        self._current_response = self._context.get_items(self._container_name,
+                                                         self._access_key,
+                                                         self._request_input)
 
         # raise if there was an issue
         self._current_response.raise_for_status()
 
         # set items
-        self._current_items = self._current_response.items
+        self._current_items = self._current_response.output.items
         self._current_item_index = 0
 
         # and recurse into next now that we repopulated response
