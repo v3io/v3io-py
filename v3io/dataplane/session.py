@@ -1,4 +1,4 @@
-import functools
+import v3io.dataplane.container
 
 
 class Session(object):
@@ -7,24 +7,32 @@ class Session(object):
         self._context = context
         self._access_key = access_key
 
-        for function_name in [
-            'get_object',
-            'put_object',
-            'delete_object',
-            'put_item',
-            'put_items',
-            'update_item',
-            'get_item',
-            'get_items'
-        ]:
-            function_implementation = functools.partial(self._call_context_function, function_name)
+    def new_items_cursor(self, container_name, request_input):
+        return self._context.new_items_cursor(container_name, self._access_key, request_input)
 
-            setattr(self, function_name, function_implementation)
+    def new_container(self, container_name):
+        return v3io.dataplane.container.Container(self, container_name)
 
-    def _call_context_function(self, context_function, *args, **kw_args):
+    def get_object(self, container_name, request_input):
+        return self._context.get_object(container_name, self._access_key, request_input)
 
-        # inject access key in the args
-        args_with_access_key = list(args)
-        args_with_access_key.insert(1, self._access_key)
+    def put_object(self, container_name, request_input):
+        return self._context.put_object(container_name, self._access_key, request_input)
 
-        return getattr(self._context, context_function)(*args_with_access_key, **kw_args)
+    def delete_object(self, container_name, request_input):
+        return self._context.delete_object(container_name, self._access_key, request_input)
+
+    def put_item(self, container_name, request_input):
+        return self._context.put_item(container_name, self._access_key, request_input)
+
+    def put_items(self, container_name, request_input):
+        return self._context.put_items(container_name, self._access_key, request_input)
+
+    def update_item(self, container_name, request_input):
+        return self._context.update_item(container_name, self._access_key, request_input)
+
+    def get_item(self, container_name, request_input):
+        return self._context.get_item(container_name, self._access_key, request_input)
+
+    def get_items(self, container_name, request_input):
+        return self._context.get_items(container_name, self._access_key, request_input)

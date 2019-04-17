@@ -4,8 +4,8 @@ import future.utils
 import requests
 
 import v3io.common.helpers
-import v3io.dataplane.response
 import v3io.dataplane.session
+import v3io.dataplane.response
 import v3io.dataplane.output
 import v3io.dataplane.items_cursor
 
@@ -48,7 +48,7 @@ class Context(object):
                                              request_input)
 
     def put_items(self, container_name, access_key, request_input):
-        responses = v3io.dataplane.Responses()
+        responses = v3io.dataplane.response.Responses()
 
         for item_path, item_attributes in future.utils.viewitems(request_input.items):
 
@@ -144,7 +144,7 @@ class Context(object):
         response = self._http_request(method, path, headers, body)
 
         # create a response
-        return v3io.dataplane.Response(output,
-                                       response.status_code,
-                                       headers,
-                                       response.text)
+        return v3io.dataplane.response.Response(output,
+                                                response.status_code,
+                                                headers,
+                                                response.text)
