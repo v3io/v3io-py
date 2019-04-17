@@ -64,7 +64,6 @@ setup(
         'v3io',
         'v3io.common',
         'v3io.dataplane',
-        'v3io.dataplane.v3io_api',
         'v3io.logger'
     ],
     install_requires=install_requires,
