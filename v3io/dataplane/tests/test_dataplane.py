@@ -9,7 +9,7 @@ import v3io.dataplane
 import v3io.logger
 
 
-class TextContext(unittest.TestCase):
+class TestDataplane(unittest.TestCase):
 
     def setUp(self):
         self._logger = v3io.logger.Logger('DEBUG')
@@ -31,8 +31,8 @@ class TextContext(unittest.TestCase):
         for item_key, item_attributes in future.utils.viewitems(items):
             response = self._context.put_item(self._container_name,
                                               self._access_key,
-                                              v3io.common.helpers.url_join(self._path, item_key),
-                                              item_attributes)
+                                              v3io.dataplane.PutItemInput(v3io.common.helpers.url_join(self._path, item_key),
+                                                                          item_attributes))
 
             response.raise_for_status()
 
@@ -40,32 +40,33 @@ class TextContext(unittest.TestCase):
 
         response = self._context.update_item(self._container_name,
                                              self._access_key,
-                                             v3io.common.helpers.url_join(self._path, 'louise'),
-                                             {
-                                                 'height': 130,
-                                                 'quip': 'i can smell fear on you'
-                                             })
+                                             v3io.dataplane.UpdateItemInput(v3io.common.helpers.url_join(self._path, 'louise'),
+                                                                            {
+                                                                                'height': 130,
+                                                                                'quip': 'i can smell fear on you'
+                                                                            }))
 
         response.raise_for_status()
 
         response = self._context.get_item(self._container_name,
                                           self._access_key,
-                                          v3io.common.helpers.url_join(self._path, 'louise'),
-                                          attribute_names=['__size', 'age', 'quip', 'height'])
+                                          v3io.dataplane.GetItemInput(v3io.common.helpers.url_join(self._path, 'louise'),
+                                                                      attribute_names=['__size', 'age', 'quip', 'height']))
 
         response.raise_for_status()
 
-        self.assertEqual(0, response.item['__size'])
-        self.assertEqual(9, response.item['age'])
-        self.assertEqual('i can smell fear on you', response.item['quip'])
-        self.assertEqual(130, response.item['height'])
+        self.assertEqual(0, response.output.item['__size'])
+        self.assertEqual(9, response.output.item['age'])
+        self.assertEqual('i can smell fear on you', response.output.item['quip'])
+        self.assertEqual(130, response.output.item['height'])
 
-        received_items = v3io.dataplane.ItemsCursor(self._context,
-                                                    self._container_name,
-                                                    self._access_key,
-                                                    self._path + '/',
-                                                    attribute_names=['age', 'feature'],
-                                                    filter_expression='age > 15').all()
+        get_items_input = v3io.dataplane.GetItemsInput(path=self._path + '/',
+                                                       attribute_names=['age', 'feature'],
+                                                       filter_expression='age > 15')
+
+        received_items = self._context.new_items_cursor(self._container_name,
+                                                        self._access_key,
+                                                        get_items_input).all()
 
         self.assertEqual(2, len(received_items))
         for item in received_items:
@@ -77,19 +78,19 @@ class TextContext(unittest.TestCase):
 
         response = self._context.update_item(self._container_name,
                                              self._access_key,
-                                             v3io.common.helpers.url_join(self._path, 'louise'),
-                                             expression='age = age + 1')
+                                             v3io.dataplane.UpdateItemInput(v3io.common.helpers.url_join(self._path, 'louise'),
+                                                                            expression='age = age + 1'))
 
         response.raise_for_status()
 
         response = self._context.get_item(self._container_name,
                                           self._access_key,
-                                          v3io.common.helpers.url_join(self._path, 'louise'),
-                                          attribute_names=['age'])
+                                          v3io.dataplane.GetItemInput(v3io.common.helpers.url_join(self._path, 'louise'),
+                                                                      attribute_names=['age']))
 
         response.raise_for_status()
 
-        self.assertEqual(10, response.item['age'])
+        self.assertEqual(10, response.output.item['age'])
 
         self._delete_items(self._path, items)
 
@@ -101,8 +102,7 @@ class TextContext(unittest.TestCase):
 
         response = self._context.put_items(self._container_name,
                                            self._access_key,
-                                           '/emd0',
-                                           items)
+                                           v3io.dataplane.PutItemsInput(self._path, items))
 
         self.assertTrue(response.success)
 
@@ -119,8 +119,7 @@ class TextContext(unittest.TestCase):
 
         response = self._context.put_items(self._container_name,
                                            self._access_key,
-                                           self._path,
-                                           items)
+                                           v3io.dataplane.PutItemsInput(self._path, items))
 
         self.assertFalse(response.success)
 
@@ -140,23 +139,21 @@ class TextContext(unittest.TestCase):
 
         response = self._context.get_object(self._container_name,
                                             self._access_key,
-                                            path)
+                                            v3io.dataplane.GetObjectInput(path))
 
         self.assertEqual(404, response.status_code)
 
         # put contents to some object
         response = self._context.put_object(self._container_name,
                                             self._access_key,
-                                            path,
-                                            0,
-                                            contents)
+                                            v3io.dataplane.PutObjectInput(path, 0, contents))
 
         response.raise_for_status()
 
         # get the contents
         response = self._context.get_object(self._container_name,
                                             self._access_key,
-                                            path)
+                                            v3io.dataplane.GetObjectInput(path))
 
         response.raise_for_status()
         self.assertEqual(response.body, contents)
@@ -164,14 +161,14 @@ class TextContext(unittest.TestCase):
         # delete the object
         response = self._context.delete_object(self._container_name,
                                                self._access_key,
-                                               path)
+                                               v3io.dataplane.DeleteObjectInput(path))
 
         response.raise_for_status()
 
         # get again
         response = self._context.get_object(self._container_name,
                                             self._access_key,
-                                            path)
+                                            v3io.dataplane.GetObjectInput(path))
 
         self.assertEqual(404, response.status_code)
 
@@ -181,23 +178,22 @@ class TextContext(unittest.TestCase):
         for item_key, _ in future.utils.viewitems(items):
             response = self._context.delete_object(self._container_name,
                                                    self._access_key,
-                                                   v3io.common.helpers.url_join(path, item_key))
+                                                   v3io.dataplane.DeleteObjectInput(v3io.common.helpers.url_join(path, item_key)))
 
             response.raise_for_status()
 
         # delete dir
         response = self._context.delete_object(self._container_name,
                                                self._access_key,
-                                               path + '/')
+                                               v3io.dataplane.DeleteObjectInput(path + '/'))
 
         response.raise_for_status()
 
     def _verify_items(self, path, items):
-        items_cursor = v3io.dataplane.ItemsCursor(self._context,
-                                                  self._container_name,
-                                                  self._access_key,
-                                                  path + '/',
-                                                  attribute_names=['*'])
+        items_cursor = self._context.new_items_cursor(self._container_name,
+                                                      self._access_key,
+                                                      v3io.dataplane.GetItemsInput(path=path + '/',
+                                                                                   attribute_names=['*']))
 
         received_items = items_cursor.all()
 

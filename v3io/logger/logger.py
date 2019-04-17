@@ -35,7 +35,7 @@ class HumanReadableFormatter(logging.Formatter):
 
 class Logger(object):
 
-    def __init__(self, level):
+    def __init__(self, level='DEBUG'):
         self._logger = logging.getLogger('root')
         self._logger.setLevel(level)
         self._handlers = {}
