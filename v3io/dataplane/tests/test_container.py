@@ -12,14 +12,14 @@ import v3io.logger
 class TestContainer(unittest.TestCase):
 
     def setUp(self):
-        self._logger = v3io.logger.Logger('DEBUG')
+        self._logger = v3io.logger.Logger()
         self._logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
 
         # create a context
-        context = v3io.dataplane.Context(self._logger, [os.environ['V3IO_DATAPLANE_URL']])
+        context = v3io.dataplane.Context(self._logger)
 
         # create a session and container
-        self._container = context.new_session(os.environ['V3IO_DATAPLANE_ACCESS_KEY']).new_container('bigdata')
+        self._container = context.new_session().new_container('bigdata')
 
         self._path = '/emd0'
 

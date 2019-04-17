@@ -24,8 +24,8 @@ class Context(object):
     def new_items_cursor(self, container_name, access_key, request_input):
         return v3io.dataplane.items_cursor.ItemsCursor(self, container_name, access_key, request_input)
 
-    def new_session(self, access_key):
-        return v3io.dataplane.session.Session(self, access_key)
+    def new_session(self, access_key=None):
+        return v3io.dataplane.session.Session(self, access_key or os.environ['V3IO_ACCESS_KEY'])
 
     def get_object(self, container_name, access_key, request_input):
         return self._encode_and_http_request(container_name,
@@ -99,8 +99,8 @@ class Context(object):
 
             if env_endpoints is not None:
                 endpoints = env_endpoints.split(',')
-
-            raise RuntimeError('Endpoints must be passed to context or specified in V3IO_API')
+            else:
+                raise RuntimeError('Endpoints must be passed to context or specified in V3IO_API')
 
         endpoints_with_scheme = []
 
