@@ -25,9 +25,11 @@ class TestContainer(unittest.TestCase):
     def test_get_containers(self):
         # response = self._session.get_containers()
 
-        response = self._container.get_container_contents(path='/test-stream-0/',
-                                                          get_all_attributes=True)
-        print(response)
+        # response = self._container.get_container_contents(path='/test-stream-0/',
+        #                                                   get_all_attributes=True)
+        # print(response)
+
+        self._container.delete_stream(path='/test-stream-0')
 
     def test_emd(self):
         items = {

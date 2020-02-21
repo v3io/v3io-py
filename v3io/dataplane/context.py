@@ -145,9 +145,12 @@ class Context(object):
         :return: Response
         """
 
-        # TODO: delete shards
+        response = self.get_container_contents(container_name, access_key, path=kwargs['path'])
 
-        return self.delete_object(container_name, access_key, **kwargs)
+        for stream_shard in response.output.contents:
+            self.delete_object(container_name, access_key, path=stream_shard['key'])
+
+        return self.delete_object(container_name, access_key, path=kwargs['path'])
 
     def describe_stream(self, container_name, access_key, **kwargs):
         """
