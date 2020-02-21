@@ -9,10 +9,6 @@ import v3io.dataplane.response
 import v3io.dataplane.output
 import v3io.dataplane.items_cursor
 
-# disable warnings
-from urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-
 
 class Context(object):
 

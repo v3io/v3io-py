@@ -16,6 +16,8 @@ class Container(object):
     def get_object(self, **kwargs):
         """
         :key path:
+        :key offset:
+        :key num_bytes:
         :return: Response
         """
         return self._session.get_object(self._container_name, **kwargs)
@@ -41,6 +43,7 @@ class Container(object):
         :key path:
         :key attributes:
         :key condition:
+        :key update_mode:
         :return: Response
         """
         return self._session.put_item(self._container_name, **kwargs)
@@ -60,6 +63,7 @@ class Container(object):
         :key attributes:
         :key expression:
         :key condition:
+        :key update_mode:
         :return: Response
         """
         return self._session.update_item(self._container_name, **kwargs)
@@ -75,8 +79,9 @@ class Container(object):
     def get_items(self, **kwargs):
         """
         :key path:
+        :key table_name:
         :key attribute_names:
-        :key filter_expression:
+        :key filter:
         :key marker:
         :key sharding_key:
         :key limit:

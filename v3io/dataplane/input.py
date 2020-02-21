@@ -51,6 +51,10 @@ class Input(object):
     def _resolve_path(self, container_name, path):
         return v3io.common.helpers.url_join(container_name, path)
 
+#
+# Object
+#
+
 
 class GetObjectInput(Input):
 
@@ -83,15 +87,20 @@ class DeleteObjectInput(Input):
         return self._encode('DELETE', container_name, access_key, self.path, None, None)
 
 
+#
+# KV/EMD
+#
+
+
 class PutItemInput(Input):
 
-    def __init__(self, path, attributes, condition=None):
+    def __init__(self, path, attributes, condition=None, update_mode=None):
         self.path = path
         self.attributes = attributes
         self.condition = condition
+        self.update_mode = update_mode
 
     def encode(self, container_name, access_key):
-
         # add 'Item' to body
         body = {
             'Item': self._dict_to_typed_attributes(self.attributes)
@@ -99,6 +108,9 @@ class PutItemInput(Input):
 
         if self.condition is not None:
             body['ConditionExpression'] = self.condition
+
+        if self.update_mode is not None:
+            body['UpdateMode'] = self.update_mode
 
         return self._encode('PUT',
                             container_name,
@@ -118,17 +130,18 @@ class PutItemsInput(Input):
 
 class UpdateItemInput(Input):
 
-    def __init__(self, path, attributes=None, expression=None, condition=None):
+    def __init__(self, path, attributes=None, expression=None, condition=None, update_mode=None):
         self.path = path
         self.attributes = attributes
         self.expression = expression
         self.condition = condition
+        self.update_mode = update_mode or 'CreateOrReplaceAttributes'
 
     def encode(self, container_name, access_key):
 
         # add 'Item' to body
         body = {
-            'UpdateMode': 'CreateOrReplaceAttributes'
+            'UpdateMode': self.update_mode
         }
 
         if self.condition is not None:
@@ -162,7 +175,6 @@ class GetItemInput(Input):
         self.attribute_names = attribute_names
 
     def encode(self, container_name, access_key):
-
         # add 'Item' to body
         body = {
             'AttributesToGet': ','.join(self.attribute_names)
@@ -180,8 +192,9 @@ class GetItemsInput(Input):
 
     def __init__(self,
                  path,
+                 table_name=None,
                  attribute_names='*',
-                 filter_expression=None,
+                 filter=None,
                  marker=None,
                  sharding_key=None,
                  limit=None,
@@ -190,8 +203,9 @@ class GetItemsInput(Input):
                  sort_key_range_start=None,
                  sort_key_range_end=None):
         self.path = path
+        self.table_name = table_name
         self.attribute_names = attribute_names
-        self.filter_expression = filter_expression
+        self.filter = filter
         self.marker = marker
         self.sharding_key = sharding_key
         self.limit = limit
@@ -205,8 +219,11 @@ class GetItemsInput(Input):
             'AttributesToGet': ','.join(self.attribute_names),
         }
 
-        if self.filter_expression:
-            body['FilterExpression'] = self.filter_expression
+        if self.table_name:
+            body['TableName'] = self.table_name
+
+        if self.filter:
+            body['FilterExpression'] = self.filter
 
         if self.marker:
             body['Marker'] = self.marker
