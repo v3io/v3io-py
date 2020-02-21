@@ -13,6 +13,17 @@ class Container(object):
         """
         return self._session.new_items_cursor(self._container_name, **kwargs)
 
+    def get_container_contents(self, **kwargs):
+        """
+        :key path:
+        :key get_all_attributes:
+        :key directories_only:
+        :key limit:
+        :key marker:
+        :return: Response
+        """
+        return self._session.get_container_contents(self._container_name, **kwargs)
+
     def get_object(self, **kwargs):
         """
         :key path:
@@ -92,3 +103,53 @@ class Container(object):
         :return: Response
         """
         return self._session.get_items(self._container_name, **kwargs)
+
+    def create_stream(self, **kwargs):
+        """
+        :key path:
+        :key shard_count:
+        :key retention_period_hours:
+        :return: Response
+        """
+        return self._session.create_stream(self._container_name, **kwargs)
+
+    def delete_stream(self, **kwargs):
+        """
+        :key path:
+        :return: Response
+        """
+        return self._session.delete_stream(self._container_name, **kwargs)
+
+    def describe_stream(self, **kwargs):
+        """
+        :key path:
+        :return: Response
+        """
+        return self._session.describe_stream(self._container_name, **kwargs)
+
+    def seek_shard(self, **kwargs):
+        """
+        :key path:
+        :key seek_type:
+        :key starting_sequence_number:
+        :key timestamp:
+        :return: Response
+        """
+        return self._session.seek_shard(self._container_name, **kwargs)
+
+    def put_records(self, **kwargs):
+        """
+        :key path:
+        :key records:
+        :return: Response
+        """
+        return self._session.put_records(self._container_name, **kwargs)
+
+    def get_records(self, **kwargs):
+        """
+        :key path:
+        :key location:
+        :key limit:
+        :return: Response
+        """
+        return self._session.get_records(self._container_name, **kwargs)

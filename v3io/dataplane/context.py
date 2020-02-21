@@ -7,6 +7,7 @@ import v3io.common.helpers
 import v3io.dataplane.session
 import v3io.dataplane.response
 import v3io.dataplane.output
+import v3io.dataplane.input
 import v3io.dataplane.items_cursor
 
 
@@ -27,45 +28,72 @@ class Context(object):
     def new_session(self, access_key=None):
         return v3io.dataplane.session.Session(self, access_key or os.environ['V3IO_ACCESS_KEY'])
 
+    def get_containers(self, access_key):
+        """
+        :return: Response
+        """
+        request_input = v3io.dataplane.input.GetContainersInput()
+
+        return self._encode_and_http_request(None,
+                                             access_key,
+                                             request_input,
+                                             v3io.dataplane.output.GetContainersOutput)
+
+    def get_container_contents(self, container_name, access_key, **kwargs):
+        """
+        :key path:
+        :key get_all_attributes:
+        :key directories_only:
+        :key limit:
+        :key marker:
+        :return: Response
+        """
+        request_input = v3io.dataplane.input.GetContainerContentsInput(**kwargs)
+
+        return self._encode_and_http_request(container_name,
+                                             access_key,
+                                             request_input,
+                                             v3io.dataplane.output.GetContainerContentsOutput)
+
     def get_object(self, container_name, access_key, **kwargs):
-        request_input = v3io.dataplane.GetObjectInput(**kwargs)
+        request_input = v3io.dataplane.input.GetObjectInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
     def put_object(self, container_name, access_key, **kwargs):
-        request_input = v3io.dataplane.PutObjectInput(**kwargs)
+        request_input = v3io.dataplane.input.PutObjectInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
     def delete_object(self, container_name, access_key, **kwargs):
-        request_input = v3io.dataplane.DeleteObjectInput(**kwargs)
+        request_input = v3io.dataplane.input.DeleteObjectInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
     def put_item(self, container_name, access_key, **kwargs):
-        request_input = v3io.dataplane.PutItemInput(**kwargs)
+        request_input = v3io.dataplane.input.PutItemInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
     def put_items(self, container_name, access_key, **kwargs):
-        request_input = v3io.dataplane.PutItemsInput(**kwargs)
+        request_input = v3io.dataplane.input.PutItemsInput(**kwargs)
 
         responses = v3io.dataplane.response.Responses()
 
         for item_path, item_attributes in future.utils.viewitems(request_input.items):
-
             # create a put item input
-            put_item_input = v3io.dataplane.PutItemInput(v3io.common.helpers.url_join(request_input.path, item_path),
-                                                         item_attributes,
-                                                         request_input.condition)
+            put_item_input = v3io.dataplane.input.PutItemInput(
+                v3io.common.helpers.url_join(request_input.path, item_path),
+                item_attributes,
+                request_input.condition)
 
             # encode it
             method, encoded_path, headers, body = put_item_input.encode(container_name, access_key)
@@ -76,14 +104,14 @@ class Context(object):
         return responses
 
     def update_item(self, container_name, access_key, **kwargs):
-        request_input = v3io.dataplane.UpdateItemInput(**kwargs)
+        request_input = v3io.dataplane.input.UpdateItemInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
     def get_item(self, container_name, access_key, **kwargs):
-        request_input = v3io.dataplane.GetItemInput(**kwargs)
+        request_input = v3io.dataplane.input.GetItemInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
@@ -91,12 +119,89 @@ class Context(object):
                                              v3io.dataplane.output.GetItemOutput)
 
     def get_items(self, container_name, access_key, **kwargs):
-        request_input = v3io.dataplane.GetItemsInput(**kwargs)
+        request_input = v3io.dataplane.input.GetItemsInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input,
                                              v3io.dataplane.output.GetItemsOutput)
+
+    def create_stream(self, container_name, access_key, **kwargs):
+        """
+        :key path:
+        :key shard_count:
+        :key retention_period_hours:
+        :return: Response
+        """
+        request_input = v3io.dataplane.input.CreateStreamInput(**kwargs)
+
+        return self._encode_and_http_request(container_name,
+                                             access_key,
+                                             request_input)
+
+    def delete_stream(self, container_name, access_key, **kwargs):
+        """
+        :key path:
+        :return: Response
+        """
+
+        # TODO: delete shards
+
+        return self.delete_object(container_name, access_key, **kwargs)
+
+    def describe_stream(self, container_name, access_key, **kwargs):
+        """
+        :key path:
+        :return: Response
+        """
+        request_input = v3io.dataplane.input.DescribeStreamInput(**kwargs)
+
+        return self._encode_and_http_request(container_name,
+                                             access_key,
+                                             request_input,
+                                             v3io.dataplane.output.DescribeStreamOutput)
+
+    def seek_shard(self, container_name, access_key, **kwargs):
+        """
+        :key path:
+        :key seek_type:
+        :key starting_sequence_number:
+        :key timestamp:
+        :return: Response
+        """
+        request_input = v3io.dataplane.input.SeekShardInput(**kwargs)
+
+        return self._encode_and_http_request(container_name,
+                                             access_key,
+                                             request_input,
+                                             v3io.dataplane.output.SeekShardOutput)
+
+    def put_records(self, container_name, access_key, **kwargs):
+        """
+        :key path:
+        :key records:
+        :return: Response
+        """
+        request_input = v3io.dataplane.input.PutRecordsInput(**kwargs)
+
+        return self._encode_and_http_request(container_name,
+                                             access_key,
+                                             request_input,
+                                             v3io.dataplane.output.PutRecordsOutput)
+
+    def get_records(self, container_name, access_key, **kwargs):
+        """
+        :key path:
+        :key location:
+        :key limit:
+        :return: Response
+        """
+        request_input = v3io.dataplane.input.GetRecordsInput(**kwargs)
+
+        return self._encode_and_http_request(container_name,
+                                             access_key,
+                                             request_input,
+                                             v3io.dataplane.output.GetRecordsOutput)
 
     def _http_request(self, method, path, headers=None, body=None):
         endpoint, connection_pool = self._get_next_connection_pool()

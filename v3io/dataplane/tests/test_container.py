@@ -15,13 +15,19 @@ class TestContainer(unittest.TestCase):
         self._logger = v3io.logger.Logger()
         self._logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
 
-        # create a context
-        context = v3io.dataplane.Context(self._logger)
-
-        # create a session and container
-        self._container = context.new_session().new_container('bigdata')
+        # create a context, session and container
+        self._context = v3io.dataplane.Context(self._logger)
+        self._session = self._context.new_session()
+        self._container = self._session.new_container('bigdata')
 
         self._path = '/emd0'
+
+    def test_get_containers(self):
+        # response = self._session.get_containers()
+
+        response = self._container.get_container_contents(path='/test-stream-0/',
+                                                          get_all_attributes=True)
+        print(response)
 
     def test_emd(self):
         items = {

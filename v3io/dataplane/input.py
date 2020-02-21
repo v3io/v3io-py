@@ -1,4 +1,6 @@
 import ujson
+import base64
+import urllib.parse
 
 import future.utils
 
@@ -8,7 +10,11 @@ import v3io.common.helpers
 class Input(object):
 
     def _encode(self, method, container_name, access_key, path, headers, body):
-        path = self._resolve_path(container_name, path)
+        if container_name:
+            path = self._resolve_path(container_name, path)
+        else:
+            path = path
+
         headers, body = self._resolve_body_and_headers(access_key, headers, body)
 
         return method, path, headers, body
@@ -50,6 +56,63 @@ class Input(object):
 
     def _resolve_path(self, container_name, path):
         return v3io.common.helpers.url_join(container_name, path)
+
+#
+# Containers
+#
+
+
+class GetContainersInput(Input):
+
+    def __init__(self):
+        pass
+
+    def encode(self, container_name, access_key):
+        return self._encode('GET',
+                            None,
+                            access_key,
+                            '/',
+                            {},
+                            None)
+
+
+class GetContainerContentsInput(Input):
+
+    def __init__(self,
+                 path,
+                 get_all_attributes=False,
+                 directories_only=False,
+                 limit=None,
+                 marker=None):
+        self.path = path
+        self.get_all_attributes = get_all_attributes
+        self.directories_only = directories_only
+        self.limit = limit
+        self.marker = marker
+
+    def encode(self, container_name, access_key):
+        query = {
+            'prefix': self.path
+        }
+
+        if self.get_all_attributes:
+            query['prefix-info'] = 1
+
+        if self.directories_only:
+            query['prefix-only'] = 1
+
+        if self.limit:
+            query['max-keys'] = self.limit
+
+        if self.marker:
+            query['marker'] = self.marker
+
+        return self._encode('GET',
+                            None,
+                            access_key,
+                            '/{0}?{1}'.format(container_name, urllib.parse.urlencode(query)),
+                            {},
+                            None)
 
 #
 # Object
@@ -252,3 +315,133 @@ class GetItemsInput(Input):
                             self.path,
                             {'X-v3io-function': 'GetItems'},
                             body)
+
+#
+# Stream
+#
+
+
+class CreateStreamInput(Input):
+
+    def __init__(self, path, shard_count, retention_period_hours=None):
+        self.path = path
+        self.shard_count = shard_count
+        self.retention_period_hours = retention_period_hours or 1
+
+    def encode(self, container_name, access_key):
+        body = {
+            'ShardCount': self.shard_count,
+            'RetentionPeriodHours': self.retention_period_hours
+        }
+
+        return self._encode('POST',
+                            container_name,
+                            access_key,
+                            self.path,
+                            {'X-v3io-function': 'CreateStream'},
+                            body)
+
+
+class DescribeStreamInput(Input):
+
+    def __init__(self, path):
+        self.path = path
+
+    def encode(self, container_name, access_key):
+        return self._encode('PUT',
+                            container_name,
+                            access_key,
+                            self.path,
+                            {'X-v3io-function': 'DescribeStream'},
+                            None)
+
+
+class SeekShardInput(Input):
+
+    def __init__(self, path, seek_type, starting_sequence_number=None, timestamp=None):
+        self.path = path
+        self.seek_type = seek_type
+        self.starting_sequence_number = starting_sequence_number
+        self.timestamp = timestamp
+
+    def encode(self, container_name, access_key):
+        body = {
+            'Type': self.seek_type,
+        }
+
+        if self.seek_type == 'SEQUENCE':
+            body['StartingSequenceNumber'] = self.starting_sequence_number
+        elif self.seek_type == 'TIME':
+            body['TimestampSec'] = self.timestamp
+            body['TimestampNSec'] = 0
+        else:
+            raise ValueError('Unsupported seek_type ({0}) for seek_shard. Must be one of sequence_number, timestamp'.
+                             format(self.seek_type))
+
+        return self._encode('PUT',
+                            container_name,
+                            access_key,
+                            self.path,
+                            {'X-v3io-function': 'SeekShard'},
+                            None)
+
+
+class PutRecordsInput(Input):
+
+    def __init__(self, path, records):
+        self.path = path
+        self.records = records
+
+    def encode(self, container_name, access_key):
+        records = []
+
+        for record in self.records:
+            record_body = {
+                'Data': base64.b64encode(record.data),
+            }
+
+            if record.client_info:
+                record_body['ClientInfo'] = record.client_info
+
+            if record.shard_id:
+                record_body['ShardId'] = record.shard_id
+
+            if record.partition_key:
+                record_body['PartitionKey'] = record.partition_key
+
+            records.append(record)
+
+        body = {
+            'Records': records
+        }
+
+        return self._encode('POST',
+                            container_name,
+                            access_key,
+                            self.path,
+                            {'X-v3io-function': 'PutRecords'},
+                            body)
+
+
+class GetRecordsInput(Input):
+
+    def __init__(self, path, location, limit=None):
+        self.path = path
+        self.location = location
+        self.limit = limit or 100
+
+    def encode(self, container_name, access_key):
+        body = {
+            'Location': self.location,
+            'Limit': self.limit,
+        }
+
+        return self._encode('PUT',
+                            container_name,
+                            access_key,
+                            self.path,
+                            {'X-v3io-function': 'GetRecords'},
+                            body)
+
+
+
