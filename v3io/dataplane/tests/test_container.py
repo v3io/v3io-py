@@ -32,22 +32,22 @@ class TestContainer(unittest.TestCase):
         }
 
         for item_key, item_attributes in future.utils.viewitems(items):
-            response = self._container.put_item(v3io.dataplane.PutItemInput(v3io.common.helpers.url_join(self._path, item_key),
-                                                                            item_attributes))
+            response = self._container.put_item(path=v3io.common.helpers.url_join(self._path, item_key),
+                                                attributes=item_attributes)
 
             response.raise_for_status()
 
         self._verify_items(self._path, items)
 
-        response = self._container.update_item(v3io.dataplane.UpdateItemInput(v3io.common.helpers.url_join(self._path, 'louise'), {
+        response = self._container.update_item(path=v3io.common.helpers.url_join(self._path, 'louise'), attributes={
             'height': 130,
             'quip': 'i can smell fear on you'
-        }))
+        })
 
         response.raise_for_status()
 
-        response = self._container.get_item(v3io.dataplane.GetItemInput(v3io.common.helpers.url_join(self._path, 'louise'),
-                                                                        attribute_names=['__size', 'age', 'quip', 'height']))
+        response = self._container.get_item(path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                            attribute_names=['__size', 'age', 'quip', 'height'])
 
         response.raise_for_status()
 
@@ -56,11 +56,9 @@ class TestContainer(unittest.TestCase):
         self.assertEqual('i can smell fear on you', response.output.item['quip'])
         self.assertEqual(130, response.output.item['height'])
 
-        get_items_input = v3io.dataplane.GetItemsInput(path=self._path + '/',
-                                                       attribute_names=['age', 'feature'],
-                                                       filter_expression='age > 15')
-
-        received_items = self._container.new_items_cursor(get_items_input).all()
+        received_items = self._container.new_items_cursor(path=self._path + '/',
+                                                          attribute_names=['age', 'feature'],
+                                                          filter_expression='age > 15').all()
 
         self.assertEqual(2, len(received_items))
         for item in received_items:
@@ -70,13 +68,13 @@ class TestContainer(unittest.TestCase):
         # Increment age
         #
 
-        response = self._container.update_item(v3io.dataplane.UpdateItemInput(v3io.common.helpers.url_join(self._path, 'louise'),
-                                                                              expression='age = age + 1'))
+        response = self._container.update_item(path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                               expression='age = age + 1')
 
         response.raise_for_status()
 
-        response = self._container.get_item(v3io.dataplane.GetItemInput(v3io.common.helpers.url_join(self._path, 'louise'),
-                                                                        attribute_names=['age']))
+        response = self._container.get_item(path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                            attribute_names=['age'])
 
         response.raise_for_status()
 
@@ -90,7 +88,7 @@ class TestContainer(unittest.TestCase):
             'linda': {'age': 40, 'feature': 'singing'}
         }
 
-        response = self._container.put_items(v3io.dataplane.PutItemsInput(self._path, items))
+        response = self._container.put_items(path=self._path, items=items)
 
         self.assertTrue(response.success)
 
@@ -105,7 +103,7 @@ class TestContainer(unittest.TestCase):
             'invalid': {'__name': 'foo', 'feature': 'singing'}
         }
 
-        response = self._container.put_items(v3io.dataplane.PutItemsInput(self._path, items))
+        response = self._container.put_items(path=self._path, items=items)
 
         self.assertFalse(response.success)
 
@@ -123,28 +121,30 @@ class TestContainer(unittest.TestCase):
         path = '/object.txt'
         contents = 'vegans are better than everyone'
 
-        response = self._container.get_object(v3io.dataplane.GetObjectInput(path))
+        response = self._container.get_object(path=path)
 
         self.assertEqual(404, response.status_code)
 
         # put contents to some object
-        response = self._container.put_object(v3io.dataplane.PutObjectInput(path, 0, contents))
+        response = self._container.put_object(path=path,
+                                              offset=0,
+                                              body=contents)
 
         response.raise_for_status()
 
         # get the contents
-        response = self._container.get_object(v3io.dataplane.GetObjectInput(path))
+        response = self._container.get_object(path=path)
 
         response.raise_for_status()
         self.assertEqual(response.body, contents)
 
         # delete the object
-        response = self._container.delete_object(v3io.dataplane.DeleteObjectInput(path))
+        response = self._container.delete_object(path=path)
 
         response.raise_for_status()
 
         # get again
-        response = self._container.get_object(v3io.dataplane.GetObjectInput(path))
+        response = self._container.get_object(path=path)
 
         self.assertEqual(404, response.status_code)
 
@@ -152,18 +152,18 @@ class TestContainer(unittest.TestCase):
 
         # delete items
         for item_key, _ in future.utils.viewitems(items):
-            response = self._container.delete_object(v3io.dataplane.DeleteObjectInput(v3io.common.helpers.url_join(path, item_key)))
+            response = self._container.delete_object(path=v3io.common.helpers.url_join(path, item_key))
 
             response.raise_for_status()
 
         # delete dir
-        response = self._container.delete_object(v3io.dataplane.DeleteObjectInput(path + '/'))
+        response = self._container.delete_object(path=path + '/')
 
         response.raise_for_status()
 
     def _verify_items(self, path, items):
-        items_cursor = self._container.new_items_cursor(v3io.dataplane.GetItemsInput(path=path + '/',
-                                                                                     attribute_names=['*']))
+        items_cursor = self._container.new_items_cursor(path=path + '/',
+                                                        attribute_names=['*'])
 
         received_items = items_cursor.all()
 

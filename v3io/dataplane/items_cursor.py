@@ -4,7 +4,7 @@ class ItemsCursor(object):
                  context,
                  container_name,
                  access_key,
-                 request_input):
+                 **kwargs):
         self._context = context
         self._current_response = None
         self._current_items = None
@@ -14,7 +14,7 @@ class ItemsCursor(object):
         # get items params
         self._container_name = container_name
         self._access_key = access_key
-        self._request_input = request_input
+        self._kwargs = kwargs
 
     def next_item(self):
         if self._current_item_index < len(self._current_items or []):
@@ -26,12 +26,12 @@ class ItemsCursor(object):
         if self._current_response and self._current_response.output.last:
             return None
 
-        self._request_input.marker = self._current_response.output.next_marker if self._current_response else None
+        self._kwargs['marker'] = self._current_response.output.next_marker if self._current_response else None
 
         # get the next batch
         self._current_response = self._context.get_items(self._container_name,
                                                          self._access_key,
-                                                         self._request_input)
+                                                         **self._kwargs)
 
         # raise if there was an issue
         self._current_response.raise_for_status()

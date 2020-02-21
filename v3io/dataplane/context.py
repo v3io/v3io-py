@@ -9,6 +9,10 @@ import v3io.dataplane.response
 import v3io.dataplane.output
 import v3io.dataplane.items_cursor
 
+# disable warnings
+from urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+
 
 class Context(object):
 
@@ -21,33 +25,43 @@ class Context(object):
         # create a tuple of connection pools
         self._connection_pools = self._create_connection_pools(self._endpoints, max_connections)
 
-    def new_items_cursor(self, container_name, access_key, request_input):
-        return v3io.dataplane.items_cursor.ItemsCursor(self, container_name, access_key, request_input)
+    def new_items_cursor(self, container_name, access_key, **kwargs):
+        return v3io.dataplane.items_cursor.ItemsCursor(self, container_name, access_key, **kwargs)
 
     def new_session(self, access_key=None):
         return v3io.dataplane.session.Session(self, access_key or os.environ['V3IO_ACCESS_KEY'])
 
-    def get_object(self, container_name, access_key, request_input):
+    def get_object(self, container_name, access_key, **kwargs):
+        request_input = v3io.dataplane.GetObjectInput(**kwargs)
+
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
-    def put_object(self, container_name, access_key, request_input):
+    def put_object(self, container_name, access_key, **kwargs):
+        request_input = v3io.dataplane.PutObjectInput(**kwargs)
+
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
-    def delete_object(self, container_name, access_key, request_input):
+    def delete_object(self, container_name, access_key, **kwargs):
+        request_input = v3io.dataplane.DeleteObjectInput(**kwargs)
+
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
-    def put_item(self, container_name, access_key, request_input):
+    def put_item(self, container_name, access_key, **kwargs):
+        request_input = v3io.dataplane.PutItemInput(**kwargs)
+
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
-    def put_items(self, container_name, access_key, request_input):
+    def put_items(self, container_name, access_key, **kwargs):
+        request_input = v3io.dataplane.PutItemsInput(**kwargs)
+
         responses = v3io.dataplane.response.Responses()
 
         for item_path, item_attributes in future.utils.viewitems(request_input.items):
@@ -65,18 +79,24 @@ class Context(object):
 
         return responses
 
-    def update_item(self, container_name, access_key, request_input):
+    def update_item(self, container_name, access_key, **kwargs):
+        request_input = v3io.dataplane.UpdateItemInput(**kwargs)
+
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
-    def get_item(self, container_name, access_key, request_input):
+    def get_item(self, container_name, access_key, **kwargs):
+        request_input = v3io.dataplane.GetItemInput(**kwargs)
+
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input,
                                              v3io.dataplane.output.GetItemOutput)
 
-    def get_items(self, container_name, access_key, request_input):
+    def get_items(self, container_name, access_key, **kwargs):
+        request_input = v3io.dataplane.GetItemsInput(**kwargs)
+
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input,
@@ -87,7 +107,12 @@ class Context(object):
 
         self._logger.debug_with('Tx', method=method, path=path, headers=headers, body=body)
 
-        response = connection_pool.request(method, endpoint + path, headers=headers, data=body, timeout=self._timeout)
+        response = connection_pool.request(method,
+                                           endpoint + path,
+                                           headers=headers,
+                                           data=body,
+                                           timeout=self._timeout,
+                                           verify=False)
 
         self._logger.debug_with('Rx', status_code=response.status_code, headers=response.headers, body=response.text)
 
