@@ -4,17 +4,37 @@ class ItemsCursor(object):
                  context,
                  container_name,
                  access_key,
-                 request_input):
+                 path,
+                 table_name=None,
+                 attribute_names='*',
+                 filter_expression=None,
+                 marker=None,
+                 sharding_key=None,
+                 limit=None,
+                 segment=None,
+                 total_segments=None,
+                 sort_key_range_start=None,
+                 sort_key_range_end=None):
         self._context = context
+        self._container_name = container_name
+        self._access_key = access_key
         self._current_response = None
         self._current_items = None
         self._current_item = None
         self._current_item_index = 0
 
         # get items params
-        self._container_name = container_name
-        self._access_key = access_key
-        self._request_input = request_input
+        self.path = path
+        self.table_name = table_name
+        self.attribute_names = attribute_names
+        self.filter_expression = filter_expression
+        self.marker = marker
+        self.sharding_key = sharding_key
+        self.limit = limit
+        self.segment = segment
+        self.total_segments = total_segments
+        self.sort_key_range_start = sort_key_range_start
+        self.sort_key_range_end = sort_key_range_end
 
     def next_item(self):
         if self._current_item_index < len(self._current_items or []):
@@ -26,12 +46,22 @@ class ItemsCursor(object):
         if self._current_response and self._current_response.output.last:
             return None
 
-        self._request_input.marker = self._current_response.output.next_marker if self._current_response else None
+        self.marker = self._current_response.output.next_marker if self._current_response else None
 
         # get the next batch
         self._current_response = self._context.get_items(self._container_name,
+                                                         self.path,
                                                          self._access_key,
-                                                         self._request_input)
+                                                         self.table_name,
+                                                         self.attribute_names,
+                                                         self.filter_expression,
+                                                         self.marker,
+                                                         self.sharding_key,
+                                                         self.limit,
+                                                         self.segment,
+                                                         self.total_segments,
+                                                         self.sort_key_range_start,
+                                                         self.sort_key_range_end)
 
         # raise if there was an issue
         self._current_response.raise_for_status()
