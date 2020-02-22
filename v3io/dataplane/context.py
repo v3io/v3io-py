@@ -254,14 +254,9 @@ class Context(object):
 
     def _get_next_connection_pool(self):
 
-        # TODO: multithreading safe
-        endpoint, connection_pool = self._connection_pools[self._next_connection_pool]
-
-        self._next_connection_pool += 1
-        if self._next_connection_pool >= len(self._connection_pools):
-            self._next_connection_pool = 0
-
-        return endpoint, connection_pool
+        # TODO: multithreading safe way to get a connection pool. for now
+        # support only one target
+        return self._connection_pools[0]
 
     def _encode_and_http_request(self,
                                  container_name,
