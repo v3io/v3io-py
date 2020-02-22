@@ -151,7 +151,7 @@ class Context(object):
         response = self.get_container_contents(container_name, access_key, path=kwargs['path'])
 
         for stream_shard in response.output.contents:
-            self.delete_object(container_name, access_key, path=stream_shard['key'])
+            self.delete_object(container_name, access_key, path=stream_shard.key)
 
         return self.delete_object(container_name, access_key, path=kwargs['path'])
 

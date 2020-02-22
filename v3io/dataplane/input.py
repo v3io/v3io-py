@@ -386,7 +386,7 @@ class SeekShardInput(Input):
         elif self.seek_type == 'TIME':
             body['TimestampSec'] = self.timestamp
             body['TimestampNSec'] = 0
-        elif self.seek_type not in ['EARLIEST', 'LATEST'] :
+        elif self.seek_type not in ['EARLIEST', 'LATEST']:
             raise ValueError('Unsupported seek_type ({0}) for seek_shard. Must be one of SEQUENCE, TIME, EARLIEST, LATEST'.
                              format(self.seek_type))
 
@@ -460,6 +460,3 @@ class GetRecordsInput(Input):
                             self.path,
                             {'X-v3io-function': 'GetRecords'},
                             body)
-
-
-

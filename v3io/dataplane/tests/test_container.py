@@ -34,12 +34,17 @@ class TestContainer(Test):
         response = self._context.get_containers()
         self.assertGreater(len(response.output.containers), 0)
 
+    def test_get_container_contents_invalid_path(self):
+        response = self._container.get_container_contents(path='/no-such-path')
+        self.assertEqual(404, response.status_code)
+        self.assertIn('No such file', response.body)
+
     def test_get_container_contents(self):
         body = 'If you cannot do great things, do small things in a great way.'
 
         for object_index in range(5):
             response = self._container.put_object(path=os.path.join(self._path, 'object-{0}.txt'.format(object_index)),
-                                       body=body)
+                                                  body=body)
             response.raise_for_status()
 
         for object_index in range(5):
@@ -77,7 +82,7 @@ class TestStream(Test):
         # clean up
         try:
             self._container.delete_stream(path=self._path)
-        except:
+        except Exception:
             pass
 
     def test_stream(self):
