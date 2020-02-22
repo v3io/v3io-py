@@ -16,7 +16,7 @@ class Context(object):
 
     def __init__(self, logger=None, endpoints=None, max_connections=4, timeout=None):
         self._logger = logger or v3io.logger.Logger(level='INFO')
-        self._transport = v3io.dataplane.transport.Transport(logger, endpoints, max_connections, timeout)
+        self._transport = v3io.dataplane.transport.Transport(self._logger, endpoints, max_connections, timeout)
         self._access_key = os.environ['V3IO_ACCESS_KEY']
 
     def new_session(self, access_key=None):
