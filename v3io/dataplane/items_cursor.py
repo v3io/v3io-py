@@ -1,7 +1,9 @@
 class ItemsCursor(object):
 
     def __init__(self,
-                 container,
+                 context,
+                 container_name,
+                 access_key,
                  path,
                  table_name=None,
                  attribute_names='*',
@@ -13,7 +15,9 @@ class ItemsCursor(object):
                  total_segments=None,
                  sort_key_range_start=None,
                  sort_key_range_end=None):
-        self._container = container
+        self._context = context
+        self._container_name = container_name
+        self._access_key = access_key
         self._current_response = None
         self._current_items = None
         self._current_item = None
@@ -45,17 +49,19 @@ class ItemsCursor(object):
         self.marker = self._current_response.output.next_marker if self._current_response else None
 
         # get the next batch
-        self._current_response = self._container.get_items(self.path,
-                                                           self.table_name,
-                                                           self.attribute_names,
-                                                           self.filter,
-                                                           self.marker,
-                                                           self.sharding_key,
-                                                           self.limit,
-                                                           self.segment,
-                                                           self.total_segments,
-                                                           self.sort_key_range_start,
-                                                           self.sort_key_range_end)
+        self._current_response = self._context.get_items(self._container_name,
+                                                         self.path,
+                                                         self._access_key,
+                                                         self.table_name,
+                                                         self.attribute_names,
+                                                         self.filter,
+                                                         self.marker,
+                                                         self.sharding_key,
+                                                         self.limit,
+                                                         self.segment,
+                                                         self.total_segments,
+                                                         self.sort_key_range_start,
+                                                         self.sort_key_range_end)
 
         # raise if there was an issue
         self._current_response.raise_for_status()

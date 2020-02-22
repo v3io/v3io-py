@@ -9,7 +9,8 @@ import v3io.dataplane.items_cursor
 
 class Container(object):
 
-    def __init__(self, access_key, transport, container_name):
+    def __init__(self, context, access_key, transport, container_name):
+        self._context = context
         self._access_key = access_key
         self._transport = transport
         self._container_name = container_name
@@ -68,7 +69,9 @@ class Container(object):
                          total_segments=None,
                          sort_key_range_start=None,
                          sort_key_range_end=None):
-        return v3io.dataplane.items_cursor.ItemsCursor(self,
+        return v3io.dataplane.items_cursor.ItemsCursor(self._context,
+                                                       self._container_name,
+                                                       self._access_key,
                                                        path,
                                                        table_name,
                                                        attribute_names,

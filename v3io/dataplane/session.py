@@ -9,4 +9,4 @@ class Session(object):
         self._access_key = access_key
 
     def new_container(self, container_name):
-        return v3io.dataplane.container.Container(self._access_key, self._transport, container_name)
+        return v3io.dataplane.container.Container(self._context, self._access_key, self._transport, container_name)
