@@ -15,7 +15,7 @@ import v3io.common.helpers
 # Container
 #
 
-def encode_get_containers(container_name, access_key):
+def encode_get_containers(container_name, access_key, kwargs):
     return _encode('GET', None, access_key, '/', {}, None)
 
 
