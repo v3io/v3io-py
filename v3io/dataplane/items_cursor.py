@@ -1,20 +1,36 @@
 class ItemsCursor(object):
 
     def __init__(self,
-                 context,
-                 container_name,
-                 access_key,
-                 **kwargs):
-        self._context = context
+                 container,
+                 path,
+                 table_name=None,
+                 attribute_names='*',
+                 filter=None,
+                 marker=None,
+                 sharding_key=None,
+                 limit=None,
+                 segment=None,
+                 total_segments=None,
+                 sort_key_range_start=None,
+                 sort_key_range_end=None):
+        self._container = container
         self._current_response = None
         self._current_items = None
         self._current_item = None
         self._current_item_index = 0
 
         # get items params
-        self._container_name = container_name
-        self._access_key = access_key
-        self._kwargs = kwargs
+        self.path = path
+        self.table_name = table_name
+        self.attribute_names = attribute_names
+        self.filter = filter
+        self.marker = marker
+        self.sharding_key = sharding_key
+        self.limit = limit
+        self.segment = segment
+        self.total_segments = total_segments
+        self.sort_key_range_start = sort_key_range_start
+        self.sort_key_range_end = sort_key_range_end
 
     def next_item(self):
         if self._current_item_index < len(self._current_items or []):
@@ -26,12 +42,20 @@ class ItemsCursor(object):
         if self._current_response and self._current_response.output.last:
             return None
 
-        self._kwargs['marker'] = self._current_response.output.next_marker if self._current_response else None
+        self.marker = self._current_response.output.next_marker if self._current_response else None
 
         # get the next batch
-        self._current_response = self._context.get_items(self._container_name,
-                                                         self._access_key,
-                                                         **self._kwargs)
+        self._current_response = self._container.get_items(self.path,
+                                                           self.table_name,
+                                                           self.attribute_names,
+                                                           self.filter,
+                                                           self.marker,
+                                                           self.sharding_key,
+                                                           self.limit,
+                                                           self.segment,
+                                                           self.total_segments,
+                                                           self.sort_key_range_start,
+                                                           self.sort_key_range_end)
 
         # raise if there was an issue
         self._current_response.raise_for_status()

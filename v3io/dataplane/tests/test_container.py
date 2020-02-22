@@ -80,10 +80,8 @@ class TestStream(Test):
         self._path = '/v3io-py-test-stream/'
 
         # clean up
-        try:
-            self._container.delete_stream(path=self._path)
-        except Exception:
-            pass
+        response = self._container.delete_stream(path=self._path)
+        response.raise_for_status([200, 204, 404])
 
     def test_stream(self):
 
@@ -127,36 +125,35 @@ class TestObject(Test):
     def setUp(self):
         super(TestObject, self).setUp()
 
-        self._path = '/v3io-py-test-object'
+        self._path = '/v3io-py-test-object/object.txt'
 
     def test_object(self):
-        path = '/object.txt'
         contents = 'vegans are better than everyone'
 
-        response = self._container.get_object(path=path)
+        response = self._container.get_object(self._path)
 
         self.assertEqual(404, response.status_code)
 
         # put contents to some object
-        response = self._container.put_object(path=path,
+        response = self._container.put_object(self._path,
                                               offset=0,
                                               body=contents)
 
         response.raise_for_status()
 
         # get the contents
-        response = self._container.get_object(path=path)
+        response = self._container.get_object(self._path)
 
         response.raise_for_status()
         self.assertEqual(response.body, contents)
 
         # delete the object
-        response = self._container.delete_object(path=path)
+        response = self._container.delete_object(self._path)
 
         response.raise_for_status()
 
         # get again
-        response = self._container.get_object(path=path)
+        response = self._container.get_object(self._path)
 
         self.assertEqual(404, response.status_code)
 

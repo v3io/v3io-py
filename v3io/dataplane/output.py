@@ -152,7 +152,7 @@ class PutRecordsOutput(Output):
         self.failed_record_count = decoded_body.get('FailedRecordCount')
         self.records = []
 
-        for record in decoded_body.get('Records'):
+        for record in decoded_body.get('Records', []):
             self.records.append(PutRecordsResult(record))
 
 
