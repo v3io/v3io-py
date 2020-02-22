@@ -144,7 +144,7 @@ class GetObjectInput(Input):
 
 class PutObjectInput(Input):
 
-    def __init__(self, path, offset, body):
+    def __init__(self, path, offset=None, body=None):
         self.path = path
         self.offset = offset
         self.body = body

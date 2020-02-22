@@ -1,3 +1,4 @@
+import os.path
 import unittest
 import sys
 
@@ -18,6 +19,52 @@ class Test(unittest.TestCase):
         self._context = v3io.dataplane.Context(self._logger)
         self._session = self._context.new_session()
         self._container = self._session.new_container('bigdata')
+
+
+class TestContainer(Test):
+
+    def setUp(self):
+        super(TestContainer, self).setUp()
+        self._path = '/v3io-py-test-container'
+
+        # clean up
+        self._delete_dir(self._path)
+
+    def test_get_containers(self):
+        response = self._context.get_containers()
+        self.assertGreater(len(response.output.containers), 0)
+
+    def test_get_container_contents(self):
+        body = 'If you cannot do great things, do small things in a great way.'
+
+        for object_index in range(5):
+            response = self._container.put_object(path=os.path.join(self._path, 'object-{0}.txt'.format(object_index)),
+                                       body=body)
+            response.raise_for_status()
+
+        for object_index in range(5):
+            response = self._container.put_object(path=os.path.join(self._path, 'dir-{0}/'.format(object_index)))
+            response.raise_for_status()
+
+        response = self._container.get_container_contents(path=self._path,
+                                                          get_all_attributes=True,
+                                                          directories_only=True)
+        self.assertEqual(0, len(response.output.contents))
+        self.assertNotEqual(0, len(response.output.common_prefixes))
+
+        response = self._container.get_container_contents(path=self._path, get_all_attributes=True)
+        self.assertNotEqual(0, len(response.output.contents))
+        self.assertNotEqual(0, len(response.output.common_prefixes))
+
+        # clean up
+        self._delete_dir(self._path)
+
+    def _delete_dir(self, path):
+        response = self._container.get_container_contents(path=path)
+        for content in response.output.contents:
+            self._container.delete_object(path=content.key)
+        for common_prefixes in response.output.common_prefixes:
+            self._container.delete_object(path=common_prefixes.prefix)
 
 
 class TestStream(Test):

@@ -21,17 +21,13 @@ class Output(object):
 
         return decoded_attributes
 
-    def _get_child_text(self, child, child_key, target_dict, target_dict_key):
-        child_value = child.find(child_key)
-        if child_value is not None:
-            target_dict[target_dict_key] = child_value.text
-
 
 #
 # Containers
 #
 
 class GetContainersOutput(Output):
+
     def __init__(self, root):
         self.containers = []
 
@@ -43,7 +39,46 @@ class GetContainersOutput(Output):
             })
 
 
+class ContainerContent(object):
+
+    def __init__(self, child):
+        for child_key, attribute_name, kind in [
+            ('Key', 'key', str),
+            ('Size', 'size', int),
+            ('LastSequenceID', 'last_sequence_id', int),
+            ('LastModified', 'last_modified', str),
+            ('Mode', 'mode', str),
+            ('AccessTime', 'access_time', str),
+            ('CreatingTime', 'creating_time', str),
+            ('GID', 'gid', str),
+            ('UID', 'uid', str),
+            ('InodeNumber', 'inode_number', int)
+        ]:
+            child_value = child.find(child_key)
+            if child_value is not None:
+                setattr(self, attribute_name, kind(child_value.text))
+
+
+class ContainerCommonPrefix(object):
+
+    def __init__(self, child):
+        for child_key, attribute_name, kind in [
+            ('Prefix', 'prefix', str),
+            ('LastModified', 'last_modified', str),
+            ('AccessTime', 'access_time', str),
+            ('CreatingTime', 'creating_time', str),
+            ('Mode', 'mode', str),
+            ('GID', 'gid', str),
+            ('UID', 'uid', str),
+            ('InodeNumber', 'inode_number', int)
+        ]:
+            child_value = child.find(child_key)
+            if child_value is not None:
+                setattr(self, attribute_name, kind(child_value.text))
+
+
 class GetContainerContentsOutput(Output):
+
     def __init__(self, root):
         self.name = root.find('Name').text
         self.next_marker = root.find('NextMarker').text
@@ -57,43 +92,11 @@ class GetContainerContentsOutput(Output):
 
         if contents_children is not None:
             for content_child in contents_children:
-                content = {}
-
-                # populate the fields
-                for field in [
-                    ('Key', 'key'),
-                    ('Size', 'size'),
-                    ('LastSequenceID', 'last_sequence_id'),
-                    ('LastModified', 'last_modified'),
-                    ('Mode', 'mode'),
-                    ('AccessTime', 'access_time'),
-                    ('CreatingTime', 'creating_time'),
-                    ('GID', 'gid'),
-                    ('UID', 'uid'),
-                    ('InodeNumber', 'inode_number')
-                ]:
-                    self._get_child_text(content_child, field[0], content, field[1])
-
-                self.contents.append(content)
+                self.contents.append(ContainerContent(content_child))
 
         if common_prefixes_children is not None:
             for common_prefix_child in common_prefixes_children:
-                common_prefix = {}
-
-                # populate the fields
-                for field in [
-                    ('Prefix', 'prefix'),
-                    ('LastModified', 'last_modified'),
-                    ('AccessTime', 'access_time'),
-                    ('CreatingTime', 'creating_time'),
-                    ('Mode', 'mode'),
-                    ('GID', 'gid'),
-                    ('UID', 'uid'),
-                    ('InodeNumber', 'inode_number')
-                ]:
-                    self._get_child_text(common_prefix_child, field[0], common_prefix, field[1])
-
-                self.common_prefixes.append(common_prefix)
+                self.common_prefixes.append(ContainerCommonPrefix(common_prefix_child))
 
 #
 # KV/EMD
@@ -135,6 +138,7 @@ class SeekShardOutput(Output):
 
 
 class PutRecordsResult(Output):
+
     def __init__(self, decoded_body):
         self.sequence_number = decoded_body.get('SequenceNumber')
         self.shard_id = decoded_body.get('ShardId')

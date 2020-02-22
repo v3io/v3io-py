@@ -22,24 +22,27 @@ class Context(object):
         # create a tuple of connection pools
         self._connection_pools = self._create_connection_pools(self._endpoints, max_connections)
 
-    def new_items_cursor(self, container_name, access_key, **kwargs):
-        return v3io.dataplane.items_cursor.ItemsCursor(self, container_name, access_key, **kwargs)
+    def new_items_cursor(self, container_name, access_key=None, **kwargs):
+        return v3io.dataplane.items_cursor.ItemsCursor(self,
+                                                       container_name,
+                                                       access_key,
+                                                       **kwargs)
 
     def new_session(self, access_key=None):
-        return v3io.dataplane.session.Session(self, access_key or os.environ['V3IO_ACCESS_KEY'])
+        return v3io.dataplane.session.Session(self, self._get_access_key(access_key))
 
-    def get_containers(self, access_key):
+    def get_containers(self, access_key=None):
         """
         :return: Response
         """
         request_input = v3io.dataplane.input.GetContainersInput()
 
         return self._encode_and_http_request(None,
-                                             access_key,
+                                             self._get_access_key(access_key),
                                              request_input,
                                              v3io.dataplane.output.GetContainersOutput)
 
-    def get_container_contents(self, container_name, access_key, **kwargs):
+    def get_container_contents(self, container_name, access_key=None, **kwargs):
         """
         :key path:
         :key get_all_attributes:
@@ -55,35 +58,35 @@ class Context(object):
                                              request_input,
                                              v3io.dataplane.output.GetContainerContentsOutput)
 
-    def get_object(self, container_name, access_key, **kwargs):
+    def get_object(self, container_name, access_key=None, **kwargs):
         request_input = v3io.dataplane.input.GetObjectInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
-    def put_object(self, container_name, access_key, **kwargs):
+    def put_object(self, container_name, access_key=None, **kwargs):
         request_input = v3io.dataplane.input.PutObjectInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
-    def delete_object(self, container_name, access_key, **kwargs):
+    def delete_object(self, container_name, access_key=None, **kwargs):
         request_input = v3io.dataplane.input.DeleteObjectInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
-    def put_item(self, container_name, access_key, **kwargs):
+    def put_item(self, container_name, access_key=None, **kwargs):
         request_input = v3io.dataplane.input.PutItemInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
-    def put_items(self, container_name, access_key, **kwargs):
+    def put_items(self, container_name, access_key=None, **kwargs):
         request_input = v3io.dataplane.input.PutItemsInput(**kwargs)
 
         responses = v3io.dataplane.response.Responses()
@@ -103,14 +106,14 @@ class Context(object):
 
         return responses
 
-    def update_item(self, container_name, access_key, **kwargs):
+    def update_item(self, container_name, access_key=None, **kwargs):
         request_input = v3io.dataplane.input.UpdateItemInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
                                              access_key,
                                              request_input)
 
-    def get_item(self, container_name, access_key, **kwargs):
+    def get_item(self, container_name, access_key=None, **kwargs):
         request_input = v3io.dataplane.input.GetItemInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
@@ -118,7 +121,7 @@ class Context(object):
                                              request_input,
                                              v3io.dataplane.output.GetItemOutput)
 
-    def get_items(self, container_name, access_key, **kwargs):
+    def get_items(self, container_name, access_key=None, **kwargs):
         request_input = v3io.dataplane.input.GetItemsInput(**kwargs)
 
         return self._encode_and_http_request(container_name,
@@ -126,7 +129,7 @@ class Context(object):
                                              request_input,
                                              v3io.dataplane.output.GetItemsOutput)
 
-    def create_stream(self, container_name, access_key, **kwargs):
+    def create_stream(self, container_name, access_key=None, **kwargs):
         """
         :key path:
         :key shard_count:
@@ -139,7 +142,7 @@ class Context(object):
                                              access_key,
                                              request_input)
 
-    def delete_stream(self, container_name, access_key, **kwargs):
+    def delete_stream(self, container_name, access_key=None, **kwargs):
         """
         :key path:
         :return: Response
@@ -152,7 +155,7 @@ class Context(object):
 
         return self.delete_object(container_name, access_key, path=kwargs['path'])
 
-    def describe_stream(self, container_name, access_key, **kwargs):
+    def describe_stream(self, container_name, access_key=None, **kwargs):
         """
         :key path:
         :return: Response
@@ -164,7 +167,7 @@ class Context(object):
                                              request_input,
                                              v3io.dataplane.output.DescribeStreamOutput)
 
-    def seek_shard(self, container_name, access_key, **kwargs):
+    def seek_shard(self, container_name, access_key=None, **kwargs):
         """
         :key path:
         :key seek_type:
@@ -179,7 +182,7 @@ class Context(object):
                                              request_input,
                                              v3io.dataplane.output.SeekShardOutput)
 
-    def put_records(self, container_name, access_key, **kwargs):
+    def put_records(self, container_name, access_key=None, **kwargs):
         """
         :key path:
         :key records:
@@ -192,7 +195,7 @@ class Context(object):
                                              request_input,
                                              v3io.dataplane.output.PutRecordsOutput)
 
-    def get_records(self, container_name, access_key, **kwargs):
+    def get_records(self, container_name, access_key=None, **kwargs):
         """
         :key path:
         :key location:
@@ -266,6 +269,8 @@ class Context(object):
                                  request_input,
                                  output=None):
 
+        access_key = self._get_access_key(access_key)
+
         # get request params with the encoder
         method, path, headers, body = request_input.encode(container_name, access_key)
 
@@ -277,3 +282,6 @@ class Context(object):
                                                 response.status_code,
                                                 headers,
                                                 response.text)
+
+    def _get_access_key(self, access_key):
+        return access_key or os.environ['V3IO_ACCESS_KEY']
