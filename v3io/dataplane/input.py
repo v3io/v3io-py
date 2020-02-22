@@ -22,6 +22,18 @@ class Input(object):
     def _typed_attributes_to_dict(self):
         pass
 
+    def _ensure_trailing_slash(self, path):
+        if not path.endswith('/'):
+            return path + '/'
+
+        return path
+
+    def _to_base64(self, input):
+        if isinstance(input, str):
+            input = input.encode('utf-8')
+
+        return base64.b64encode(input)
+
     def _dict_to_typed_attributes(self, d):
         typed_attributes = {}
 
@@ -324,7 +336,7 @@ class GetItemsInput(Input):
 class CreateStreamInput(Input):
 
     def __init__(self, path, shard_count, retention_period_hours=None):
-        self.path = path
+        self.path = self._ensure_trailing_slash(path)
         self.shard_count = shard_count
         self.retention_period_hours = retention_period_hours or 1
 
@@ -345,7 +357,7 @@ class CreateStreamInput(Input):
 class DescribeStreamInput(Input):
 
     def __init__(self, path):
-        self.path = path
+        self.path = self._ensure_trailing_slash(path)
 
     def encode(self, container_name, access_key):
         return self._encode('PUT',
@@ -359,7 +371,7 @@ class DescribeStreamInput(Input):
 class SeekShardInput(Input):
 
     def __init__(self, path, seek_type, starting_sequence_number=None, timestamp=None):
-        self.path = path
+        self.path = self._ensure_trailing_slash(path)
         self.seek_type = seek_type
         self.starting_sequence_number = starting_sequence_number
         self.timestamp = timestamp
@@ -374,8 +386,8 @@ class SeekShardInput(Input):
         elif self.seek_type == 'TIME':
             body['TimestampSec'] = self.timestamp
             body['TimestampNSec'] = 0
-        else:
-            raise ValueError('Unsupported seek_type ({0}) for seek_shard. Must be one of sequence_number, timestamp'.
+        elif self.seek_type not in ['EARLIEST', 'LATEST'] :
+            raise ValueError('Unsupported seek_type ({0}) for seek_shard. Must be one of SEQUENCE, TIME, EARLIEST, LATEST'.
                              format(self.seek_type))
 
         return self._encode('PUT',
@@ -383,13 +395,13 @@ class SeekShardInput(Input):
                             access_key,
                             self.path,
                             {'X-v3io-function': 'SeekShard'},
-                            None)
+                            body)
 
 
 class PutRecordsInput(Input):
 
     def __init__(self, path, records):
-        self.path = path
+        self.path = self._ensure_trailing_slash(path)
         self.records = records
 
     def encode(self, container_name, access_key):
@@ -397,19 +409,25 @@ class PutRecordsInput(Input):
 
         for record in self.records:
             record_body = {
-                'Data': base64.b64encode(record.data),
+                'Data': self._to_base64(record['data']),
             }
 
-            if record.client_info:
-                record_body['ClientInfo'] = record.client_info
+            try:
+                record_body['ClientInfo'] = self._to_base64(record['client_info'])
+            except KeyError:
+                pass
 
-            if record.shard_id:
-                record_body['ShardId'] = record.shard_id
+            try:
+                record_body['ShardId'] = record['shard_id']
+            except KeyError:
+                pass
 
-            if record.partition_key:
-                record_body['PartitionKey'] = record.partition_key
+            try:
+                record_body['PartitionKey'] = record['partition_key']
+            except KeyError:
+                pass
 
-            records.append(record)
+            records.append(record_body)
 
         body = {
             'Records': records
@@ -426,7 +444,7 @@ class PutRecordsInput(Input):
 class GetRecordsInput(Input):
 
     def __init__(self, path, location, limit=None):
-        self.path = path
+        self.path = self._ensure_trailing_slash(path)
         self.location = location
         self.limit = limit or 100
 

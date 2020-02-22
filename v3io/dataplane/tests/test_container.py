@@ -9,7 +9,7 @@ import v3io.dataplane
 import v3io.logger
 
 
-class TestContainer(unittest.TestCase):
+class Test(unittest.TestCase):
 
     def setUp(self):
         self._logger = v3io.logger.Logger()
@@ -20,16 +20,102 @@ class TestContainer(unittest.TestCase):
         self._session = self._context.new_session()
         self._container = self._session.new_container('bigdata')
 
-        self._path = '/emd0'
 
-    def test_get_containers(self):
-        # response = self._session.get_containers()
+class TestStream(Test):
 
-        # response = self._container.get_container_contents(path='/test-stream-0/',
-        #                                                   get_all_attributes=True)
-        # print(response)
+    def setUp(self):
+        super(TestStream, self).setUp()
 
-        self._container.delete_stream(path='/test-stream-0')
+        self._path = '/v3io-py-test-stream/'
+
+        # clean up
+        try:
+            self._container.delete_stream(path=self._path)
+        except:
+            pass
+
+    def test_stream(self):
+
+        # create a stream w/8 shards
+        response = self._container.create_stream(path=self._path, shard_count=8)
+
+        records = [
+            {'shard_id': 1, 'data': 'first shard record #1'},
+            {'shard_id': 1, 'data': 'first shard record #2'},
+            {'shard_id': 10, 'data': 'invalid shard record #1'},
+            {'shard_id': 2, 'data': 'second shard record #1'},
+            {'data': 'some shard record #1'},
+        ]
+
+        response = self._container.put_records(path=self._path, records=records)
+        self.assertEqual(1, response.output.failed_record_count)
+
+        for response_record_index, response_record in enumerate(response.output.records):
+            if response_record_index == 2:
+                self.assertIsNotNone(response_record.error_code)
+            else:
+                self.assertIsNone(response_record.error_code)
+
+        shard_path = self._path + '/1'
+
+        response = self._container.seek_shard(path=shard_path, seek_type='EARLIEST')
+
+        self.assertNotEqual('', response.output.location)
+
+        response = self._container.get_records(path=shard_path, location=response.output.location)
+
+        self.assertEqual(2, len(response.output.records))
+        self.assertEqual('first shard record #1', response.output.records[0].data.decode('utf-8'))
+        self.assertEqual('first shard record #2', response.output.records[1].data.decode('utf-8'))
+
+        self._container.delete_stream(path=self._path)
+
+
+class TestObject(Test):
+
+    def setUp(self):
+        super(TestObject, self).setUp()
+
+        self._path = '/v3io-py-test-object'
+
+    def test_object(self):
+        path = '/object.txt'
+        contents = 'vegans are better than everyone'
+
+        response = self._container.get_object(path=path)
+
+        self.assertEqual(404, response.status_code)
+
+        # put contents to some object
+        response = self._container.put_object(path=path,
+                                              offset=0,
+                                              body=contents)
+
+        response.raise_for_status()
+
+        # get the contents
+        response = self._container.get_object(path=path)
+
+        response.raise_for_status()
+        self.assertEqual(response.body, contents)
+
+        # delete the object
+        response = self._container.delete_object(path=path)
+
+        response.raise_for_status()
+
+        # get again
+        response = self._container.get_object(path=path)
+
+        self.assertEqual(404, response.status_code)
+
+
+class TestEmd(Test):
+
+    def setUp(self):
+        super(TestEmd, self).setUp()
+
+        self._path = '/v3io-py-test-emd'
 
     def test_emd(self):
         items = {
@@ -124,37 +210,6 @@ class TestContainer(unittest.TestCase):
         del items['invalid']
 
         self._verify_items(self._path, items)
-
-    def test_object(self):
-        path = '/object.txt'
-        contents = 'vegans are better than everyone'
-
-        response = self._container.get_object(path=path)
-
-        self.assertEqual(404, response.status_code)
-
-        # put contents to some object
-        response = self._container.put_object(path=path,
-                                              offset=0,
-                                              body=contents)
-
-        response.raise_for_status()
-
-        # get the contents
-        response = self._container.get_object(path=path)
-
-        response.raise_for_status()
-        self.assertEqual(response.body, contents)
-
-        # delete the object
-        response = self._container.delete_object(path=path)
-
-        response.raise_for_status()
-
-        # get again
-        response = self._container.get_object(path=path)
-
-        self.assertEqual(404, response.status_code)
 
     def _delete_items(self, path, items):
 

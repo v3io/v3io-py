@@ -1,3 +1,5 @@
+import base64
+
 import future.utils
 
 
@@ -132,6 +134,14 @@ class SeekShardOutput(Output):
         self.location = decoded_body['Location']
 
 
+class PutRecordsResult(Output):
+    def __init__(self, decoded_body):
+        self.sequence_number = decoded_body.get('SequenceNumber')
+        self.shard_id = decoded_body.get('ShardId')
+        self.error_code = decoded_body.get('ErrorCode')
+        self.error_message = decoded_body.get('ErrorMessage')
+
+
 class PutRecordsOutput(Output):
 
     def __init__(self, decoded_body):
@@ -139,12 +149,25 @@ class PutRecordsOutput(Output):
         self.records = []
 
         for record in decoded_body['Records']:
-            self.records.append({
-                'sequence_number': record['SequenceNumber'],
-                'shard_id': record['ShardId'],
-                'error_code': record.get('ErrorCode'),
-                'error_message': record.get('ErrorMessage')
-            })
+            self.records.append(PutRecordsResult(record))
+
+
+class GetRecordsResult(Output):
+
+    def __init__(self, decoded_body):
+        self.arrival_time_sec = decoded_body.get('ArrivalTimeSec')
+        self.arrival_time_nsec = decoded_body.get('ArrivalTimeNSec')
+        self.sequence_number = decoded_body.get('SequenceNumber')
+        self.client_info = decoded_body.get('ClientInfo')
+        self.partition_key = decoded_body.get('PartitionKey')
+        self.data = self._from_base64(decoded_body.get('Data'))
+
+    @staticmethod
+    def _from_base64(value):
+        if value is None:
+            return None
+
+        return base64.b64decode(value)
 
 
 class GetRecordsOutput(Output):
@@ -156,11 +179,4 @@ class GetRecordsOutput(Output):
         self.records = []
 
         for record in decoded_body['Records']:
-            self.records.append({
-                'arrival_time_sec': record.get('ArrivalTimeSec'),
-                'arrival_time_nsec': record.get('ArrivalTimeNSec'),
-                'sequence_number': record.get('SequenceNumber'),
-                'client_info': record.get('ClientInfo'),
-                'partition_key': record.get('PartitionKey'),
-                'data': record.get('Data'),
-            })
+            self.records.append(GetRecordsResult(record))

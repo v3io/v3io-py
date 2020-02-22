@@ -21,7 +21,7 @@ class Response(object):
     def raise_for_status(self, expected_statuses=None):
         if (expected_statuses is None and self.status_code >= 300) \
                 or (expected_statuses and self.status_code not in expected_statuses):
-            raise RuntimeError('Request failed with status {0}'.format(self.status_code))
+            raise RuntimeError('Request failed with status {0}: {1}'.format(self.status_code, self.body))
 
 
 class Responses(object):
