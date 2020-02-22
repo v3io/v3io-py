@@ -9,12 +9,13 @@ import v3io.dataplane.response
 import v3io.dataplane.output
 import v3io.dataplane.items_cursor
 import v3io.common.helpers
+import v3io.logger
 
 
 class Context(object):
 
-    def __init__(self, logger, endpoints=None, max_connections=4, timeout=None):
-        self._logger = logger
+    def __init__(self, logger=None, endpoints=None, max_connections=4, timeout=None):
+        self._logger = logger or v3io.logger.Logger(level='INFO')
         self._transport = v3io.dataplane.transport.Transport(logger, endpoints, max_connections, timeout)
         self._access_key = os.environ['V3IO_ACCESS_KEY']
 

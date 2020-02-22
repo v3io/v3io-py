@@ -1,11 +1,12 @@
 import base64
 import future.utils
-import ujson
-try:
-    from urllib.parse import urlparse
-except ImportError:
-     from urlparse import urlparse
 
+try:
+    from urllib.parse import urlencode
+except:
+    from urllib import urlencode
+
+import ujson
 
 import v3io.common.helpers
 
@@ -42,7 +43,7 @@ def encode_get_container_contents(container_name, access_key, kwargs):
     return _encode('GET',
                    None,
                    access_key,
-                   '/{0}?{1}'.format(container_name, urllib.parse.urlencode(query)),
+                   '/{0}?{1}'.format(container_name, urlencode(query)),
                    {},
                    None)
 
