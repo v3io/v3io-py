@@ -1,8 +1,11 @@
 import base64
 import future.utils
-import urllib.parse
-
 import ujson
+try:
+    from urllib.parse import urlparse
+except ImportError:
+     from urlparse import urlparse
+
 
 import v3io.common.helpers
 
