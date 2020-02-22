@@ -134,8 +134,8 @@ def encode_get_items(container_name, access_key, kwargs):
     if kwargs['table_name']:
         body['TableName'] = kwargs['table_name']
 
-    if kwargs['filter']:
-        body['FilterExpression'] = kwargs['filter']
+    if kwargs['filter_expression']:
+        body['FilterExpression'] = kwargs['filter_expression']
 
     if kwargs['marker']:
         body['Marker'] = kwargs['marker']
@@ -201,8 +201,8 @@ def encode_seek_shard(container_name, access_key, kwargs):
     if kwargs['seek_type'] == 'SEQUENCE':
         body['StartingSequenceNumber'] = kwargs['starting_sequence_number']
     elif kwargs['seek_type'] == 'TIME':
-        body['TimestampSec'] = kwargs['timestamp']
-        body['TimestampNSec'] = 0
+        body['TimestampSec'] = kwargs['timestamp_sec']
+        body['TimestampNSec'] = kwargs['timestamp_nsec']
     elif kwargs['seek_type'] not in ['EARLIEST', 'LATEST']:
         raise ValueError('Unsupported seek_type ({0}) for seek_shard. Must be one of SEQUENCE, TIME, EARLIEST, LATEST'.
                          format(kwargs['seek_type']))

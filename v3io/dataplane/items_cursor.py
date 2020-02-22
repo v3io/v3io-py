@@ -7,7 +7,7 @@ class ItemsCursor(object):
                  path,
                  table_name=None,
                  attribute_names='*',
-                 filter=None,
+                 filter_expression=None,
                  marker=None,
                  sharding_key=None,
                  limit=None,
@@ -27,7 +27,7 @@ class ItemsCursor(object):
         self.path = path
         self.table_name = table_name
         self.attribute_names = attribute_names
-        self.filter = filter
+        self.filter_expression = filter_expression
         self.marker = marker
         self.sharding_key = sharding_key
         self.limit = limit
@@ -54,7 +54,7 @@ class ItemsCursor(object):
                                                          self._access_key,
                                                          self.table_name,
                                                          self.attribute_names,
-                                                         self.filter,
+                                                         self.filter_expression,
                                                          self.marker,
                                                          self.sharding_key,
                                                          self.limit,

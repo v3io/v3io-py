@@ -200,7 +200,7 @@ class TestEmd(Test):
 
         received_items = self._container.new_items_cursor(path=self._path + '/',
                                                           attribute_names=['age', 'feature'],
-                                                          filter='age > 15').all()
+                                                          filter_expression='age > 15').all()
 
         self.assertEqual(2, len(received_items))
         for item in received_items:
