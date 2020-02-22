@@ -109,11 +109,11 @@ class GetItemOutput(Output):
 class GetItemsOutput(Output):
 
     def __init__(self, decoded_body):
-        self.last = decoded_body['LastItemIncluded'] == 'TRUE'
+        self.last = decoded_body.get('LastItemIncluded') == 'TRUE'
         self.next_marker = decoded_body.get('NextMarker')
         self.items = []
 
-        for item in decoded_body['Items']:
+        for item in decoded_body.get('Items', []):
             self.items.append(self._decode_typed_attributes(item))
 
 
@@ -124,14 +124,14 @@ class GetItemsOutput(Output):
 class DescribeStreamOutput(Output):
 
     def __init__(self, decoded_body):
-        self.shard_count = decoded_body['ShardCount']
+        self.shard_count = decoded_body.get('ShardCount')
         self.retention_period_hours = decoded_body.get('RetentionPeriodHours')
 
 
 class SeekShardOutput(Output):
 
     def __init__(self, decoded_body):
-        self.location = decoded_body['Location']
+        self.location = decoded_body.get('Location')
 
 
 class PutRecordsResult(Output):
@@ -145,10 +145,10 @@ class PutRecordsResult(Output):
 class PutRecordsOutput(Output):
 
     def __init__(self, decoded_body):
-        self.failed_record_count = decoded_body['FailedRecordCount']
+        self.failed_record_count = decoded_body.get('FailedRecordCount')
         self.records = []
 
-        for record in decoded_body['Records']:
+        for record in decoded_body.get('Records'):
             self.records.append(PutRecordsResult(record))
 
 
@@ -173,10 +173,10 @@ class GetRecordsResult(Output):
 class GetRecordsOutput(Output):
 
     def __init__(self, decoded_body):
-        self.next_location = decoded_body['NextLocation']
-        self.msec_behind_latest = decoded_body['MSecBehindLatest']
-        self.records_behind_latest = decoded_body['RecordsBehindLatest']
+        self.next_location = decoded_body.get('NextLocation')
+        self.msec_behind_latest = decoded_body.get('MSecBehindLatest')
+        self.records_behind_latest = decoded_body.get('RecordsBehindLatest')
         self.records = []
 
-        for record in decoded_body['Records']:
+        for record in decoded_body.get('Records'):
             self.records.append(GetRecordsResult(record))

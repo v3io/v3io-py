@@ -1,4 +1,3 @@
-import os
 import unittest
 import sys
 
@@ -186,7 +185,7 @@ class TestEmd(Test):
 
         self.assertTrue(response.success)
 
-        self._verify_items('/emd0', items)
+        self._verify_items(self._path, items)
 
         self._delete_items(self._path, items)
 
