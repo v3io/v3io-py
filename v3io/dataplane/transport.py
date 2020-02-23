@@ -18,6 +18,7 @@ class Transport(object):
     def encode_and_send(self,
                         container_name,
                         access_key,
+                        raise_for_status,
                         encoder,
                         encoder_args,
                         output=None):
@@ -37,7 +38,7 @@ class Transport(object):
     def _http_request(self, method, path, headers=None, body=None):
         endpoint, connection_pool = self._get_next_connection_pool()
 
-        self._logger.debug_with('Tx', method=method, path=path, headers=headers, body=body)
+        # self._logger.debug_with('Tx', method=method, path=path, headers=headers, body=body)
 
         response = connection_pool.request(method,
                                            endpoint + path,
@@ -46,7 +47,7 @@ class Transport(object):
                                            timeout=self._timeout,
                                            verify=False)
 
-        self._logger.debug_with('Rx', status_code=response.status_code, headers=response.headers, body=response.text)
+        # self._logger.debug_with('Rx', status_code=response.status_code, headers=response.headers, body=response.text)
 
         return response
 

@@ -3,7 +3,7 @@ import future.utils
 
 try:
     from urllib.parse import urlencode
-except:
+except BaseException:
     from urllib import urlencode
 
 import ujson
