@@ -28,7 +28,7 @@ class Context(object):
     # Container
     #
 
-    def get_containers(self, access_key=None):
+    def get_containers(self, access_key=None, raise_for_status=None):
         """Lists the containers that are visible to the user who sent the request, according to its tenant.
 
         Parameters
@@ -43,6 +43,7 @@ class Context(object):
 
         return self._transport.encode_and_send(None,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_get_containers,
                                                locals(),
                                                v3io.dataplane.output.GetContainersOutput)
@@ -51,6 +52,7 @@ class Context(object):
                                container_name,
                                path,
                                access_key=None,
+                               raise_for_status=None,
                                get_all_attributes=None,
                                directories_only=None,
                                limit=None,
@@ -84,6 +86,7 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_get_container_contents,
                                                locals(),
                                                v3io.dataplane.output.GetContainerContentsOutput)
@@ -92,7 +95,7 @@ class Context(object):
     # Object
     #
 
-    def get_object(self, container_name, path, access_key=None):
+    def get_object(self, container_name, path, access_key=None, raise_for_status=None):
         """Retrieves an object from a container.
 
         Parameters
@@ -110,10 +113,11 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_get_object,
                                                locals())
 
-    def put_object(self, container_name, path, access_key=None, offset=None, body=None):
+    def put_object(self, container_name, path, access_key=None, raise_for_status=None, offset=None, body=None):
         """Adds a new object to a container, or appends data to an existing object. The option to append data is
         extension to the S3 PUT Object capabilities
 
@@ -136,10 +140,11 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_put_object,
                                                locals())
 
-    def delete_object(self, container_name, path, access_key=None):
+    def delete_object(self, container_name, path, access_key=None, raise_for_status=None):
         """Deletes an object from a container.
 
         Parameters
@@ -157,6 +162,7 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_delete_object,
                                                locals())
 
@@ -168,6 +174,7 @@ class Context(object):
                          container_name,
                          path,
                          access_key=None,
+                         raise_for_status=None,
                          table_name=None,
                          attribute_names='*',
                          filter_expression=None,
@@ -182,6 +189,7 @@ class Context(object):
                                                        container_name,
                                                        access_key or self._access_key,
                                                        path,
+                                                       raise_for_status,
                                                        table_name,
                                                        attribute_names,
                                                        filter_expression,
@@ -193,7 +201,14 @@ class Context(object):
                                                        sort_key_range_start,
                                                        sort_key_range_end)
 
-    def put_item(self, container_name, path, attributes, access_key=None, condition=None, update_mode=None):
+    def put_item(self,
+                 container_name,
+                 path,
+                 attributes,
+                 access_key=None,
+                 raise_for_status=None,
+                 condition=None,
+                 update_mode=None):
         """Creates an item with the provided attributes. If an item with the same name (primary key) already exists in
         the specified table, the existing item is completely overwritten (replaced with a new item). If the item or
         table do not exist, the operation creates them.
@@ -228,10 +243,11 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_put_item,
                                                locals())
 
-    def put_items(self, container_name, path, items, access_key=None, condition=None):
+    def put_items(self, container_name, path, items, access_key=None, raise_for_status=None, condition=None):
         """A helper to put several items, calling put_item for each.
 
         Parameters
@@ -276,6 +292,7 @@ class Context(object):
                     container_name,
                     path,
                     access_key=None,
+                    raise_for_status=None,
                     attributes=None,
                     expression=None,
                     condition=None,
@@ -315,10 +332,11 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_update_item,
                                                locals())
 
-    def get_item(self, container_name, path, access_key=None, attribute_names='*'):
+    def get_item(self, container_name, path, access_key=None, raise_for_status=None, attribute_names='*'):
         """Retrieves the requested attributes of a table item.
 
         See:
@@ -341,6 +359,7 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_get_item,
                                                locals(),
                                                v3io.dataplane.output.GetItemOutput)
@@ -349,6 +368,7 @@ class Context(object):
                   container_name,
                   path,
                   access_key=None,
+                  raise_for_status=None,
                   table_name=None,
                   attribute_names='*',
                   filter_expression=None,
@@ -419,6 +439,7 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_get_items,
                                                locals(),
                                                v3io.dataplane.output.GetItemsOutput)
@@ -432,6 +453,7 @@ class Context(object):
                       path,
                       shard_count,
                       access_key=None,
+                      raise_for_status=None,
                       retention_period_hours=None):
         """Creates and configures a new stream. The configuration includes the stream’s shard count and retention
         period. The new stream is available immediately upon its creation.
@@ -459,10 +481,11 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_create_stream,
                                                locals())
 
-    def delete_stream(self, container_name, path, access_key=None):
+    def delete_stream(self, container_name, path, access_key=None, raise_for_status=None):
         """Deletes a stream object along with all of its shards.
 
         Parameters
@@ -478,18 +501,21 @@ class Context(object):
         ----------
         A `Response` object.
         """
-        response = self.get_container_contents(path)
+        response = self.get_container_contents(container_name,
+                                               path,
+                                               access_key,
+                                               raise_for_status)
 
         # nothing to do
         if response.status_code == 404:
             return response
 
         for stream_shard in response.output.contents:
-            self.delete_object(stream_shard.key)
+            self.delete_object(container_name, stream_shard.key, access_key, raise_for_status)
 
-        return self.delete_object(path)
+        return self.delete_object(container_name, path, access_key, raise_for_status)
 
-    def describe_stream(self, container_name, path, access_key=None):
+    def describe_stream(self, container_name, path, access_key=None, raise_for_status=None):
         """Retrieves a stream’s configuration, including the shard count and retention period.
 
         See:
@@ -508,6 +534,7 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_describe_stream,
                                                locals(),
                                                v3io.dataplane.output.DescribeStreamOutput)
@@ -517,6 +544,7 @@ class Context(object):
                    path,
                    seek_type,
                    access_key=None,
+                   raise_for_status=None,
                    starting_sequence_number=None,
                    timestamp_sec=None,
                    timestamp_nsec=None):
@@ -567,11 +595,12 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_seek_shard,
                                                locals(),
                                                v3io.dataplane.output.SeekShardOutput)
 
-    def put_records(self, container_name, path, records, access_key=None):
+    def put_records(self, container_name, path, records, access_key=None, raise_for_status=None):
         """Adds records to a stream.
 
         You can optionally assign a record to specific stream shard by specifying a related shard ID, or associate
@@ -624,11 +653,12 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_put_records,
                                                locals(),
                                                v3io.dataplane.output.PutRecordsOutput)
 
-    def get_records(self, container_name, path, location, access_key=None, limit=None):
+    def get_records(self, container_name, path, location, access_key=None, raise_for_status=None, limit=None):
         """Retrieves (consumes) records from a stream shard.
 
         See:
@@ -655,6 +685,7 @@ class Context(object):
         """
         return self._transport.encode_and_send(container_name,
                                                access_key or self._access_key,
+                                               raise_for_status,
                                                v3io.dataplane.request.encode_get_records,
                                                locals(),
                                                v3io.dataplane.output.GetRecordsOutput)

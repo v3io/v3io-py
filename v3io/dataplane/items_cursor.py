@@ -5,6 +5,7 @@ class ItemsCursor(object):
                  container_name,
                  access_key,
                  path,
+                 raise_for_status=None,
                  table_name=None,
                  attribute_names='*',
                  filter_expression=None,
@@ -24,6 +25,7 @@ class ItemsCursor(object):
         self._current_item_index = 0
 
         # get items params
+        self.raise_for_status = raise_for_status
         self.path = path
         self.table_name = table_name
         self.attribute_names = attribute_names
@@ -52,6 +54,7 @@ class ItemsCursor(object):
         self._current_response = self._context.get_items(self._container_name,
                                                          self.path,
                                                          self._access_key,
+                                                         self.raise_for_status,
                                                          self.table_name,
                                                          self.attribute_names,
                                                          self.filter_expression,

@@ -4,6 +4,11 @@ import requests
 import v3io.dataplane.response
 
 
+class RaiseForStatus(object):
+    never = 'never'
+    always = 'always'
+
+
 class Transport(object):
 
     def __init__(self, logger, endpoints=None, max_connections=4, timeout=None):
@@ -18,6 +23,7 @@ class Transport(object):
     def encode_and_send(self,
                         container_name,
                         access_key,
+                        raise_for_status,
                         encoder,
                         encoder_args,
                         output=None):
@@ -26,18 +32,24 @@ class Transport(object):
         method, path, headers, body = encoder(container_name, access_key, encoder_args)
 
         # call the encoder to get the response
-        response = self._http_request(method, path, headers, body)
+        http_response = self._http_request(method, path, headers, body)
 
         # create a response
-        return v3io.dataplane.response.Response(output,
-                                                response.status_code,
+        response = v3io.dataplane.response.Response(output,
+                                                http_response.status_code,
                                                 headers,
-                                                response.text)
+                                                http_response.text)
+
+        # if user didn't specify never to raise, raise for the given statuses
+        if raise_for_status != RaiseForStatus.never:
+            response.raise_for_status(raise_for_status)
+
+        return response
 
     def _http_request(self, method, path, headers=None, body=None):
         endpoint, connection_pool = self._get_next_connection_pool()
 
-        self._logger.debug_with('Tx', method=method, path=path, headers=headers, body=body)
+        # self._logger.debug_with('Tx', method=method, path=path, headers=headers, body=body)
 
         response = connection_pool.request(method,
                                            endpoint + path,
@@ -46,7 +58,7 @@ class Transport(object):
                                            timeout=self._timeout,
                                            verify=False)
 
-        self._logger.debug_with('Rx', status_code=response.status_code, headers=response.headers, body=response.text)
+        # self._logger.debug_with('Rx', status_code=response.status_code, headers=response.headers, body=response.text)
 
         return response
 
