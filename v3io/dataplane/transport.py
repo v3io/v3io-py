@@ -20,6 +20,10 @@ class Transport(object):
         # create a tuple of connection pools
         self._connection_pools = self._create_connection_pools(self._endpoints, max_connections)
 
+    def close(self):
+        for (endpoint, session) in self._connection_pools:
+            session.close()
+
     def encode_and_send(self,
                         container_name,
                         access_key,

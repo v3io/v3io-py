@@ -20,6 +20,9 @@ class Test(unittest.TestCase):
         self._session = self._context.new_session()
         self._container = self._session.new_container('bigdata')
 
+    def tearDown(self):
+        self._context.close()
+
 
 class TestContainer(Test):
 
