@@ -26,17 +26,25 @@ class Output(object):
 # Containers
 #
 
+class Container(object):
+
+    def __init__(self, name, creation_date, identifier):
+        self.name = name
+        self.creation_date = creation_date
+        self.identifier = identifier
+
+
 class GetContainersOutput(Output):
 
     def __init__(self, root):
         self.containers = []
 
         for bucket in root.find('Buckets'):
-            self.containers.append({
-                'name': bucket.find('Name').text,
-                'creation_date': bucket.find('CreationDate').text,
-                'id': int(bucket.find('Id').text),
-            })
+            self.containers.append(Container(
+                name=bucket.find('Name').text,
+                creation_date=bucket.find('CreationDate').text,
+                identifier=int(bucket.find('Id').text)
+            ))
 
 
 class ContainerContent(object):
