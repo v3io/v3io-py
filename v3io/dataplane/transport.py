@@ -40,9 +40,9 @@ class Transport(object):
 
         # create a response
         response = v3io.dataplane.response.Response(output,
-                                                http_response.status_code,
-                                                headers,
-                                                http_response.text)
+                                                    http_response.status_code,
+                                                    headers,
+                                                    http_response.text)
 
         # if user didn't specify never to raise, raise for the given statuses
         if raise_for_status != RaiseForStatus.never:
