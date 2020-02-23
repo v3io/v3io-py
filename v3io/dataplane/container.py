@@ -410,16 +410,16 @@ class Container(object):
         ----------
         A `Response` object.
         """
-        response = self.get_container_contents(path)
+        response = self.get_container_contents(path, raise_for_status=raise_for_status)
 
         # nothing to do
         if response.status_code == 404:
             return response
 
         for stream_shard in response.output.contents:
-            self.delete_object(stream_shard.key)
+            self.delete_object(stream_shard.key, raise_for_status=raise_for_status)
 
-        return self.delete_object(path)
+        return self.delete_object(path, raise_for_status=raise_for_status)
 
     def describe_stream(self, path, raise_for_status=None):
         """Retrieves a stream’s configuration, including the shard count and retention period.
