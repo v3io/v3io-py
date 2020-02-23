@@ -19,6 +19,9 @@ class Context(object):
         self._transport = v3io.dataplane.transport.Transport(self._logger, endpoints, max_connections, timeout)
         self._access_key = os.environ['V3IO_ACCESS_KEY']
 
+    def close(self):
+        self._transport.close()
+
     def new_session(self, access_key=None):
         return v3io.dataplane.session.Session(self,
                                               self._transport,
