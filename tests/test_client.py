@@ -72,12 +72,20 @@ class TestContainer(Test):
         self._delete_dir(self._path)
 
     def _delete_dir(self, path):
-        response = self._client.get_container_contents(container=self._container, path=path)
+        response = self._client.get_container_contents(container=self._container,
+                                                       path=path,
+                                                       raise_for_status=v3io.dataplane.RaiseForStatus.never)
+
+        if response.status_code == 404:
+            return
+
         for content in response.output.contents:
             self._client.delete_object(container=self._container, path=content.key)
+
         for common_prefixes in response.output.common_prefixes:
             self._client.delete_object(container=self._container,
                                        path=common_prefixes.prefix)
+
 
 
 class TestStream(Test):
@@ -265,8 +273,8 @@ class TestEmd(Test):
 
         response = self._client.put_items(container=self._container,
                                           path=self._path,
-                                          raise_for_status=v3io.dataplane.RaiseForStatus.never,
-                                          items=items)
+                                          items=items,
+                                          raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
         self.assertFalse(response.success)
 

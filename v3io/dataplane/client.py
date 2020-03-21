@@ -278,7 +278,8 @@ class Client(object):
                                      v3io.common.helpers.url_join(path, item_path),
                                      item_attributes,
                                      access_key=access_key,
-                                     condition=condition)
+                                     condition=condition,
+                                     raise_for_status=raise_for_status)
 
             # add the response
             responses.add_response(response)
