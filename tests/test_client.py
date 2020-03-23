@@ -14,13 +14,27 @@ class Test(unittest.TestCase):
     def setUp(self):
         self._logger = v3io.logger.Logger()
         self._logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
-
-        # create a context, session and container
         self._client = v3io.dataplane.Client(self._logger)
+
         self._container = 'bigdata'
 
     def tearDown(self):
         self._client.close()
+
+    def _delete_dir(self, path):
+        response = self._client.get_container_contents(container=self._container,
+                                                       path=path,
+                                                       raise_for_status=v3io.dataplane.RaiseForStatus.never)
+
+        if response.status_code == 404:
+            return
+
+        for content in response.output.contents:
+            self._client.delete_object(container=self._container, path=content.key)
+
+        for common_prefixes in response.output.common_prefixes:
+            self._client.delete_object(container=self._container,
+                                       path=common_prefixes.prefix)
 
 
 class TestContainer(Test):
@@ -41,7 +55,7 @@ class TestContainer(Test):
                                                        path='/no-such-path',
                                                        raise_for_status=v3io.dataplane.RaiseForStatus.never)
         self.assertEqual(404, response.status_code)
-        self.assertIn('No such file', response.body)
+        self.assertIn('No such file', str(response.body))
 
     def test_get_container_contents(self):
         body = 'If you cannot do great things, do small things in a great way.'
@@ -70,22 +84,6 @@ class TestContainer(Test):
 
         # clean up
         self._delete_dir(self._path)
-
-    def _delete_dir(self, path):
-        response = self._client.get_container_contents(container=self._container,
-                                                       path=path,
-                                                       raise_for_status=v3io.dataplane.RaiseForStatus.never)
-
-        if response.status_code == 404:
-            return
-
-        for content in response.output.contents:
-            self._client.delete_object(container=self._container, path=content.key)
-
-        for common_prefixes in response.output.common_prefixes:
-            self._client.delete_object(container=self._container,
-                                       path=common_prefixes.prefix)
-
 
 
 class TestStream(Test):
@@ -153,6 +151,9 @@ class TestObject(Test):
 
         self._path = '/v3io-py-test-object/object.txt'
 
+        # clean up
+        self._delete_dir('/v3io-py-test-object')
+
     def test_object(self):
         contents = 'vegans are better than everyone'
 
@@ -171,6 +172,9 @@ class TestObject(Test):
         # get the contents
         response = self._client.get_object(container=self._container,
                                            path=self._path)
+
+        if not isinstance(response.body, str):
+            response.body = response.body.decode('utf-8')
 
         self.assertEqual(response.body, contents)
 
