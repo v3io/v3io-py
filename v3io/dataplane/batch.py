@@ -1,3 +1,5 @@
+import functools
+
 import v3io.dataplane.transport
 
 
@@ -10,23 +12,12 @@ class Batch(object):
         self._transport_actions = v3io.dataplane.transport.Actions.encode_only
         self._transport = self._client._transport
 
-    def put_object(self, container, path, access_key=None, raise_for_status=None, offset=None, body=None):
-        request = self._client.put_object(container,
-                                          path,
-                                          access_key=access_key,
-                                          raise_for_status=raise_for_status,
-                                          transport_actions=self._transport_actions,
-                                          offset=offset,
-                                          body=body)
+        for client_call in ['get_object', 'put_object']:
+            setattr(self, client_call, functools.partial(self._call_client, client_call))
 
-        self._encoded_requests.append(request)
-
-    def get_object(self, container, path, access_key=None, raise_for_status=None):
-        request = self._client.get_object(container,
-                                          path,
-                                          access_key=access_key,
-                                          raise_for_status=raise_for_status,
-                                          transport_actions=self._transport_actions)
+    def _call_client(self, name, *args, **kw_args):
+        kw_args['transport_actions'] = self._transport_actions
+        request = getattr(self._client, name)(*args, **kw_args)
 
         self._encoded_requests.append(request)
 
