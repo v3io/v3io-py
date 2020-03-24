@@ -25,7 +25,7 @@ class Transport(object):
                 encoder,
                 encoder_args,
                 output=None,
-                wait_response=True):
+                transport_actions=True):
 
         # allocate a request
         request = v3io.dataplane.request.Request(container,
@@ -35,14 +35,14 @@ class Transport(object):
                                                  encoder_args,
                                                  output)
 
-        if not wait_response:
+        if not transport_actions:
             return request
 
         # send the request
         inflight_request = self.send_request(request)
 
         # wait for the response
-        return self.wait_response(inflight_request)
+        return self.transport_actions(inflight_request)
 
     def send_request(self, request):
 
@@ -57,7 +57,7 @@ class Transport(object):
 
         return request
 
-    def wait_response(self, request):
+    def transport_actions(self, request):
 
         # create a response
         return v3io.dataplane.response.Response(request.output,

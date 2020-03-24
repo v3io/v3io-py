@@ -5,6 +5,7 @@ import future.utils
 import v3io.dataplane.transport.requests
 import v3io.dataplane.transport.httpclient
 import v3io.dataplane.request
+import v3io.dataplane.batch
 import v3io.dataplane.response
 import v3io.dataplane.output
 import v3io.dataplane.items_cursor
@@ -16,9 +17,14 @@ class Client(object):
 
     def __init__(self, logger=None, endpoint=None, access_key=None, max_connections=4, timeout=None):
         self._logger = logger or v3io.logger.Logger(level='INFO')
-        self._transport = v3io.dataplane.transport.httpclient.Transport(self._logger, endpoint, max_connections,
-                                                                        timeout)
         self._access_key = access_key or os.environ['V3IO_ACCESS_KEY']
+        self._transport = v3io.dataplane.transport.httpclient.Transport(self._logger,
+                                                                        endpoint,
+                                                                        max_connections,
+                                                                        timeout)
+
+    def new_batch(self):
+        return v3io.dataplane.batch.Batch(self)
 
     def close(self):
         self._transport.close()
@@ -27,7 +33,7 @@ class Client(object):
     # Container
     #
 
-    def get_containers(self, access_key=None, raise_for_status=None):
+    def get_containers(self, access_key=None, raise_for_status=None, transport_actions=None):
         """Lists the containers that are visible to the user who sent the request, according to its tenant.
 
         Parameters
@@ -43,6 +49,7 @@ class Client(object):
         return self._transport.request(None,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_get_containers,
                                        locals(),
                                        v3io.dataplane.output.GetContainersOutput)
@@ -52,6 +59,7 @@ class Client(object):
                                path,
                                access_key=None,
                                raise_for_status=None,
+                               transport_actions=None,
                                get_all_attributes=None,
                                directories_only=None,
                                limit=None,
@@ -86,6 +94,7 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_get_container_contents,
                                        locals(),
                                        v3io.dataplane.output.GetContainerContentsOutput)
@@ -94,7 +103,7 @@ class Client(object):
     # Object
     #
 
-    def get_object(self, container, path, access_key=None, raise_for_status=None):
+    def get_object(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Retrieves an object from a container.
 
         Parameters
@@ -113,10 +122,18 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_get_object,
                                        locals())
 
-    def put_object(self, container, path, access_key=None, raise_for_status=None, offset=None, body=None):
+    def put_object(self,
+                   container,
+                   path,
+                   access_key=None,
+                   raise_for_status=None,
+                   transport_actions=None,
+                   offset=None,
+                   body=None):
         """Adds a new object to a container, or appends data to an existing object. The option to append data is
         extension to the S3 PUT Object capabilities
 
@@ -140,10 +157,11 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_put_object,
                                        locals())
 
-    def delete_object(self, container, path, access_key=None, raise_for_status=None):
+    def delete_object(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Deletes an object from a container.
 
         Parameters
@@ -162,6 +180,7 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_delete_object,
                                        locals())
 
@@ -206,6 +225,7 @@ class Client(object):
                  attributes,
                  access_key=None,
                  raise_for_status=None,
+                 transport_actions=None,
                  condition=None,
                  update_mode=None):
         """Creates an item with the provided attributes. If an item with the same name (primary key) already exists in
@@ -243,6 +263,7 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_put_item,
                                        locals())
 
@@ -292,6 +313,7 @@ class Client(object):
                     path,
                     access_key=None,
                     raise_for_status=None,
+                    transport_actions=None,
                     attributes=None,
                     expression=None,
                     condition=None,
@@ -332,10 +354,17 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_update_item,
                                        locals())
 
-    def get_item(self, container, path, access_key=None, raise_for_status=None, attribute_names='*'):
+    def get_item(self,
+                 container,
+                 path,
+                 access_key=None,
+                 raise_for_status=None,
+                 transport_actions=None,
+                 attribute_names='*'):
         """Retrieves the requested attributes of a table item.
 
         See:
@@ -359,6 +388,7 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_get_item,
                                        locals(),
                                        v3io.dataplane.output.GetItemOutput)
@@ -368,6 +398,7 @@ class Client(object):
                   path,
                   access_key=None,
                   raise_for_status=None,
+                  transport_actions=None,
                   table_name=None,
                   attribute_names='*',
                   filter_expression=None,
@@ -439,6 +470,7 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_get_items,
                                        locals(),
                                        v3io.dataplane.output.GetItemsOutput)
@@ -453,6 +485,7 @@ class Client(object):
                       shard_count,
                       access_key=None,
                       raise_for_status=None,
+                      transport_actions=None,
                       retention_period_hours=None):
         """Creates and configures a new stream. The configuration includes the stream’s shard count and retention
         period. The new stream is available immediately upon its creation.
@@ -481,6 +514,7 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_create_stream,
                                        locals())
 
@@ -514,7 +548,7 @@ class Client(object):
 
         return self.delete_object(container, path, access_key, raise_for_status)
 
-    def describe_stream(self, container, path, access_key=None, raise_for_status=None):
+    def describe_stream(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Retrieves a stream’s configuration, including the shard count and retention period.
 
         See:
@@ -534,6 +568,7 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_describe_stream,
                                        locals(),
                                        v3io.dataplane.output.DescribeStreamOutput)
@@ -544,6 +579,7 @@ class Client(object):
                    seek_type,
                    access_key=None,
                    raise_for_status=None,
+                   transport_actions=None,
                    starting_sequence_number=None,
                    timestamp_sec=None,
                    timestamp_nsec=None):
@@ -595,11 +631,12 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_seek_shard,
                                        locals(),
                                        v3io.dataplane.output.SeekShardOutput)
 
-    def put_records(self, container, path, records, access_key=None, raise_for_status=None):
+    def put_records(self, container, path, records, access_key=None, raise_for_status=None, transport_actions=None):
         """Adds records to a stream.
 
         You can optionally assign a record to specific stream shard by specifying a related shard ID, or associate
@@ -653,11 +690,19 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_put_records,
                                        locals(),
                                        v3io.dataplane.output.PutRecordsOutput)
 
-    def get_records(self, container, path, location, access_key=None, raise_for_status=None, limit=None):
+    def get_records(self,
+                    container,
+                    path,
+                    location,
+                    access_key=None,
+                    raise_for_status=None,
+                    transport_actions=None,
+                    limit=None):
         """Retrieves (consumes) records from a stream shard.
 
         See:
@@ -685,6 +730,7 @@ class Client(object):
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
+                                       transport_actions,
                                        v3io.dataplane.request.encode_get_records,
                                        locals(),
                                        v3io.dataplane.output.GetRecordsOutput)

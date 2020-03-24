@@ -13,6 +13,7 @@ class Transport(object):
         self._endpoint = self._get_endpoint(endpoint)
         self._timeout = timeout
         self._next_connection_idx = 0
+        self.max_connections = max_connections
 
         # based on scheme, create a host and context for _create_connection
         self._host, self._ssl_context = self._parse_endpoint(self._endpoint)
@@ -30,10 +31,13 @@ class Transport(object):
                 container,
                 access_key,
                 raise_for_status,
+                transport_actions,
                 encoder,
                 encoder_args,
-                output=None,
-                wait_response=True):
+                output=None):
+
+        # default to sending/receiving
+        transport_actions = transport_actions or v3io.dataplane.transport.Actions.send_and_receive
 
         # allocate a request
         request = v3io.dataplane.request.Request(container,
@@ -43,7 +47,8 @@ class Transport(object):
                                                  encoder_args,
                                                  output)
 
-        if not wait_response:
+        # if all we had to do is encode, return now
+        if transport_actions == v3io.dataplane.transport.Actions.encode_only:
             return request
 
         # send the request
@@ -52,8 +57,9 @@ class Transport(object):
         # wait for the response
         return self.wait_response(inflight_request)
 
-    def send_request(self, request):
-        connection_idx = self._get_next_connection_idx()
+    def send_request(self, request, connection_idx=None):
+        if connection_idx is None:
+            connection_idx = self._get_next_connection_idx()
 
         # set the used connection on the request
         setattr(request.transport, 'connection_idx', connection_idx)

@@ -149,29 +149,30 @@ class TestObject(Test):
     def setUp(self):
         super(TestObject, self).setUp()
 
-        self._path = '/v3io-py-test-object/object.txt'
+        self._object_dir = '/v3io-py-test-object'
+        self._object_path = self._object_dir + '/object.txt'
 
         # clean up
-        self._delete_dir('/v3io-py-test-object')
+        self._delete_dir(self._object_dir)
 
     def test_object(self):
         contents = 'vegans are better than everyone'
 
         response = self._client.get_object(container=self._container,
-                                           path=self._path,
+                                           path=self._object_path,
                                            raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
         self.assertEqual(404, response.status_code)
 
         # put contents to some object
         self._client.put_object(container=self._container,
-                                path=self._path,
+                                path=self._object_path,
                                 offset=0,
                                 body=contents)
 
         # get the contents
         response = self._client.get_object(container=self._container,
-                                           path=self._path)
+                                           path=self._object_path)
 
         if not isinstance(response.body, str):
             response.body = response.body.decode('utf-8')
@@ -180,14 +181,44 @@ class TestObject(Test):
 
         # delete the object
         self._client.delete_object(container=self._container,
-                                   path=self._path)
+                                   path=self._object_path)
 
         # get again
         response = self._client.get_object(container=self._container,
-                                           path=self._path,
+                                           path=self._object_path,
                                            raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
         self.assertEqual(404, response.status_code)
+
+    def test_batch(self):
+
+        def _object_path(idx):
+            return self._object_dir + f'/object{idx}'
+
+        def _object_contents(idx):
+            return f'object-{idx}'
+
+        batch = self._client.new_batch()
+        num_objects = 16
+
+        for object_idx in range(num_objects):
+            batch.put_object(self._container,
+                             _object_path(object_idx),
+                             body=_object_contents(object_idx))
+
+        responses = batch.wait()
+
+        for response in responses:
+            self.assertEqual(200, response.status_code)
+
+        for object_idx in range(num_objects):
+            batch.get_object(self._container, _object_path(object_idx))
+
+        responses = batch.wait()
+
+        for response_idx, response in enumerate(responses):
+            self.assertEqual(200, response.status_code)
+            self.assertEqual(_object_contents(response_idx), response.body.decode('utf-8'))
 
 
 class TestEmd(Test):
