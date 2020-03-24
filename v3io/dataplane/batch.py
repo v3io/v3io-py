@@ -12,7 +12,23 @@ class Batch(object):
         self._transport_actions = v3io.dataplane.transport.Actions.encode_only
         self._transport = self._client._transport
 
-        for client_call in ['get_object', 'put_object']:
+        for client_call in [
+            'get_containers',
+            'get_container_contents',
+            'get_object',
+            'put_object',
+            'delete_object',
+            'put_item',
+            'update_item',
+            'get_item',
+            'get_items',
+            'create_stream',
+            'delete_stream',
+            'describe_stream',
+            'seek_shard',
+            'put_records',
+            'get_records'
+        ]:
             setattr(self, client_call, functools.partial(self._call_client, client_call))
 
     def _call_client(self, name, *args, **kw_args):

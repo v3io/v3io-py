@@ -323,6 +323,35 @@ class TestEmd(Test):
 
         self._verify_items(self._path, items)
 
+    def test_batch(self):
+        batch = self._client.new_batch()
+
+        items = {
+            'bob': {'age': 42, 'feature': 'mustache'},
+            'linda': {'age': 41, 'feature': 'singing'},
+            'louise': {'age': 9, 'feature': 'bunny ears'},
+            'tina': {'age': 14, 'feature': 'butts'},
+        }
+
+        # put the item in a batch
+        for item_key, item_attributes in future.utils.viewitems(items):
+            batch.put_item(container=self._container,
+                           path=v3io.common.helpers.url_join(self._path, item_key),
+                           attributes=item_attributes)
+
+        responses = batch.wait()
+        for response in responses:
+            self.assertEqual(200, response.status_code)
+
+        for item_key in items.keys():
+            batch.get_item(container=self._container,
+                           path=v3io.common.helpers.url_join(self._path, item_key),
+                           attribute_names=['__size', 'age'])
+
+        responses = batch.wait()
+        for response in responses:
+            self.assertEqual(200, response.status_code)
+
     def _delete_items(self, path, items):
 
         # delete items
