@@ -1,19 +1,18 @@
-import os
 import ssl
 import http.client
 
 import v3io.dataplane.response
 import v3io.dataplane.request
+from . import abstract
 
 
-class Transport(object):
+class Transport(abstract.Transport):
 
-    def __init__(self, logger, endpoint=None, max_connections=4, timeout=None):
-        self._logger = logger
-        self._endpoint = self._get_endpoint(endpoint)
-        self._timeout = timeout
+    def __init__(self, logger, endpoint=None, max_connections=None, timeout=None):
+        super(Transport, self).__init__(logger, endpoint, max_connections, timeout)
+
+        # holds which connection index we'll use
         self._next_connection_idx = 0
-        self.max_connections = max_connections
 
         # based on scheme, create a host and context for _create_connection
         self._host, self._ssl_context = self._parse_endpoint(self._endpoint)
@@ -27,39 +26,11 @@ class Transport(object):
         for connection in self._connections:
             connection.close()
 
-    def request(self,
-                container,
-                access_key,
-                raise_for_status,
-                transport_actions,
-                encoder,
-                encoder_args,
-                output=None):
-
-        # default to sending/receiving
-        transport_actions = transport_actions or v3io.dataplane.transport.Actions.send_and_receive
-
-        # allocate a request
-        request = v3io.dataplane.request.Request(container,
-                                                 access_key,
-                                                 raise_for_status,
-                                                 encoder,
-                                                 encoder_args,
-                                                 output)
-
-        # if all we had to do is encode, return now
-        if transport_actions == v3io.dataplane.transport.Actions.encode_only:
-            return request
-
-        # send the request
-        inflight_request = self.send_request(request)
-
-        # wait for the response
-        return self.wait_response(inflight_request)
-
-    def send_request(self, request, connection_idx=None):
-        if connection_idx is None:
+    def send_request(self, request, transport_state=None):
+        if transport_state is None:
             connection_idx = self._get_next_connection_idx()
+        else:
+            connection_idx = transport_state.connection_idx
 
         # set the used connection on the request
         setattr(request.transport, 'connection_idx', connection_idx)
@@ -135,18 +106,6 @@ class Transport(object):
             return http.client.HTTPConnection(host)
 
         return http.client.HTTPSConnection(host, context=ssl_context)
-
-    def _get_endpoint(self, endpoint):
-        if endpoint is None:
-            endpoint = os.environ.get('V3IO_API')
-
-            if endpoint is None:
-                raise RuntimeError('Endpoints must be passed to context or specified in V3IO_API')
-
-        if not endpoint.startswith('http://') and not endpoint.startswith('https://'):
-            endpoint = 'http://' + endpoint
-
-        return endpoint
 
     def _parse_endpoint(self, endpoint):
         if endpoint.startswith('http://'):

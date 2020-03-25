@@ -66,7 +66,7 @@ class Batch(object):
 
                 # send the request
                 request = self._transport.send_request(self._encoded_requests.pop(0),
-                                                       connection_idx=inflight_request.transport.connection_idx)
+                                                       transport_state=inflight_request.transport)
 
                 # add to inflight requests
                 self._inflight_requests.append(request)
