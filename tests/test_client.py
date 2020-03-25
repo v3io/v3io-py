@@ -41,7 +41,7 @@ class TestContainer(Test):
 
     def setUp(self):
         super(TestContainer, self).setUp()
-        self._path = '/v3io-py-test-container'
+        self._path = 'v3io-py-test-container'
 
         # clean up
         self._delete_dir(self._path)
@@ -91,7 +91,7 @@ class TestStream(Test):
     def setUp(self):
         super(TestStream, self).setUp()
 
-        self._path = '/v3io-py-test-stream/'
+        self._path = 'v3io-py-test-stream'
 
         # clean up
         self._client.delete_stream(container=self._container,
@@ -372,3 +372,32 @@ class TestEmd(Test):
 
         # TODO: verify contents
         self.assertEqual(len(items), len(received_items))
+
+
+class TestRaiseForStatus(Test):
+
+    def setUp(self):
+        super(TestRaiseForStatus, self).setUp()
+
+    def test_always_raise_no_error(self):
+
+        # should raise - since the status code is 500
+        self._client.get_containers(raise_for_status=v3io.dataplane.transport.RaiseForStatus.always)
+
+    def test_specific_status_code_match(self):
+
+        # should raise - since the status code is 500
+        self._client.get_containers(raise_for_status=[200])
+
+    def test_specific_status_code_no_match(self):
+
+        # should raise - since the status code is 500
+        self.assertRaises(Exception, self._client.get_containers, raise_for_status=[500])
+
+    def test_never_raise(self):
+        self._client.get_object(container=self._container,
+                                path='/non-existing',
+                                raise_for_status=v3io.dataplane.RaiseForStatus.never)
+
+    def test_default_raise(self):
+        self.assertRaises(Exception, self._client.get_object, container=self._container, path='/non-existing')

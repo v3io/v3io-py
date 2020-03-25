@@ -10,7 +10,7 @@ class Transport(object):
         self._logger = logger
         self._endpoint = self._get_endpoint(endpoint)
         self._timeout = timeout
-        self.max_connections = max_connections or 4
+        self.max_connections = max_connections or 8
 
     def request(self,
                 container,
