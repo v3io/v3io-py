@@ -13,7 +13,7 @@ class Response(object):
         if output and self.body:
             try:
                 parsed_output = ujson.loads(self.body)
-            except:
+            except Exception:
                 parsed_output = xml.etree.ElementTree.fromstring(self.body)
 
             self.output = output(parsed_output)
