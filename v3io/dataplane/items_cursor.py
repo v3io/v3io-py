@@ -55,6 +55,7 @@ class ItemsCursor(object):
                                                          self.path,
                                                          self._access_key,
                                                          self.raise_for_status,
+                                                         None,
                                                          self.table_name,
                                                          self.attribute_names,
                                                          self.filter_expression,

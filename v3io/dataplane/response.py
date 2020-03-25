@@ -11,12 +11,12 @@ class Response(object):
         self.output = None
 
         if output and self.body:
-            if self.headers.get('Content-Type') == 'application/json':
-                self.output = output(ujson.loads(self.body))
+            try:
+                parsed_output = ujson.loads(self.body)
+            except Exception:
+                parsed_output = xml.etree.ElementTree.fromstring(self.body)
 
-            # since there's no content type, look for xml start
-            elif self.body[0] == '<':
-                self.output = output(xml.etree.ElementTree.fromstring(self.body))
+            self.output = output(parsed_output)
 
     def raise_for_status(self, expected_statuses=None):
         if (expected_statuses is None and self.status_code >= 300) \

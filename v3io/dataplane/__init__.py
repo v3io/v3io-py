@@ -1,2 +1,2 @@
-from .context import Context
+from .client import Client
 from .transport import RaiseForStatus

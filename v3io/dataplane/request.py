@@ -12,6 +12,33 @@ import v3io.common.helpers
 
 
 #
+# Request
+#
+
+class Request(object):
+
+    def __init__(self,
+                 container,
+                 access_key,
+                 raise_for_status,
+                 encoder,
+                 encoder_args,
+                 output=None):
+        self.container = container
+        self.access_key = access_key
+        self.raise_for_status = raise_for_status
+        self.encoder = encoder
+        self.encoder_args = encoder_args
+        self.output = output
+
+        # get request params with the encoder
+        self.method, self.path, self.headers, self.body = encoder(container, access_key, encoder_args)
+
+        # used by the transport
+        self.transport = lambda: None
+
+
+#
 # Encoders
 #
 

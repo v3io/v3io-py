@@ -37,6 +37,12 @@ class Container(object):
 class GetContainersOutput(Output):
 
     def __init__(self, root):
+
+        # got an error code
+        if isinstance(root, dict):
+            self.error = root
+            return
+
         self.containers = []
 
         for bucket in root.find('Buckets'):
@@ -50,6 +56,12 @@ class GetContainersOutput(Output):
 class ContainerContent(object):
 
     def __init__(self, child):
+
+        # got an error code
+        if isinstance(child, dict):
+            self.error = child
+            return
+
         for child_key, attribute_name, kind in [
             ('Key', 'key', str),
             ('Size', 'size', int),
@@ -70,6 +82,12 @@ class ContainerContent(object):
 class ContainerCommonPrefix(object):
 
     def __init__(self, child):
+
+        # got an error code
+        if isinstance(child, dict):
+            self.error = child
+            return
+
         for child_key, attribute_name, kind in [
             ('Prefix', 'prefix', str),
             ('LastModified', 'last_modified', str),
@@ -88,6 +106,12 @@ class ContainerCommonPrefix(object):
 class GetContainerContentsOutput(Output):
 
     def __init__(self, root):
+
+        # got an error code
+        if isinstance(root, dict):
+            self.error = root
+            return
+
         self.name = root.find('Name').text
         self.next_marker = root.find('NextMarker').text
         self.max_keys = root.find('MaxKeys').text
@@ -105,6 +129,7 @@ class GetContainerContentsOutput(Output):
         if common_prefixes_children is not None:
             for common_prefix_child in common_prefixes_children:
                 self.common_prefixes.append(ContainerCommonPrefix(common_prefix_child))
+
 
 #
 # KV/EMD
