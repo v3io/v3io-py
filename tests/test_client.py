@@ -198,23 +198,22 @@ class TestObject(Test):
         def _object_contents(idx):
             return f'object-{idx}'
 
-        batch = self._client.new_batch()
         num_objects = 16
 
         for object_idx in range(num_objects):
-            batch.put_object(self._container,
-                             _object_path(object_idx),
-                             body=_object_contents(object_idx))
+            self._client.batch.put_object(self._container,
+                                          _object_path(object_idx),
+                                          body=_object_contents(object_idx))
 
-        responses = batch.wait()
+        responses = self._client.batch.wait()
 
         for response in responses:
             self.assertEqual(200, response.status_code)
 
         for object_idx in range(num_objects):
-            batch.get_object(self._container, _object_path(object_idx))
+            self._client.batch.get_object(self._container, _object_path(object_idx))
 
-        responses = batch.wait()
+        responses = self._client.batch.wait()
 
         for response_idx, response in enumerate(responses):
             self.assertEqual(200, response.status_code)
@@ -324,8 +323,6 @@ class TestEmd(Test):
         self._verify_items(self._path, items)
 
     def test_batch(self):
-        batch = self._client.new_batch()
-
         items = {
             'bob': {'age': 42, 'feature': 'mustache'},
             'linda': {'age': 41, 'feature': 'singing'},
@@ -335,20 +332,20 @@ class TestEmd(Test):
 
         # put the item in a batch
         for item_key, item_attributes in future.utils.viewitems(items):
-            batch.put_item(container=self._container,
-                           path=v3io.common.helpers.url_join(self._path, item_key),
-                           attributes=item_attributes)
+            self._client.batch.put_item(container=self._container,
+                                        path=v3io.common.helpers.url_join(self._path, item_key),
+                                        attributes=item_attributes)
 
-        responses = batch.wait()
+        responses = self._client.batch.wait()
         for response in responses:
             self.assertEqual(200, response.status_code)
 
         for item_key in items.keys():
-            batch.get_item(container=self._container,
-                           path=v3io.common.helpers.url_join(self._path, item_key),
-                           attribute_names=['__size', 'age'])
+            self._client.batch.get_item(container=self._container,
+                                        path=v3io.common.helpers.url_join(self._path, item_key),
+                                        attribute_names=['__size', 'age'])
 
-        responses = batch.wait()
+        responses = self._client.batch.wait()
         for response in responses:
             self.assertEqual(200, response.status_code)
 
@@ -380,17 +377,14 @@ class TestRaiseForStatus(Test):
         super(TestRaiseForStatus, self).setUp()
 
     def test_always_raise_no_error(self):
-
         # should raise - since the status code is 500
         self._client.get_containers(raise_for_status=v3io.dataplane.transport.RaiseForStatus.always)
 
     def test_specific_status_code_match(self):
-
         # should raise - since the status code is 500
         self._client.get_containers(raise_for_status=[200])
 
     def test_specific_status_code_no_match(self):
-
         # should raise - since the status code is 500
         self.assertRaises(Exception, self._client.get_containers, raise_for_status=[500])
 
@@ -401,3 +395,58 @@ class TestRaiseForStatus(Test):
 
     def test_default_raise(self):
         self.assertRaises(Exception, self._client.get_object, container=self._container, path='/non-existing')
+
+
+class TestBatchRaiseForStatus(Test):
+
+    def setUp(self):
+        super(TestBatchRaiseForStatus, self).setUp()
+        self._object_dir = '/v3io-py-test-batch-raise'
+
+        # clean up
+        self._delete_dir(self._object_dir)
+
+    def test_raise(self):
+
+        def _object_path(idx):
+            return self._object_dir + f'/object{idx}'
+
+        def _object_contents(idx):
+            return f'object-{idx}'
+
+        num_objects = 4
+        err_idx = 1
+
+        for object_idx in range(num_objects):
+            self._client.batch.put_object(self._container,
+                                          _object_path(object_idx),
+                                          body=_object_contents(object_idx))
+
+        responses = self._client.batch.wait()
+
+        for object_idx in range(num_objects):
+
+            # inject an error
+            if object_idx == err_idx:
+                object_idx = 10
+
+            self._client.batch.get_object(self._container, _object_path(object_idx))
+
+        self.assertRaises(Exception, self._client.batch.wait)
+
+        # do it again, only this time don't raise
+        for object_idx in range(num_objects):
+
+            # inject an error
+            if object_idx == 1:
+                object_idx = 10
+
+            self._client.batch.get_object(self._container, _object_path(object_idx))
+
+        responses = self._client.batch.wait(raise_for_status=v3io.dataplane.RaiseForStatus.never)
+
+        for response_idx, response in enumerate(responses):
+            if response_idx == err_idx:
+                self.assertEqual(404, response.status_code)
+            else:
+                self.assertEqual(200, response.status_code)

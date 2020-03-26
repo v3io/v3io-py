@@ -37,7 +37,7 @@ class Batch(object):
 
         self._encoded_requests.append(request)
 
-    def wait(self):
+    def wait(self, raise_for_status=None):
         responses = []
 
         # while we can send requests - send them
@@ -56,7 +56,7 @@ class Batch(object):
             inflight_request = self._inflight_requests.pop(0)
 
             # wait for the response of the request
-            response = self._transport.wait_response(inflight_request)
+            response = self._transport.wait_response(inflight_request, raise_for_status)
 
             # add to responses
             responses.append(response)
@@ -71,5 +71,4 @@ class Batch(object):
                 # add to inflight requests
                 self._inflight_requests.append(request)
 
-        # todo - raise for, etc
         return responses

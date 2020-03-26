@@ -59,7 +59,10 @@ class Client(object):
                                                   max_connections,
                                                   timeout)
 
-    def new_batch(self):
+        # create a default "batch" object
+        self.batch = self.create_batch()
+
+    def create_batch(self):
         return v3io.dataplane.batch.Batch(self)
 
     def close(self):
