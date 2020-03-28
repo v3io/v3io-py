@@ -14,7 +14,7 @@ class Test(unittest.TestCase):
     def setUp(self):
         self._logger = v3io.logger.Logger()
         self._logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
-        self._client = v3io.dataplane.Client(self._logger)
+        self._client = v3io.dataplane.Client(self._logger, transport_kind='httpclient')
 
         self._container = 'bigdata'
 
