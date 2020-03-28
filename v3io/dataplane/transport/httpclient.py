@@ -22,6 +22,14 @@ class Transport(abstract.Transport):
                                                      self._host,
                                                      self._ssl_context)
 
+    def restart(self):
+        self.close()
+
+        # recreate the connections
+        self._connections = self._create_connections(self.max_connections,
+                                                     self._host,
+                                                     self._ssl_context)
+
     def close(self):
         for connection in self._connections:
             connection.close()

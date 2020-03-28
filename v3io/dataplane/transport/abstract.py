@@ -12,6 +12,9 @@ class Transport(object):
         self._timeout = timeout
         self.max_connections = max_connections or 8
 
+    def restart(self):
+        pass
+
     def request(self,
                 container,
                 access_key,

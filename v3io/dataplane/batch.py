@@ -38,6 +38,19 @@ class Batch(object):
         self._encoded_requests.append(request)
 
     def wait(self, raise_for_status=None):
+        try:
+            return self._wait(raise_for_status)
+
+        # if an exception is raised, clean up everything
+        except Exception as e:
+            self._inflight_requests = []
+            self._encoded_requests = []
+            self._transport.restart()
+
+            raise e
+
+    def _wait(self, raise_for_status=None):
+
         responses = []
 
         # while we can send requests - send them
