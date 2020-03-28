@@ -1,6 +1,8 @@
 import ujson
 import xml.etree.ElementTree
 
+import v3io.dataplane.transport
+
 
 class Response(object):
 
@@ -19,6 +21,13 @@ class Response(object):
             self.output = output(parsed_output)
 
     def raise_for_status(self, expected_statuses=None):
+        if expected_statuses == v3io.dataplane.transport.RaiseForStatus.never:
+            return
+
+        # "always" and "none" are equivalent. use the one that's faster to compare against
+        if expected_statuses == v3io.dataplane.transport.RaiseForStatus.always:
+            expected_statuses = None
+
         if (expected_statuses is None and self.status_code >= 300) \
                 or (expected_statuses and self.status_code not in expected_statuses):
             raise RuntimeError('Request failed with status {0}: {1}'.format(self.status_code, self.body))

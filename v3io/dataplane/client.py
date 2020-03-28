@@ -15,15 +15,54 @@ import v3io.logger
 
 class Client(object):
 
-    def __init__(self, logger=None, endpoint=None, access_key=None, max_connections=4, timeout=None):
+    def __init__(self,
+                 logger=None,
+                 endpoint=None,
+                 access_key=None,
+                 max_connections=None,
+                 timeout=None,
+                 transport_kind='httpclient'):
+        """Creates a v3io client, used to access v3io
+
+        Parameters
+        ----------
+        logger (Optional) : logger
+            On optional pre-existing logger. If not passed, a logger is created with "INFO" level
+        endpoint (Optional) : str
+            The v3io endpoint to connect to (e.g. http://v3io-webapi:8081). if empty, the env var
+            V3IO_API is used
+        access_key (Optional) : str
+            The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env. this can
+            be overridden per request if needed
+        max_connections (Optional) : int
+            The number of connections to create towards v3io - defining the max number of parallel
+            operations towards v3io. Defaults to 8
+        timeout (Optional) : None
+            For future use
+        transport_kind (Optional) : str
+            Defines the underlying transport to use towards v3io (of of httpclient, requests). Should
+            normally be left httpclient unless an underlying issue is found, in which case requests may
+            be used as a temporary workaround at the expense of performance
+
+        Return Value
+        ----------
+        A `Client` object
+        """
         self._logger = logger or v3io.logger.Logger(level='INFO')
         self._access_key = access_key or os.environ['V3IO_ACCESS_KEY']
-        self._transport = v3io.dataplane.transport.httpclient.Transport(self._logger,
-                                                                        endpoint,
-                                                                        max_connections,
-                                                                        timeout)
 
-    def new_batch(self):
+        # get the transport class
+        transport_cls = getattr(v3io.dataplane.transport, transport_kind)
+
+        self._transport = transport_cls.Transport(self._logger,
+                                                  endpoint,
+                                                  max_connections,
+                                                  timeout)
+
+        # create a default "batch" object
+        self.batch = self.create_batch()
+
+    def create_batch(self):
         return v3io.dataplane.batch.Batch(self)
 
     def close(self):
@@ -511,6 +550,8 @@ class Client(object):
         ----------
         A `Response` object.
         """
+        path = self._normalize_stream_path(path)
+
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
@@ -534,6 +575,8 @@ class Client(object):
         ----------
         A `Response` object.
         """
+        path = self._normalize_stream_path(path)
+
         response = self.get_container_contents(container,
                                                path,
                                                access_key,
@@ -565,6 +608,8 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `DescribeStreamOutput`.
         """
+        path = self._normalize_stream_path(path)
+
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
@@ -628,6 +673,8 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `SeekShardOutput`.
         """
+        path = self._normalize_stream_path(path)
+
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
@@ -687,6 +734,8 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `PutRecordsOutput`.
         """
+        path = self._normalize_stream_path(path)
+
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
@@ -727,6 +776,8 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `GetRecordsOutput`.
         """
+        path = self._normalize_stream_path(path)
+
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
@@ -734,3 +785,10 @@ class Client(object):
                                        v3io.dataplane.request.encode_get_records,
                                        locals(),
                                        v3io.dataplane.output.GetRecordsOutput)
+
+    @staticmethod
+    def _normalize_stream_path(path):
+        if not path.endswith('/'):
+            return path + '/'
+
+        return path

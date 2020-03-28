@@ -18,7 +18,15 @@ class Transport(abstract.Transport):
         self._host, self._ssl_context = self._parse_endpoint(self._endpoint)
 
         # create the pool connection
-        self._connections = self._create_connections(max_connections,
+        self._connections = self._create_connections(self.max_connections,
+                                                     self._host,
+                                                     self._ssl_context)
+
+    def restart(self):
+        self.close()
+
+        # recreate the connections
+        self._connections = self._create_connections(self.max_connections,
                                                      self._host,
                                                      self._ssl_context)
 
@@ -38,7 +46,7 @@ class Transport(abstract.Transport):
         # get a connection for the request and send it
         return self._send_request_on_connection(request, connection_idx)
 
-    def wait_response(self, request, num_retries=1):
+    def wait_response(self, request, raise_for_status=None, num_retries=1):
         connection_idx = request.transport.connection_idx
         connection = self._connections[connection_idx]
 
@@ -49,11 +57,16 @@ class Transport(abstract.Transport):
                 response = connection.getresponse()
                 response_body = response.read()
 
-                # create a response
-                return v3io.dataplane.response.Response(request.output,
-                                                        response.code,
-                                                        response.headers,
-                                                        response_body)
+                response = v3io.dataplane.response.Response(request.output,
+                                                            response.code,
+                                                            response.headers,
+                                                            response_body)
+
+                # enforce raise for status
+                response.raise_for_status(request.raise_for_status or raise_for_status)
+
+                # return the response
+                return response
 
             except http.client.RemoteDisconnected as e:
                 if num_retries == 0:
