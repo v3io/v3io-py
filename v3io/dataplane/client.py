@@ -1,4 +1,5 @@
 import os
+import ujson
 
 import future.utils
 
@@ -307,7 +308,7 @@ class Client(object):
                                        locals())
 
     def put_items(self, container, path, items, access_key=None, raise_for_status=None, condition=None):
-        """A helper to put several items, calling put_item for each.
+        """[OBSOLETED] A helper to put several items, calling put_item for each.
 
         Parameters
         ----------
@@ -786,9 +787,78 @@ class Client(object):
                                        locals(),
                                        v3io.dataplane.output.GetRecordsOutput)
 
+    #
+    # Helpers
+    #
+
+    def create_schema(self,
+                      container,
+                      path,
+                      access_key=None,
+                      raise_for_status=None,
+                      transport_actions=None,
+                      key=None,
+                      fields=None):
+        """Creates a KV schema file
+
+        Parameters
+        ----------
+        container (Required) : str
+            The container on which to operate.
+        path (Required) : str
+            The path of the object
+        access_key (Optional) : str
+            The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
+        key (Required) : str
+            The key field name
+        fields (Required) : list of dicts
+            A dictionary of fields, where each item has:
+            - name (string)
+            - type (string - one of string, double, long)
+            - nullable (boolean)
+
+            Example: [
+                {
+                  'name': 'my_field',
+                  'type': 'string',
+                  'nullable': False
+                },
+                {
+                  'name': 'who',
+                  'type': 'string',
+                  "nullable": True
+                }
+            ]
+
+        Return Value
+        ----------
+        A `Response` object
+        """
+        put_object_args = locals()
+        put_object_args['path'] = os.path.join(put_object_args['path'], '.%23schema')
+        put_object_args['offset'] = 0
+        put_object_args['body'] = self._get_schema_contents(key, fields)
+        del(put_object_args['key'])
+        del (put_object_args['fields'])
+
+        return self._transport.request(container,
+                                       access_key or self._access_key,
+                                       raise_for_status,
+                                       transport_actions,
+                                       v3io.dataplane.request.encode_put_object,
+                                       put_object_args)
+
     @staticmethod
     def _normalize_stream_path(path):
         if not path.endswith('/'):
             return path + '/'
 
         return path
+
+    @staticmethod
+    def _get_schema_contents(key, fields):
+        return ujson.dumps({
+            'hashingBucketNum': 0,
+            'key': key,
+            'fields': fields
+        })
