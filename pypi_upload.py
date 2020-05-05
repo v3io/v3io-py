@@ -62,6 +62,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--force', '-f', help='force upload', action='store_true')
     parser.add_argument(
+        '--test', '-t', help='upload to testpypi', action='store_true')        
+    parser.add_argument(
         '--user', '-u', help='pypi user (or V3IO_PYPI_USER)', default='')
     parser.add_argument(
         '--password', '-p', help='pypi password (or V3IO_PYPI_PASSWORD)',
@@ -93,6 +95,27 @@ if __name__ == '__main__':
         '--user', user,
         '--password', passwd,
     ] + glob('dist/v3io-*')
+    cmd = cmd + ['-r', 'testpypi'] if args.test else cmd
+
     out = run(cmd)
     if out.returncode != 0:
         raise SystemExit('error: cannot upload to pypi')
+
+    artifactory_user = environ.get('V3IO_ARTIFACTORY_USER')
+    artifactory_passwd = environ.get('V3IO_ARTIFACTORY_PASSWORD')
+    artifactory_repo = environ.get('ARTIFACTORY_PYPI_URL')
+
+    if not (artifactory_user and artifactory_passwd or artifactory_repo):
+        print('warning: missing artifactory information - skipping upload')
+        raise SystemExit()
+
+    cmd = [
+        'twine', 'upload',
+        '--user', artifactory_user,
+        '--password', artifactory_passwd,
+        '--repository-url', artifactory_repo,
+    ] + glob('dist/v3io-*')
+    out = run(cmd)
+
+    if out.returncode != 0:
+        raise SystemExit('error: cannot upload to Artifactory')

@@ -6,6 +6,10 @@ all:
 upload:
 	pipenv run python pypi_upload.py
 
+.PHONY: debug-upload
+debug-upload:
+	pipenv run python pypi_upload.py -t
+
 .PHONY: clean_pyc
 clean_pyc:
 	find . -name '*.pyc' -exec rm {} \;
