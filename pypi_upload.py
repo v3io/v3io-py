@@ -107,11 +107,12 @@ if __name__ == '__main__':
     artifactory_passwd = environ.get('V3IO_ARTIFACTORY_PASSWORD')
     artifactory_repo = environ.get('ARTIFACTORY_PYPI_URL')
 
-    if not (artifactory_user and artifactory_passwd or artifactory_repo):
-        print('warning: missing artifactory information - skipping upload')
-        raise SystemExit()
-    
     if not args.skip_artifactory:
+        
+        if not (artifactory_user and artifactory_passwd or artifactory_repo):
+            print('warning: missing artifactory information - skipping upload')
+            raise SystemExit()
+
         cmd = [
             'twine', 'upload',
             '--user', artifactory_user,
