@@ -62,6 +62,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--force', '-f', help='force upload', action='store_true')
     parser.add_argument(
+        '--skip-artifactory', help='disable uploading to Artifactory', action='store_true')
+    parser.add_argument(
         '--test', '-t', help='upload to testpypi', action='store_true')        
     parser.add_argument(
         '--user', '-u', help='pypi user (or V3IO_PYPI_USER)', default='')
@@ -108,14 +110,15 @@ if __name__ == '__main__':
     if not (artifactory_user and artifactory_passwd or artifactory_repo):
         print('warning: missing artifactory information - skipping upload')
         raise SystemExit()
+    
+    if not args.skip_artifactory:
+        cmd = [
+            'twine', 'upload',
+            '--user', artifactory_user,
+            '--password', artifactory_passwd,
+            '--repository-url', artifactory_repo,
+        ] + glob('dist/v3io-*')
+        out = run(cmd)
 
-    cmd = [
-        'twine', 'upload',
-        '--user', artifactory_user,
-        '--password', artifactory_passwd,
-        '--repository-url', artifactory_repo,
-    ] + glob('dist/v3io-*')
-    out = run(cmd)
-
-    if out.returncode != 0:
-        raise SystemExit('error: cannot upload to Artifactory')
+        if out.returncode != 0:
+            raise SystemExit('error: cannot upload to Artifactory')
