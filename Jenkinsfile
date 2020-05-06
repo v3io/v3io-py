@@ -36,8 +36,8 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang-p
                                                         script: "echo ${github.DOCKER_TAG_VERSION} | awk -F - '{print \$1}'",
                                                         returnStdout: true
                                                     ).trim()
-                                                    artifactory_repo_url="${pipelinex.PackagesRepo.ARTIFACTORY_IGUAZIO[0]}/artifactory/api/pypi/v3io_pypi"
-                                                    common.shellc("ARTIFACTORY_PYPI_URL=${artifactory_repo_url} TRAVIS_REPO_SLUG=v3io/v3io-py V3IO_PYPI_USER=${V3IO_PYPI_USER} V3IO_PYPI_PASSWORD=${V3IO_PYPI_PASSWORD} TRAVIS_TAG=${pypi_version} make debug-upload")
+                                                    artifactory_repo_url="http://${pipelinex.PackagesRepo.ARTIFACTORY_IGUAZIO[0]}/artifactory/api/pypi/v3io_pypi"
+                                                    common.shellc("ARTIFACTORY_PYPI_URL=${artifactory_repo_url} TRAVIS_REPO_SLUG=v3io/v3io-py V3IO_PYPI_USER=${V3IO_PYPI_USER} V3IO_PYPI_PASSWORD=${V3IO_PYPI_PASSWORD} TRAVIS_TAG=${pypi_version} make upload")
                                                 } catch (err) {
                                                     unstable("Failed uploading to pypi")
                                                     // Do not continue stages
