@@ -5,7 +5,6 @@ git_project_upstream_user = "v3io"
 git_deploy_user = "iguazio-prod-git-user"
 git_deploy_user_token = "iguazio-prod-git-user-token"
 git_deploy_user_private_key = "iguazio-prod-git-user-private-key"
-artifactory_pypi_repo = "https://artifactory.iguazeng.com/artifactory/api/pypi/v3io_pypi"
 
 podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang-python37") {
     node("${git_project}-${label}") {
@@ -37,7 +36,8 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang-p
                                                         script: "echo ${github.DOCKER_TAG_VERSION} | awk -F - '{print \$1}'",
                                                         returnStdout: true
                                                     ).trim()
-                                                    common.shellc("ARTIFACTORY_PYPI_URL=${artifactory_pypi_repo} TRAVIS_REPO_SLUG=v3io/v3io-py V3IO_PYPI_USER=${V3IO_PYPI_USER} V3IO_PYPI_PASSWORD=${V3IO_PYPI_PASSWORD} TRAVIS_TAG=${pypi_version} make upload")
+                                                    artifactory_repo_url="${pipelinex.PackagesRepo.ARTIFACTORY_IGUAZIO[0]}/artifactory/api/pypi/v3io_pypi"
+                                                    common.shellc("ARTIFACTORY_PYPI_URL=${artifactory_repo_url} TRAVIS_REPO_SLUG=v3io/v3io-py V3IO_PYPI_USER=${V3IO_PYPI_USER} V3IO_PYPI_PASSWORD=${V3IO_PYPI_PASSWORD} TRAVIS_TAG=${pypi_version} make debug-upload")
                                                 } catch (err) {
                                                     unstable("Failed uploading to pypi")
                                                     // Do not continue stages
