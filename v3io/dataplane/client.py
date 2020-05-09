@@ -177,7 +177,8 @@ class Client(object):
                    raise_for_status=None,
                    transport_actions=None,
                    offset=None,
-                   body=None):
+                   body=None,
+                   append=None):
         """Adds a new object to a container, or appends data to an existing object. The option to append data is
         extension to the S3 PUT Object capabilities
 
@@ -193,6 +194,8 @@ class Client(object):
             A numeric offset into the object (in bytes)
         body (Optional) : str
             The contents of the object
+        append (Optional) : bool
+            If True, the put appends the data to the end of the object. Defaults to False
 
         Return Value
         ----------
@@ -841,6 +844,7 @@ class Client(object):
         put_object_args = locals()
         put_object_args['path'] = os.path.join(put_object_args['path'], '.%23schema')
         put_object_args['offset'] = 0
+        put_object_args['append'] = None
         put_object_args['body'] = self._get_schema_contents(key, fields)
         del(put_object_args['key'])
         del (put_object_args['fields'])

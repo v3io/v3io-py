@@ -193,6 +193,27 @@ class TestObject(Test):
 
         self.assertEqual(404, response.status_code)
 
+    def test_append(self):
+        contents = [
+            'First part',
+            'Second part',
+            'Third part',
+        ]
+
+        # put the contents into the object
+        for content in contents:
+            self._client.put_object(container=self._container,
+                                    path=self._object_path,
+                                    offset=0,
+                                    body=content,
+                                    append=True)
+
+        # get the contents
+        response = self._client.get_object(container=self._container,
+                                           path=self._object_path)
+
+        self.assertEqual(response.body.decode('utf-8'), ''.join(contents))
+
     def test_batch(self):
 
         def _object_path(idx):
