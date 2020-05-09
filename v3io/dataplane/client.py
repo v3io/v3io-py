@@ -50,7 +50,11 @@ class Client(object):
         A `Client` object
         """
         self._logger = logger or v3io.logger.Logger(level='INFO')
-        self._access_key = access_key or os.environ['V3IO_ACCESS_KEY']
+        self._access_key = access_key or os.environ.get('V3IO_ACCESS_KEY')
+
+        if not self._access_key:
+            raise ValueError('Access key must be provided in Client() arguments or in the '
+                             'V3IO_ACCESS_KEY environment variable')
 
         # get the transport class
         transport_cls = getattr(v3io.dataplane.transport, transport_kind)
