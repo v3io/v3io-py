@@ -29,6 +29,9 @@ class Test(unittest.TestCase):
         if response.status_code == 404:
             return
 
+        if response.status_code != 200:
+            raise RuntimeError(response.body)
+
         for content in response.output.contents:
             self._client.delete_object(container=self._container, path=content.key)
 
