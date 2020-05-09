@@ -80,7 +80,23 @@ def encode_get_container_contents(container_name, access_key, kwargs):
 #
 
 def encode_get_object(container_name, access_key, kwargs):
-    return _encode('GET', container_name, access_key, kwargs['path'], None, None)
+    headers = None
+
+    offset = kwargs.get('offset')
+
+    # if the append flag is passed, add a range header
+    if offset:
+        range_value = 'bytes=' + str(offset)
+
+        num_bytes = kwargs.get('num_bytes')
+        if num_bytes:
+            range_value += '-' + str(offset + num_bytes - 1)
+
+        headers = {
+            'Range': range_value
+        }
+
+    return _encode('GET', container_name, access_key, kwargs['path'], headers, None)
 
 
 def encode_put_object(container_name, access_key, kwargs):

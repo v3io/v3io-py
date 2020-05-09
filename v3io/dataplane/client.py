@@ -147,7 +147,14 @@ class Client(object):
     # Object
     #
 
-    def get_object(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
+    def get_object(self,
+                   container,
+                   path,
+                   access_key=None,
+                   raise_for_status=None,
+                   transport_actions=None,
+                   offset=None,
+                   num_bytes=None):
         """Retrieves an object from a container.
 
         Parameters
@@ -158,6 +165,10 @@ class Client(object):
             The path of the object
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
+        offset (Optional) : int
+            A numeric offset into the object (in bytes). Defaults to 0
+        num_bytes (Optional) : int
+            Number of bytes to return. By default equal to len(object)-offset
 
         Return Value
         ----------
@@ -176,7 +187,6 @@ class Client(object):
                    access_key=None,
                    raise_for_status=None,
                    transport_actions=None,
-                   offset=None,
                    body=None,
                    append=None):
         """Adds a new object to a container, or appends data to an existing object. The option to append data is
@@ -190,8 +200,6 @@ class Client(object):
             The path of the object
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
-        offset (Optional) : int
-            A numeric offset into the object (in bytes)
         body (Optional) : str
             The contents of the object
         append (Optional) : bool
