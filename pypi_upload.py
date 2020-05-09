@@ -48,7 +48,6 @@ def set_version():
     init_py = 'v3io/__init__.py'
     with open(init_py) as fp:
         for line in fp:
-            # __version__ = '0.3.1'
             if '__version__' in line:
                 line = "__version__ = '{}'\n".format(version)
             lines.append(line)
