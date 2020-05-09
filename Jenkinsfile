@@ -28,7 +28,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang-p
                                         ]) {
                                             dir("${github.BUILD_FOLDER}/src/github.com/${git_project_upstream_user}/${git_project}") {
                                                 try {
-                                                    common.shellc("pip install pipenv")
+                                                    common.shellc("pip install pipenv setuptools")
                                                     common.shellc("make update-deps")
                                                     common.shellc("make sync-deps")
 
