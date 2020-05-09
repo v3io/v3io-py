@@ -170,7 +170,6 @@ class TestObject(Test):
         # put contents to some object
         self._client.put_object(container=self._container,
                                 path=self._object_path,
-                                offset=0,
                                 body=contents)
 
         # get the contents
@@ -192,6 +191,46 @@ class TestObject(Test):
                                            raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
         self.assertEqual(404, response.status_code)
+
+    def test_append(self):
+        contents = [
+            'First part',
+            'Second part',
+            'Third part',
+        ]
+
+        # put the contents into the object
+        for content in contents:
+            self._client.put_object(container=self._container,
+                                    path=self._object_path,
+                                    body=content,
+                                    append=True)
+
+        # get the contents
+        response = self._client.get_object(container=self._container,
+                                           path=self._object_path)
+
+        self.assertEqual(response.body.decode('utf-8'), ''.join(contents))
+
+    def test_get_offset(self):
+        self._client.put_object(container=self._container,
+                                path=self._object_path,
+                                body='1234567890')
+
+        # get the contents without limit
+        response = self._client.get_object(container=self._container,
+                                           path=self._object_path,
+                                           offset=4)
+
+        self.assertEqual(response.body.decode('utf-8'), '567890')
+
+        # get the contents with limit
+        response = self._client.get_object(container=self._container,
+                                           path=self._object_path,
+                                           offset=4,
+                                           num_bytes=3)
+
+        self.assertEqual(response.body.decode('utf-8'), '567')
 
     def test_batch(self):
 
