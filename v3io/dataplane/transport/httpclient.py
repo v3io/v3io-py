@@ -1,4 +1,5 @@
 import ssl
+import sys
 import http.client
 
 import v3io.dataplane.response
@@ -21,6 +22,16 @@ class Transport(abstract.Transport):
         self._connections = self._create_connections(self.max_connections,
                                                      self._host,
                                                      self._ssl_context)
+
+        # python 2 and 3 have different exceptions
+        if sys.version_info[0] >= 3:
+            self._remote_disconnect_exception = http.client.RemoteDisconnected
+            self._disconnection_exceptions = (BrokenPipeError, http.client.CannotSendRequest, http.client.RemoteDisconnected)
+            self._get_status_and_headers = self._get_status_and_headers_py3
+        else:
+            self._remote_disconnect_exception = http.client.BadStatusLine
+            self._disconnection_exceptions = (http.client.CannotSendRequest, http.client.BadStatusLine)
+            self._get_status_and_headers = self._get_status_and_headers_py2
 
     def restart(self):
         self.close()
@@ -57,9 +68,11 @@ class Transport(abstract.Transport):
                 response = connection.getresponse()
                 response_body = response.read()
 
+                status_code, headers = self._get_status_and_headers(response)
+
                 response = v3io.dataplane.response.Response(request.output,
-                                                            response.code,
-                                                            response.headers,
+                                                            status_code,
+                                                            headers,
                                                             response_body)
 
                 # enforce raise for status
@@ -68,7 +81,7 @@ class Transport(abstract.Transport):
                 # return the response
                 return response
 
-            except http.client.RemoteDisconnected as e:
+            except self._remote_disconnect_exception as e:
                 if num_retries == 0:
                     raise e
 
@@ -85,7 +98,7 @@ class Transport(abstract.Transport):
 
         try:
             connection.request(request.method, request.path, request.body, request.headers)
-        except (BrokenPipeError, http.client.CannotSendRequest, http.client.RemoteDisconnected):
+        except self._disconnection_exceptions:
             connection = self._recreate_connection_at_index(connection_idx)
 
             # re-request
@@ -141,3 +154,9 @@ class Transport(abstract.Transport):
             self._next_connection_idx = 0
 
         return connection_idx
+
+    def _get_status_and_headers_py2(self, response):
+        return response.status, response.getheaders()
+
+    def _get_status_and_headers_py3(self, response):
+        return response.code, response.headers

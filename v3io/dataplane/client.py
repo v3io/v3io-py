@@ -297,7 +297,7 @@ class Client(object):
         path (Required) : str
             The path and collection (table) name of the item
         attributes (Required) : dict
-            The item to add — an object containing zero or more attributes.
+            The item to add - an object containing zero or more attributes.
             For example:
                 {
                     'age': 42,
@@ -373,7 +373,7 @@ class Client(object):
                     expression=None,
                     condition=None,
                     update_mode=None):
-        """Updates the attributes of a table item. If the specified item or table don’t exist,
+        """Updates the attributes of a table item. If the specified item or table don't exist,
         the operation creates them.
 
         See:
@@ -386,7 +386,7 @@ class Client(object):
         path (Required) : str
             The path and collection (table) name of the item.
         attributes (Required) : dict
-            The item to update — an object containing zero or more attributes.
+            The item to update - an object containing zero or more attributes.
             For example:
                 {
                     'age': 42,
@@ -395,7 +395,7 @@ class Client(object):
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
         expression (Optional) : str
-            An update expression that specifies the changes to make to the item’s attributes.
+            An update expression that specifies the changes to make to the item's attributes.
         condition (Optional) : str
             A Boolean condition expression that defines a conditional logic for executing the put-item operation.
             See https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/putitem/
@@ -464,7 +464,7 @@ class Client(object):
                   total_segments=None,
                   sort_key_range_start=None,
                   sort_key_range_end=None):
-        """Retrieves (reads) attributes of multiple items in a table or in a data container’s root directory,
+        """Retrieves (reads) attributes of multiple items in a table or in a data container's root directory,
         according to the specified criteria.
 
         See:
@@ -498,11 +498,11 @@ class Client(object):
             the SortKeyRangeStart parameter (if set) and less than (<) the value of the SortKeyRangeEnd parameter.
         limit (Optional) : str
             The maximum number of items to return within the response (i.e., the maximum number of elements in the
-            response object’s Items array).
+            response object's Items array).
         segment (Optional) : str
-            The ID of a specific table segment to scan — 0 to one less than TotalSegment
+            The ID of a specific table segment to scan - 0 to one less than TotalSegment
         total_segments (Optional) : str
-            The number of segments into which to divide the table scan — 1 to 1024. See Parallel Scan.
+            The number of segments into which to divide the table scan - 1 to 1024. See Parallel Scan.
             The segments are assigned sequential IDs starting with 0.
         sort_key_range_start (Optional) : str
             The minimal sorting-key value of the items to get by using a range scan. The sorting-key value is the part
@@ -542,7 +542,7 @@ class Client(object):
                       raise_for_status=None,
                       transport_actions=None,
                       retention_period_hours=None):
-        """Creates and configures a new stream. The configuration includes the stream’s shard count and retention
+        """Creates and configures a new stream. The configuration includes the stream's shard count and retention
         period. The new stream is available immediately upon its creation.
 
         See:
@@ -555,11 +555,11 @@ class Client(object):
         path (Required) : str
             A unique name for the new stream (collection) that will be created.
         shard_count (Required) : int
-            The steam’s shard count, i.e., the number of stream shards to create.
+            The steam's shard count, i.e., the number of stream shards to create.
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
         retention_period_hours (Optional) : int
-            The stream’s retention period, in hours. After this period elapses, when new records are added to the
+            The stream's retention period, in hours. After this period elapses, when new records are added to the
             stream, the earliest ingested records are deleted. default: 24
 
         Return Value
@@ -608,7 +608,7 @@ class Client(object):
         return self.delete_object(container, path, access_key, raise_for_status)
 
     def describe_stream(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
-        """Retrieves a stream’s configuration, including the shard count and retention period.
+        """Retrieves a stream's configuration, including the shard count and retention period.
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/describestream/
@@ -669,7 +669,7 @@ class Client(object):
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
         starting_sequence_number (Optional) : int
-            Record sequence number for a sequence-number based seek operation — Type=SEQUENCE. When this parameter is
+            Record sequence number for a sequence-number based seek operation - Type=SEQUENCE. When this parameter is
             set, the operation returns the location of the record whose sequence number matches the parameter.
         timestamp_sec (Optional) : int
             The base time for a time-based seek operation (Type=TIME), as a Unix timestamp in seconds. For example,
@@ -718,9 +718,9 @@ class Client(object):
         records (Required) : []dict
             A list of dictionaries with the following keys:
             - shard_id: The ID of the shard to which to assign the record, as an integer between 0 and one less than
-                        the stream’s shard count. When both ShardId and PartitionKey are set, the record is assigned
+                        the stream's shard count. When both ShardId and PartitionKey are set, the record is assigned
                         according to the shard ID, and PartitionKey is ignored. When neither a Shard ID or a partition
-                        key is provided in the request, the platform’s default shard-assignment algorithm is used.
+                        key is provided in the request, the platform's default shard-assignment algorithm is used.
             - data: Record data.
             - client_info: Custom opaque information that can optionally be provided by the producer. This metadata can
                            be used, for example, to save the data format of a record, or the time at which a sensor or
@@ -729,12 +729,12 @@ class Client(object):
                              same partition key are assigned to the same shard, subject to the following exceptions: if
                              a shard ID is also provided for the record (see the Records ShardId request parameter),
                              the record is assigned according to the shard ID, and PartitionKey is ignored. In addition,
-                             if you increase a stream’s shard count after its creation (see UpdateStream), new records
+                             if you increase a stream's shard count after its creation (see UpdateStream), new records
                              with a previously used partition key will be assigned either to the same shard that was
                              previously used for this partition key or to a new shard. All records with the same
                              partition key that are added to the stream after the shard-count change will be assigned
                              to the same shard (be it the previously used shard or a new shard). When neither a Shard
-                             ID or a partition key is provided in the request, the platform’s default shard-assignment
+                             ID or a partition key is provided in the request, the platform's default shard-assignment
                              algorithm is used
 
             For example:
@@ -784,7 +784,7 @@ class Client(object):
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
         limit (Optional) : int
-            The maximum number of records to return in the response. The minimum is 1. There’s no restriction on
+            The maximum number of records to return in the response. The minimum is 1. There's no restriction on
             the amount of returned records, but the maximum supported overall size of all the returned records is
             10 MB and the maximum size of a single record is 2 MB, so calculate the limit accordingly.
 
