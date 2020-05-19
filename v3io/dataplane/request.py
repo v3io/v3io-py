@@ -1,5 +1,6 @@
 import base64
 import future.utils
+import datetime
 
 try:
     from urllib.parse import urlencode
@@ -362,6 +363,7 @@ def _dict_to_typed_attributes(d):
 
     for (key, value) in future.utils.viewitems(d):
         attribute_type = type(value)
+        type_value = None
 
         if isinstance(value, future.utils.string_types):
             type_key = 'S'
@@ -369,10 +371,14 @@ def _dict_to_typed_attributes(d):
             type_key = 'N'
         elif attribute_type in [bytes, bytearray]:
             type_key = 'B'
+            type_value = base64.b64encode(value)
+        elif isinstance(value, bool):
+            type_key = 'BOOL'
+            type_value = value
         else:
             raise AttributeError('Attribute {0} has unsupported type {1}'.format(key, attribute_type))
 
-        typed_attributes[key] = {type_key: str(value)}
+        typed_attributes[key] = {type_key: type_value or str(value)}
 
     return typed_attributes
 

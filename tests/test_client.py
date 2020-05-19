@@ -360,7 +360,7 @@ class TestEmd(Test):
         self.assertEqual(130, response.output.item['height'])
 
         received_items = self._client.new_items_cursor(container=self._container,
-                                                       path=self._path + '/',
+                                                       path=self._path,
                                                        attribute_names=['age', 'feature'],
                                                        filter_expression='age > 15').all()
 
@@ -387,7 +387,12 @@ class TestEmd(Test):
     def test_put_items(self):
         items = {
             'bob': {'age': 42, 'feature': 'mustache'},
-            'linda': {'age': 40, 'feature': 'singing'}
+            'linda': {
+                'age': 40,
+                'feature': 'singing',
+                'female': True,
+                'some_blob': bytearray('\x00\x11\x00\x11', encoding='utf-8')
+            },
         }
 
         response = self._client.put_items(container=self._container,
@@ -459,11 +464,11 @@ class TestEmd(Test):
 
         # delete dir
         self._client.delete_object(container=self._container,
-                                   path=path + '/')
+                                   path=path)
 
     def _verify_items(self, path, items):
         items_cursor = self._client.new_items_cursor(container=self._container,
-                                                     path=path + '/',
+                                                     path=path,
                                                      attribute_names=['*'])
 
         received_items = items_cursor.all()

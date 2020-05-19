@@ -13,7 +13,7 @@ class Output(object):
                 if attribute_type == 'N':
                     decoded_attribute = float(attribute_value)
                 elif attribute_type == 'B':
-                    decoded_attribute = bytearray(attribute_value)
+                    decoded_attribute = bytearray(attribute_value, encoding='utf-8')
                 else:
                     decoded_attribute = attribute_value
 
