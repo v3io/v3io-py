@@ -522,6 +522,8 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `GetItemsOutput`.
         """
+        path = self._ensure_path_ends_with_slash(path)
+
         return self._transport.request(container,
                                        access_key or self._access_key,
                                        raise_for_status,
@@ -566,7 +568,7 @@ class Client(object):
         ----------
         A `Response` object.
         """
-        path = self._normalize_stream_path(path)
+        path = self._ensure_path_ends_with_slash(path)
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -591,7 +593,7 @@ class Client(object):
         ----------
         A `Response` object.
         """
-        path = self._normalize_stream_path(path)
+        path = self._ensure_path_ends_with_slash(path)
 
         response = self.get_container_contents(container,
                                                path,
@@ -624,7 +626,7 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `DescribeStreamOutput`.
         """
-        path = self._normalize_stream_path(path)
+        path = self._ensure_path_ends_with_slash(path)
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -689,7 +691,7 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `SeekShardOutput`.
         """
-        path = self._normalize_stream_path(path)
+        path = self._ensure_path_ends_with_slash(path)
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -750,7 +752,7 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `PutRecordsOutput`.
         """
-        path = self._normalize_stream_path(path)
+        path = self._ensure_path_ends_with_slash(path)
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -792,7 +794,7 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `GetRecordsOutput`.
         """
-        path = self._normalize_stream_path(path)
+        path = self._ensure_path_ends_with_slash(path)
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -865,7 +867,7 @@ class Client(object):
                                        put_object_args)
 
     @staticmethod
-    def _normalize_stream_path(path):
+    def _ensure_path_ends_with_slash(path):
         if not path.endswith('/'):
             return path + '/'
 
