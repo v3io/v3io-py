@@ -378,7 +378,10 @@ def _dict_to_typed_attributes(d):
         else:
             raise AttributeError('Attribute {0} has unsupported type {1}'.format(key, attribute_type))
 
-        typed_attributes[key] = {type_key: type_value or str(value)}
+        if type_value is None:
+            type_value = str(value)
+
+        typed_attributes[key] = {type_key: type_value}
 
     return typed_attributes
 
