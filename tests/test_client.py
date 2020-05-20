@@ -386,7 +386,11 @@ class TestEmd(Test):
 
     def test_put_items(self):
         items = {
-            'bob': {'age': 42, 'feature': 'mustache'},
+            'bob': {
+                'age': 42,
+                'feature': 'mustache',
+                'female': False
+            },
             'linda': {
                 'age': 40,
                 'feature': 'singing',
