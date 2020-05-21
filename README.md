@@ -109,7 +109,6 @@ Put data in an object, get it back and then delete the object:
 # put contents to some object
 v3io_client.put_object(container='users',
                        path='/my-object',
-                       offset=0,
                        body='hello, there')
 
 # get the object
@@ -137,7 +136,7 @@ items = {
 
 # add the records to the table
 for item_key, item_attributes in items.items():
-    v3io_client.put_item(container='users', path='/bobs-burgers', attributes=item_attributes)
+    v3io_client.put_item(container='users', path='/bobs-burgers/' + item_key, attributes=item_attributes)
 
 # adds two fields (height, quip) to the louise record
 v3io_client.update_item(container='users',
