@@ -45,7 +45,7 @@ class ItemsCursor(object):
 
             return self._current_item
 
-        if self._current_response and self._current_response.output.last:
+        if self._current_response and (self._current_response.output.last or len(self._current_items) == 0):
             return None
 
         self.marker = self._current_response.output.next_marker if self._current_response else None

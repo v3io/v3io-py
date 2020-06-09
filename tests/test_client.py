@@ -359,6 +359,15 @@ class TestEmd(Test):
         self.assertEqual('i can smell fear on you', response.output.item['quip'])
         self.assertEqual(130, response.output.item['height'])
 
+        # with limit = 0
+        received_items = self._client.new_items_cursor(container=self._container,
+                                                       path=self._path,
+                                                       attribute_names=['age', 'feature'],
+                                                       filter_expression='age > 15',
+                                                       limit=0).all()
+
+        self.assertEqual(0, len(received_items))
+
         received_items = self._client.new_items_cursor(container=self._container,
                                                        path=self._path,
                                                        attribute_names=['age', 'feature'],
