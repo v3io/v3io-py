@@ -62,7 +62,7 @@ def encode_get_container_contents(container_name, access_key, kwargs):
     if kwargs['directories_only']:
         query['prefix-only'] = 1
 
-    if kwargs['limit']:
+    if kwargs['limit'] is not None:
         query['max-keys'] = kwargs['limit']
 
     if kwargs['marker']:
@@ -199,7 +199,7 @@ def encode_get_items(container_name, access_key, kwargs):
     if kwargs['sharding_key']:
         body['ShardingKey'] = kwargs['sharding_key']
 
-    if kwargs['limit']:
+    if kwargs['limit'] is not None:
         body['Limit'] = kwargs['limit']
 
     if kwargs['segment']:

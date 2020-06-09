@@ -126,7 +126,7 @@ class Client(object):
             True - retrieves only directories (common prefixes)
         limit (Optional) : int
             Number of objects/directories to receive. default: 1000
-        marker (Optional) : int
+        marker (Optional) : str
             An opaque identifier that was returned in the NextMarker element of a response to a previous
             get_container_contents request that did not return all the requested items. This marker identifies the
             location in the path from which to start searching for the remaining requested items.
@@ -496,7 +496,7 @@ class Client(object):
             applicable only together with the ShardingKey request parameter. The scan will return all items with the
             specified sharding-key value whose sorting-key values are greater than or equal to (>=) than the value of
             the SortKeyRangeStart parameter (if set) and less than (<) the value of the SortKeyRangeEnd parameter.
-        limit (Optional) : str
+        limit (Optional) : int
             The maximum number of items to return within the response (i.e., the maximum number of elements in the
             response object's Items array).
         segment (Optional) : str
