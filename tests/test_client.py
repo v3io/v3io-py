@@ -326,7 +326,7 @@ class TestEmd(Test):
     def setUp(self):
         super(TestEmd, self).setUp()
 
-        self._path = '/v3io-py-test-emd'
+        self._path = 'some_dir/v3io-py-test-emd'
 
     def test_emd(self):
         items = {
@@ -358,6 +358,11 @@ class TestEmd(Test):
         self.assertEqual(9, response.output.item['age'])
         self.assertEqual('i can smell fear on you', response.output.item['quip'])
         self.assertEqual(130, response.output.item['height'])
+
+        response = self._client.get_items(container=self._container,
+                                          path=self._path,
+                                          filter_expression="feature == 'singing'")
+        self.assertEqual(1, len(response.output.items))
 
         # with limit = 0
         received_items = self._client.new_items_cursor(container=self._container,
