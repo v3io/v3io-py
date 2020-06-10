@@ -334,6 +334,7 @@ class TestEmd(Test):
         item = {
             item_key: {
                 'age': 42,
+                'pi': 3.14,
                 'feature': 'mustache',
                 'male': True,
                 'happy': False,
@@ -349,6 +350,9 @@ class TestEmd(Test):
                                          path=v3io.common.helpers.url_join(self._path, item_key))
 
         self.assertEqual(item[item_key], response.output.item)
+
+        for key, value in item[item_key].items():
+            self.assertEqual(type(value), type(response.output.item[key]))
 
     def test_emd(self):
         items = {

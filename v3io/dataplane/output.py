@@ -11,9 +11,14 @@ class Output(object):
         for attribute_key, typed_attribute_value in future.utils.viewitems(typed_attributes):
             for attribute_type, attribute_value in future.utils.viewitems(typed_attribute_value):
                 if attribute_type == 'N':
-                    decoded_attribute = float(attribute_value)
+                    try:
+                        decoded_attribute = int(attribute_value)
+                    except ValueError:
+                        decoded_attribute = float(attribute_value)
                 elif attribute_type == 'B':
                     decoded_attribute = base64.b64decode(attribute_value)
+                elif attribute_type == 'S':
+                    decoded_attribute = str(attribute_value)
                 else:
                     decoded_attribute = attribute_value
 
