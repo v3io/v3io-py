@@ -327,6 +327,28 @@ class TestEmd(Test):
         super(TestEmd, self).setUp()
 
         self._path = 'some_dir/v3io-py-test-emd'
+        self._delete_dir(self._path)
+
+    def test_emd_values(self):
+        item_key = 'bob'
+        item = {
+            item_key: {
+                'age': 42,
+                'feature': 'mustache',
+                'male': True,
+                'happy': False,
+                'blob': b'+AFymWFzAL/LUOiU2huiADbugMH0AARATEO1'
+            }
+        }
+
+        self._client.put_item(container=self._container,
+                              path=v3io.common.helpers.url_join(self._path, item_key),
+                              attributes=item[item_key])
+
+        response = self._client.get_item(container=self._container,
+                                         path=v3io.common.helpers.url_join(self._path, item_key))
+
+        self.assertEqual(item[item_key], response.output.item)
 
     def test_emd(self):
         items = {
@@ -396,8 +418,6 @@ class TestEmd(Test):
 
         self.assertEqual(10, response.output.item['age'])
 
-        self._delete_items(self._path, items)
-
     def test_put_items(self):
         items = {
             'bob': {
@@ -419,8 +439,6 @@ class TestEmd(Test):
         self.assertTrue(response.success)
 
         self._verify_items(self._path, items)
-
-        self._delete_items(self._path, items)
 
     def test_put_items_with_error(self):
         items = {
