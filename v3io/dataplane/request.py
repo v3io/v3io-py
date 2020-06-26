@@ -202,10 +202,10 @@ def encode_get_items(container_name, access_key, kwargs):
     if kwargs['limit'] is not None:
         body['Limit'] = kwargs['limit']
 
-    if kwargs['segment']:
+    if kwargs['segment'] is not None:
         body['Segment'] = kwargs['segment']
 
-    if kwargs['total_segments']:
+    if kwargs['total_segments'] is not None:
         body['TotalSegment'] = kwargs['total_segments']
 
     if kwargs['sort_key_range_start']:
