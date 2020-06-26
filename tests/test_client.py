@@ -385,10 +385,24 @@ class TestEmd(Test):
         self.assertEqual('i can smell fear on you', response.output.item['quip'])
         self.assertEqual(130, response.output.item['height'])
 
+        # get items with filter expression
         response = self._client.get_items(container=self._container,
                                           path=self._path,
                                           filter_expression="feature == 'singing'")
         self.assertEqual(1, len(response.output.items))
+
+        # get items with segment / total_segments
+        total_segments = 4
+        total_items = []
+
+        for segment in range(total_segments):
+            received_items = self._client.new_items_cursor(container=self._container,
+                                                           path=self._path,
+                                                           segment=segment,
+                                                           total_segments=total_segments).all()
+            total_items.append(received_items)
+
+        self.assertEqual(4, len(total_items))
 
         # with limit = 0
         received_items = self._client.new_items_cursor(container=self._container,
