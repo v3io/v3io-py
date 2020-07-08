@@ -7,8 +7,8 @@ from . import abstract
 
 class Transport(abstract.Transport):
 
-    def __init__(self, logger, endpoint=None, max_connections=None, timeout=None):
-        super(Transport, self).__init__(logger, endpoint, max_connections, timeout)
+    def __init__(self, logger, endpoint=None, max_connections=None, timeout=None, verbosity=None):
+        super(Transport, self).__init__(logger, endpoint, max_connections, timeout, verbosity)
         self._next_connection_pool = 0
         self._session = requests.Session()
 
@@ -41,7 +41,7 @@ class Transport(abstract.Transport):
         return response
 
     def _http_request(self, method, path, headers=None, body=None):
-        # self._logger.debug_with('Tx', method=method, path=path, headers=headers, body=body)
+        self.log('Tx', method=method, path=path, headers=headers, body=body)
 
         response = self._session.request(method,
                                          self._endpoint + path,
@@ -50,6 +50,6 @@ class Transport(abstract.Transport):
                                          timeout=self._timeout,
                                          verify=False)
 
-        # self._logger.debug_with('Rx', status_code=response.status_code, headers=response.headers, body=response.text)
+        self.log('Rx', status_code=response.status_code, headers=response.headers, body=response.text)
 
         return response

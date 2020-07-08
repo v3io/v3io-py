@@ -200,7 +200,7 @@ class GetRecordsResult(Output):
         self.arrival_time_sec = decoded_body.get('ArrivalTimeSec')
         self.arrival_time_nsec = decoded_body.get('ArrivalTimeNSec')
         self.sequence_number = decoded_body.get('SequenceNumber')
-        self.client_info = decoded_body.get('ClientInfo')
+        self.client_info = self._from_base64(decoded_body.get('ClientInfo'))
         self.partition_key = decoded_body.get('PartitionKey')
         self.data = self._from_base64(decoded_body.get('Data'))
 

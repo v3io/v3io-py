@@ -12,9 +12,9 @@ import v3io.logger
 class Test(unittest.TestCase):
 
     def setUp(self):
-        self._logger = v3io.logger.Logger()
-        self._logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
-        self._client = v3io.dataplane.Client(self._logger, transport_kind='httpclient')
+        self._client = v3io.dataplane.Client(transport_kind='httpclient',
+                                             logger_verbosity='DEBUG',
+                                             transport_verbosity='DEBUG')
 
         self._container = 'bigdata'
 
@@ -110,7 +110,7 @@ class TestStream(Test):
 
         records = [
             {'shard_id': 1, 'data': 'first shard record #1'},
-            {'shard_id': 1, 'data': 'first shard record #2'},
+            {'shard_id': 1, 'data': 'first shard record #2', 'client_info': bytearray(b'some info')},
             {'shard_id': 10, 'data': 'invalid shard record #1'},
             {'shard_id': 2, 'data': 'second shard record #1'},
             {'data': 'some shard record #1'},
@@ -140,8 +140,9 @@ class TestStream(Test):
                                             location=response.output.location)
 
         self.assertEqual(2, len(response.output.records))
-        self.assertEqual('first shard record #1', response.output.records[0].data.decode('utf-8'))
-        self.assertEqual('first shard record #2', response.output.records[1].data.decode('utf-8'))
+        self.assertEqual(records[0]['data'], response.output.records[0].data.decode('utf-8'))
+        self.assertEqual(records[1]['data'], response.output.records[1].data.decode('utf-8'))
+        self.assertEqual(records[1]['client_info'], response.output.records[1].client_info)
 
         self._client.delete_stream(container=self._container,
                                    path=self._path)

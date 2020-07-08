@@ -9,8 +9,8 @@ from . import abstract
 
 class Transport(abstract.Transport):
 
-    def __init__(self, logger, endpoint=None, max_connections=None, timeout=None):
-        super(Transport, self).__init__(logger, endpoint, max_connections, timeout)
+    def __init__(self, logger, endpoint=None, max_connections=None, timeout=None, verbosity=None):
+        super(Transport, self).__init__(logger, endpoint, max_connections, timeout, verbosity)
 
         # holds which connection index we'll use
         self._next_connection_idx = 0
@@ -70,6 +70,11 @@ class Transport(abstract.Transport):
 
                 status_code, headers = self._get_status_and_headers(response)
 
+                self.log('Rx',
+                         connection_idx=connection_idx,
+                         status_code=status_code,
+                         body=response_body)
+
                 response = v3io.dataplane.response.Response(request.output,
                                                             status_code,
                                                             headers,
@@ -94,6 +99,13 @@ class Transport(abstract.Transport):
                 request = self._send_request_on_connection(request, connection_idx)
 
     def _send_request_on_connection(self, request, connection_idx):
+        self.log('Tx',
+                 connection_idx =connection_idx,
+                 method=request.method,
+                 path=request.path,
+                 headers=request.headers,
+                 body=request.body)
+
         connection = self._connections[connection_idx]
 
         try:

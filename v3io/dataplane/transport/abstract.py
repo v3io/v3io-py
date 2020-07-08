@@ -6,11 +6,13 @@ import v3io.dataplane.transport
 
 class Transport(object):
 
-    def __init__(self, logger, endpoint=None, max_connections=None, timeout=None):
+    def __init__(self, logger, endpoint=None, max_connections=None, timeout=None, verbosity=None):
         self._logger = logger
         self._endpoint = self._get_endpoint(endpoint)
         self._timeout = timeout
         self.max_connections = max_connections or 8
+
+        self._set_log_method(verbosity)
 
     def restart(self):
         pass
@@ -58,3 +60,18 @@ class Transport(object):
             endpoint = 'http://' + endpoint
 
         return endpoint.rstrip('/')
+
+    def _set_log_method(self, verbosity):
+        # by default, the log method is null
+        log_method = self._log_null
+
+        if verbosity == 'DEBUG':
+            log_method = self._log
+
+        setattr(self, 'log', log_method)
+
+    def _log(self, message, *args, **kw_args):
+        self._logger.debug_with(message, *args, **kw_args)
+
+    def _log_null(self, message, *args, **kw_args):
+        pass
