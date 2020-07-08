@@ -382,7 +382,8 @@ class Client(object):
                     attributes=None,
                     expression=None,
                     condition=None,
-                    update_mode=None):
+                    update_mode=None,
+                    alternate_expression=None):
         """Updates the attributes of a table item. If the specified item or table don't exist,
         the operation creates them.
 
@@ -411,6 +412,14 @@ class Client(object):
             See https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/putitem/
         update_mode (Optional) : str
             CreateOrReplaceAttributes (default): Creates or replaces attributes
+        alternate_expression (Optional) : str
+            An alternate update expression that specifies the changes to make to the item's attributes when a
+            condition expression, defined in the ConditionExpression request parameter, evaluates to false;
+            (i.e., this parameter defines the else clause of a conditional if-then-else update expression).
+            See Update Expression for syntax details and examples. When the alternate update expression is executed,
+            it's evaluated against the table item to be updated, if it exists. If the item doesn't exist, the update
+            creates it (as well as the parent table if it doesn't exist). See also the UpdateExpression notes, which
+            apply to the alternate update expression as well.
 
         Return Value
         ----------
