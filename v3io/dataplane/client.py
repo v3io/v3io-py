@@ -1,5 +1,6 @@
 import os
 import ujson
+import sys
 
 import future.utils
 
@@ -22,13 +23,15 @@ class Client(object):
                  access_key=None,
                  max_connections=None,
                  timeout=None,
-                 transport_kind='httpclient'):
+                 transport_kind='httpclient',
+                 logger_verbosity=None,
+                 transport_verbosity='info'):
         """Creates a v3io client, used to access v3io
 
         Parameters
         ----------
         logger (Optional) : logger
-            On optional pre-existing logger. If not passed, a logger is created with "INFO" level
+            An optional pre-existing logger. If not passed, a logger is created with 'logger_verbosity' level
         endpoint (Optional) : str
             The v3io endpoint to connect to (e.g. http://v3io-webapi:8081). if empty, the env var
             V3IO_API is used
@@ -44,12 +47,18 @@ class Client(object):
             Defines the underlying transport to use towards v3io (of of httpclient, requests). Should
             normally be left httpclient unless an underlying issue is found, in which case requests may
             be used as a temporary workaround at the expense of performance
+        logger_verbosity (Optional) : INFO / DEBUG
+            If 'logger' is not provided, this will specify the verbosity of the created logger.
+        transport_verbosity (Optional) : INFO / DEBUG
+            If set to 'DEBUG', transport will log lots of information at the cost of performance. It uses
+            the "debug_with" logger interface, so wither a logger set to DEBUG level must be passed in 'logger' or
+            'logger_verbosity' must be set to DEBUG
 
         Return Value
         ----------
         A `Client` object
         """
-        self._logger = logger or v3io.logger.Logger(level='INFO')
+        self._logger = logger or self._create_logger(logger_verbosity)
         self._access_key = access_key or os.environ.get('V3IO_ACCESS_KEY')
 
         if not self._access_key:
@@ -62,7 +71,8 @@ class Client(object):
         self._transport = transport_cls.Transport(self._logger,
                                                   endpoint,
                                                   max_connections,
-                                                  timeout)
+                                                  timeout,
+                                                  transport_verbosity)
 
         # create a default "batch" object
         self.batch = self.create_batch()
@@ -719,15 +729,19 @@ class Client(object):
             The path of the stream.
         records (Required) : []dict
             A list of dictionaries with the following keys:
-            - shard_id: The ID of the shard to which to assign the record, as an integer between 0 and one less than
+            - shard_id: int, optional
+                        The ID of the shard to which to assign the record, as an integer between 0 and one less than
                         the stream's shard count. When both ShardId and PartitionKey are set, the record is assigned
                         according to the shard ID, and PartitionKey is ignored. When neither a Shard ID or a partition
                         key is provided in the request, the platform's default shard-assignment algorithm is used.
-            - data: Record data.
-            - client_info: Custom opaque information that can optionally be provided by the producer. This metadata can
-                           be used, for example, to save the data format of a record, or the time at which a sensor or
-                           application event was triggered.
-            - partition_key: A partition key with which to associate the record (see Record Metadata). Records with the
+            - data: str, required
+                    Record data.
+            - client_info: bytes/bytearray, optional
+                           Custom opaque information that can optionally be provided by the producer.
+                           This metadata can be used, for example, to save the data format of a record, or the time at
+                           which a sensor or application event was triggered.
+            - partition_key: str, optional
+                             A partition key with which to associate the record (see Record Metadata). Records with the
                              same partition key are assigned to the same shard, subject to the following exceptions: if
                              a shard ID is also provided for the record (see the Records ShardId request parameter),
                              the record is assigned according to the shard ID, and PartitionKey is ignored. In addition,
@@ -880,3 +894,9 @@ class Client(object):
             'key': key,
             'fields': fields
         })
+
+    def _create_logger(self, logger_verbosity):
+        logger = v3io.logger.Logger(level=logger_verbosity or 'INFO')
+        logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
+
+        return logger
