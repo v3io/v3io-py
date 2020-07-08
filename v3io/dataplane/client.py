@@ -596,6 +596,42 @@ class Client(object):
                                        v3io.dataplane.request.encode_create_stream,
                                        locals())
 
+    def update_stream(self,
+                      container,
+                      path,
+                      shard_count,
+                      access_key=None,
+                      raise_for_status=None,
+                      transport_actions=None):
+        """Updates a stream's configuration by increasing its shard count. The changes are applied immediately.
+
+        See:
+        https://www.iguazio.com/docs/latest-release/reference/api-reference/web-apis/streaming-web-api/updatestream/
+
+        Parameters
+        ----------
+        container (Required) : str
+            The container on which to operate.
+        path (Required) : str
+            A unique name for the new stream (collection) that will be created.
+        shard_count (Required) : int
+            The steam's shard count, i.e., the number of stream shards to create.
+        access_key (Optional) : str
+            The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
+
+        Return Value
+        ----------
+        A `Response` object.
+        """
+        path = self._ensure_path_ends_with_slash(path)
+
+        return self._transport.request(container,
+                                       access_key or self._access_key,
+                                       raise_for_status,
+                                       transport_actions,
+                                       v3io.dataplane.request.encode_update_stream,
+                                       locals())
+
     def delete_stream(self, container, path, access_key=None, raise_for_status=None):
         """Deletes a stream object along with all of its shards.
 

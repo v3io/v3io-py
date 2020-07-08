@@ -245,6 +245,19 @@ def encode_create_stream(container_name, access_key, kwargs):
                    body)
 
 
+def encode_update_stream(container_name, access_key, kwargs):
+    body = {
+        'ShardCount': kwargs['shard_count'],
+    }
+
+    return _encode('POST',
+                   container_name,
+                   access_key,
+                   kwargs['path'],
+                   {'X-v3io-function': 'UpdateStream'},
+                   body)
+
+
 def encode_describe_stream(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
