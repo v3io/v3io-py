@@ -156,6 +156,11 @@ def encode_update_item(container_name, access_key, kwargs):
         function_name = 'UpdateItem'
         body['UpdateExpression'] = kwargs['expression']
 
+    if kwargs['alternate_expression']:
+        http_method = 'POST'
+        function_name = 'UpdateItem'
+        body['AlternateUpdateExpression'] = kwargs['alternate_expression']
+
     elif kwargs['attributes']:
         http_method = 'PUT'
         function_name = 'PutItem'
