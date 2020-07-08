@@ -144,6 +144,21 @@ class TestStream(Test):
         self.assertEqual(records[1]['data'], response.output.records[1].data.decode('utf-8'))
         self.assertEqual(records[1]['client_info'], response.output.records[1].client_info)
 
+        # update the stream by adding 8 shards to it
+        self._client.update_stream(container=self._container,
+                                   path=self._path,
+                                   shard_count=16)
+
+        records = [
+            {'shard_id': 10, 'data': 'Now valid shard record #1'},
+        ]
+
+        response = self._client.put_records(container=self._container,
+                                            path=self._path,
+                                            records=records)
+
+        self.assertEqual(0, response.output.failed_record_count)
+
         self._client.delete_stream(container=self._container,
                                    path=self._path)
 

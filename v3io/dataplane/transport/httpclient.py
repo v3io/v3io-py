@@ -100,7 +100,7 @@ class Transport(abstract.Transport):
 
     def _send_request_on_connection(self, request, connection_idx):
         self.log('Tx',
-                 connection_idx =connection_idx,
+                 connection_idx=connection_idx,
                  method=request.method,
                  path=request.path,
                  headers=request.headers,
