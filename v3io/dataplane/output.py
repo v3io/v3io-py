@@ -1,4 +1,5 @@
 import base64
+import string
 
 import future.utils
 
@@ -18,7 +19,10 @@ class Output(object):
                 elif attribute_type == 'B':
                     decoded_attribute = base64.b64decode(attribute_value)
                 elif attribute_type == 'S':
-                    decoded_attribute = str(attribute_value)
+                    if type(attribute_value) in [float, int]:
+                        decoded_attribute = str(attribute_value)
+                    else:
+                        decoded_attribute = attribute_value
                 else:
                     decoded_attribute = attribute_value
 
