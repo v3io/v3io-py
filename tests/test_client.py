@@ -351,7 +351,10 @@ class TestEmd(Test):
             item_key: {
                 'age': 42,
                 'pi': 3.14,
-                'feature': 'mustache',
+                'feature_str': 'mustache',
+                'feature_unicode': u'mustache',
+                'numeric_str': '1',
+                'unicode': u'\xd7\xa9\xd7\x9c\xd7\x95\xd7\x9d',
                 'male': True,
                 'happy': False,
                 'blob': b'+AFymWFzAL/LUOiU2huiADbugMH0AARATEO1'
@@ -365,10 +368,17 @@ class TestEmd(Test):
         response = self._client.get_item(container=self._container,
                                          path=v3io.common.helpers.url_join(self._path, item_key))
 
-        self.assertEqual(item[item_key], response.output.item)
+        self.assertEqual(len(item[item_key].keys()), len(response.output.item.keys()))
+
+        for key, value in response.output.item.items():
+            if item[item_key][key] != value:
+                self.fail('Values dont match')
 
         for key, value in item[item_key].items():
-            self.assertEqual(type(value), type(response.output.item[key]))
+
+            # can't guarantee strings as they might be converted to unicode
+            if type(value) is not str:
+                self.assertEqual(type(value), type(response.output.item[key]))
 
     def test_emd(self):
         items = {

@@ -383,10 +383,15 @@ def _dict_to_typed_attributes(d):
         attribute_type = type(value)
         type_value = None
 
-        if isinstance(value, future.utils.string_types):
+        if isinstance(value, future.utils.text_type):
             type_key = 'S'
+            type_value = value
+        elif isinstance(value, future.utils.string_types):
+            type_key = 'S'
+            type_value = str(value)
         elif attribute_type in [int, float]:
             type_key = 'N'
+            type_value = str(value)
         elif attribute_type in [bytes, bytearray]:
             type_key = 'B'
             type_value = base64.b64encode(value)
@@ -395,9 +400,6 @@ def _dict_to_typed_attributes(d):
             type_value = value
         else:
             raise AttributeError('Attribute {0} has unsupported type {1}'.format(key, attribute_type))
-
-        if type_value is None:
-            type_value = str(value)
 
         typed_attributes[key] = {type_key: type_value}
 
