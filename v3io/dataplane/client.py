@@ -291,8 +291,7 @@ class Client(object):
                  access_key=None,
                  raise_for_status=None,
                  transport_actions=None,
-                 condition=None,
-                 update_mode=None):
+                 condition=None):
         """Creates an item with the provided attributes. If an item with the same name (primary key) already exists in
         the specified table, the existing item is completely overwritten (replaced with a new item). If the item or
         table do not exist, the operation creates them.
@@ -318,8 +317,6 @@ class Client(object):
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
         condition (Optional) : str
             A Boolean condition expression that defines a conditional logic for executing the put-item operation.
-        update_mode (Optional) : str
-            CreateOrReplaceAttributes (default): Creates or replaces attributes
 
         Return Value
         ----------
@@ -550,6 +547,24 @@ class Client(object):
                                        v3io.dataplane.request.encode_get_items,
                                        locals(),
                                        v3io.dataplane.output.GetItemsOutput)
+
+    def delete_item(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
+        """Deletes an item.
+
+        Parameters
+        ----------
+        container (Required) : str
+            The container on which to operate.
+        path (Required) : str
+            The path of the item
+        access_key (Optional) : str
+            The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
+
+        Return Value
+        ----------
+        A `Response` object.
+        """
+        return self.delete_object(container, path, access_key, raise_for_status, transport_actions)
 
     #
     # Stream
