@@ -129,9 +129,6 @@ def encode_put_item(container_name, access_key, kwargs):
     if kwargs['condition'] is not None:
         body['ConditionExpression'] = kwargs['condition']
 
-    if kwargs['update_mode'] is not None:
-        body['UpdateMode'] = kwargs['update_mode']
-
     return _encode('PUT',
                    container_name,
                    access_key,

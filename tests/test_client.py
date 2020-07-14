@@ -478,9 +478,16 @@ class TestEmd(Test):
         }
 
         response = self._client.put_items(container=self._container,
-                                          path=self._path, items=items)
+                                          path=self._path,
+                                          items=items)
 
         self.assertTrue(response.success)
+
+        self._verify_items(self._path, items)
+
+        # delete an item
+        self._client.delete_item(container=self._container, path=self._path + '/linda')
+        del(items['linda'])
 
         self._verify_items(self._path, items)
 
