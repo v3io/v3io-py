@@ -1,6 +1,7 @@
 import ssl
 import sys
 import http.client
+import socket
 
 import v3io.dataplane.response
 import v3io.dataplane.request
@@ -25,12 +26,12 @@ class Transport(abstract.Transport):
 
         # python 2 and 3 have different exceptions
         if sys.version_info[0] >= 3:
-            self._remote_disconnect_exception = http.client.RemoteDisconnected
-            self._disconnection_exceptions = (BrokenPipeError, http.client.CannotSendRequest, http.client.RemoteDisconnected)
+            self._wait_response_exceptions = (http.client.RemoteDisconnected, ConnectionResetError, ConnectionRefusedError)
+            self._send_request_exceptions = (BrokenPipeError, http.client.CannotSendRequest, http.client.RemoteDisconnected)
             self._get_status_and_headers = self._get_status_and_headers_py3
         else:
-            self._remote_disconnect_exception = http.client.BadStatusLine
-            self._disconnection_exceptions = (http.client.CannotSendRequest, http.client.BadStatusLine)
+            self._wait_response_exceptions = (http.client.BadStatusLine, socket.error)
+            self._send_request_exceptions = (http.client.CannotSendRequest, http.client.BadStatusLine)
             self._get_status_and_headers = self._get_status_and_headers_py2
 
     def restart(self):
@@ -86,9 +87,17 @@ class Transport(abstract.Transport):
                 # return the response
                 return response
 
-            except self._remote_disconnect_exception as e:
+            except self._wait_response_exceptions as e:
                 if num_retries == 0:
+                    self._logger.warn_with('Remote disconnected while waiting for response and ran out of retries',
+                                           e=type(e),
+                                           connection_idx=connection_idx)
+
                     raise e
+
+                self._logger.info_with('Remote disconnected while waiting for response',
+                                       retries_left=num_retries,
+                                       connection_idx=connection_idx)
 
                 num_retries -= 1
 
@@ -97,6 +106,11 @@ class Transport(abstract.Transport):
 
                 # re-send the request on the connection
                 request = self._send_request_on_connection(request, connection_idx)
+            except BaseException as e:
+                self._logger.warn_with('Unhandled exception while waiting for response',
+                                       e=type(e),
+                                       connection_idx=connection_idx)
+                raise e
 
     def _send_request_on_connection(self, request, connection_idx):
         self.log('Tx',
@@ -110,11 +124,16 @@ class Transport(abstract.Transport):
 
         try:
             connection.request(request.method, request.path, request.body, request.headers)
-        except self._disconnection_exceptions:
+        except self._send_request_exceptions as e:
+            self._logger.info_with('Disconnected while attempting to send. Recreating connection', e=type(e))
+
             connection = self._recreate_connection_at_index(connection_idx)
 
             # re-request
             connection.request(request.method, request.path, request.body, request.headers)
+        except BaseException as e:
+            self._logger.warn_with('Unhandled exception while sending request', e=type(e))
+            raise e
 
         return request
 
