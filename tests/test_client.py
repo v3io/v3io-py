@@ -1,6 +1,6 @@
 import os.path
 import unittest
-import sys
+import time
 
 import future.utils
 
@@ -643,3 +643,76 @@ class TestBatchRaiseForStatus(Test):
                 self.assertEqual(404, response.status_code)
             else:
                 self.assertEqual(200, response.status_code)
+
+
+class TestConnectonErrorRecovery(Test):
+
+    def setUp(self):
+        super(TestConnectonErrorRecovery, self).setUp()
+
+        self._object_dir = '/v3io-py-test-connection-error'
+        self._object_path = self._object_dir + '/object.txt'
+
+        self._emd_path = 'some_dir/v3io-py-test-emd'
+        self._delete_dir(self._emd_path)
+
+        # clean up
+        self._delete_dir(self._object_dir)
+
+    @unittest.skip("Manually executed")
+    def test_object(self):
+
+        for i in range(100):
+            body = 'iteration {}'.format(i)
+
+            if i == 10:
+                self._restart_webapi()
+
+            # put contents to some object
+            self._client.put_object(container=self._container,
+                                    path=self._object_path,
+                                    body=body)
+
+            response = self._client.get_object(container=self._container,
+                                               path=self._object_path)
+
+            if not isinstance(response.body, str):
+                response.body = response.body.decode('utf-8')
+
+            self.assertEqual(response.body, body)
+
+            time.sleep(0.1)
+
+    @unittest.skip("Manually executed")
+    def test_emd_batch(self):
+        items = {
+            'bob': {'age': 42, 'feature': 'mustache'},
+            'linda': {'age': 41, 'feature': 'singing'},
+            'louise': {'age': 9, 'feature': 'bunny ears'},
+            'tina': {'age': 14, 'feature': 'butts'},
+        }
+
+        # put the item in a batch
+        for item_key, item_attributes in future.utils.viewitems(items):
+            self._client.batch.put_item(container=self._container,
+                                        path=v3io.common.helpers.url_join(self._emd_path, item_key),
+                                        attributes=item_attributes)
+
+        responses = self._client.batch.wait()
+        for response in responses:
+            self.assertEqual(200, response.status_code)
+
+        self._restart_webapi()
+
+        for item_key in items.keys():
+            self._client.batch.get_item(container=self._container,
+                                        path=v3io.common.helpers.url_join(self._emd_path, item_key),
+                                        attribute_names=['__size', 'age'])
+
+        responses = self._client.batch.wait()
+        for response in responses:
+            self.assertEqual(200, response.status_code)
+
+    def _restart_webapi(self):
+        print('Restart webapi now')
+        time.sleep(15)
