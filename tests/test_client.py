@@ -101,6 +101,39 @@ class TestStream(Test):
                                    path=self._path,
                                    raise_for_status=[200, 204, 404])
 
+    def test_delete_stream_with_cg(self):
+        num_shards = 8
+
+        # check that the stream doesn't exist
+        self.assertFalse(self._stream_exists())
+
+        # create a stream
+        self._client.create_stream(container=self._container,
+                                   path=self._path,
+                                   shard_count=num_shards)
+
+        # write data to all shards so there are files
+        for shard_id in range(num_shards):
+            self._client.put_records(container=self._container,
+                                     path=self._path,
+                                     records=[
+                                         {'shard_id': shard_id, 'data': f'data for shard {shard_id}'}
+                                     ])
+
+        # write several "consumer group state" files
+        for cg_id in range(3):
+            self._client.put_object(container=self._container,
+                                    path=os.path.join(self._path, f'cg{cg_id}-state.json'))
+
+        # check that the stream doesn't exist
+        self.assertTrue(self._stream_exists())
+
+        # delete the stream
+        self._client.delete_stream(container=self._container, path=self._path)
+
+        # check that the stream doesn't exist
+        self.assertFalse(self._stream_exists())
+
     def test_stream(self):
 
         # create a stream w/8 shards
@@ -161,6 +194,12 @@ class TestStream(Test):
 
         self._client.delete_stream(container=self._container,
                                    path=self._path)
+
+    def _stream_exists(self):
+        response = self._client.describe_stream(container=self._container,
+                                                path=self._path,
+                                                raise_for_status=v3io.dataplane.RaiseForStatus.never)
+        return response.status_code == 200
 
 
 class TestObject(Test):
