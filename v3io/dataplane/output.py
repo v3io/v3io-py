@@ -40,9 +40,6 @@ class Output(object):
 
         return decoded_attributes
 
-    def _decode_array(self, decoded_attribute):
-        return ['aaa']
-
 
 #
 # Containers
