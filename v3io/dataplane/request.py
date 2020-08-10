@@ -2,6 +2,7 @@ import base64
 import future.utils
 import datetime
 import array
+import datetime
 
 try:
     from urllib.parse import urlencode
@@ -11,8 +12,8 @@ except BaseException:
 import ujson
 
 import v3io.common.helpers
-import v3io.dataplane.array
-
+import v3io.dataplane.item_array
+import v3io.dataplane.item_timestamp
 
 #
 # Request
@@ -399,10 +400,13 @@ def _dict_to_typed_attributes(d):
             type_value = value
         elif isinstance(value, list):
             type_key = 'B'
-            type_value = v3io.dataplane.array.encode_list(value)
+            type_value = v3io.dataplane.item_array.encode_list(value)
         elif isinstance(value, array.array):
             type_key = 'B'
-            type_value = v3io.dataplane.array.encode_array(value, value.typecode)
+            type_value = v3io.dataplane.item_array.encode_array(value, value.typecode)
+        elif isinstance(value, datetime.datetime):
+            type_key = 'TS'
+            type_value = v3io.dataplane.item_timestamp.encode(value)
         else:
             raise AttributeError('Attribute {0} has unsupported type {1}'.format(key, attribute_type))
 

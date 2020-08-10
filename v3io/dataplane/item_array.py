@@ -8,6 +8,7 @@ ITEM_HEADER_MAGIC_AND_VERSION = ITEM_HEADER_MAGIC + struct.pack("h", 1)
 OPERAND_TYPE_LONG = 259
 OPERAND_TYPE_DOUBLE = 261
 
+
 def encode_list(list_value):
     typecode = 'l'
     if len(list_value) and isinstance(list_value[0], float):
