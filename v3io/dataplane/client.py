@@ -294,10 +294,15 @@ class Client(object):
                  condition=None):
         """Creates an item with the provided attributes. If an item with the same name (primary key) already exists in
         the specified table, the existing item is completely overwritten (replaced with a new item). If the item or
-        table do not exist, the operation creates them.
+        table do not exist, the operation creates them. The max number of values per item is 1000.
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/putitem/
+
+        Notes:
+        1. To provide arrays, pass either a list of integers ([1, 2, 3]), a list of floats ([1.0, 2.0, 3.0]) an
+           array.array with a typecode of either 'l' (integer) or 'd' (float). The response will always either be
+           a list of integers or a list of floats (never an array.array)
 
         Parameters
         ----------
