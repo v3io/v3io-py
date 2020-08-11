@@ -1,7 +1,11 @@
 import base64
-import string
+import struct
 
 import future.utils
+
+
+import v3io.dataplane.item_array
+import v3io.dataplane.item_timestamp
 
 
 class Output(object):
@@ -18,11 +22,21 @@ class Output(object):
                         decoded_attribute = float(attribute_value)
                 elif attribute_type == 'B':
                     decoded_attribute = base64.b64decode(attribute_value)
+
+                    # try to decode as an array
+                    try:
+                        decoded_attribute = v3io.dataplane.item_array.decode(decoded_attribute)
+                    except:
+                        pass
+
                 elif attribute_type == 'S':
                     if type(attribute_value) in [float, int]:
                         decoded_attribute = str(attribute_value)
                     else:
                         decoded_attribute = attribute_value
+
+                elif attribute_type == 'TS':
+                    decoded_attribute = v3io.dataplane.item_timestamp.decode(attribute_value)
                 else:
                     decoded_attribute = attribute_value
 

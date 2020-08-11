@@ -1,6 +1,8 @@
 import os.path
 import unittest
 import time
+import array
+import datetime
 
 import future.utils
 
@@ -117,13 +119,13 @@ class TestStream(Test):
             self._client.put_records(container=self._container,
                                      path=self._path,
                                      records=[
-                                         {'shard_id': shard_id, 'data': f'data for shard {shard_id}'}
+                                         {'shard_id': shard_id, 'data': 'data for shard {}'.format(shard_id)}
                                      ])
 
         # write several "consumer group state" files
         for cg_id in range(3):
             self._client.put_object(container=self._container,
-                                    path=os.path.join(self._path, f'cg{cg_id}-state.json'))
+                                    path=os.path.join(self._path, 'cg{}-state.json'.format(cg_id)))
 
         # check that the stream doesn't exist
         self.assertTrue(self._stream_exists())
@@ -384,7 +386,46 @@ class TestEmd(Test):
         self._path = 'some_dir/v3io-py-test-emd'
         self._delete_dir(self._path)
 
+    def test_emd_array(self):
+        item_key = 'item_with_arrays'
+        item = {
+            'list_with_ints': [1, 2, 3],
+            'list_with_floats': [10.25, 20.25, 30.25],
+        }
+
+        item_path = v3io.common.helpers.url_join(self._path, item_key)
+
+        self._client.put_item(container=self._container,
+                              path=item_path,
+                              attributes=item)
+
+        for attribute_name in item.keys():
+            self._client.update_item(container=self._container,
+                                     path=item_path,
+                                     expression=f'{attribute_name}[1]={attribute_name}[1]*2')
+
+        # get the item
+        response = self._client.get_item(container=self._container, path=item_path)
+
+        for attribute_name in item.keys():
+            self.assertEqual(response.output.item[attribute_name][1], item[attribute_name][1] * 2)
+
     def test_emd_values(self):
+
+        def _get_int_array():
+            int_array = array.array('l')
+            for value in range(10):
+                int_array.append(value)
+
+            return int_array
+
+        def _get_float_array():
+            float_array = array.array('d')
+            for value in range(10):
+                float_array.append(value)
+
+            return float_array
+
         item_key = 'bob'
         item = {
             item_key: {
@@ -396,7 +437,12 @@ class TestEmd(Test):
                 'unicode': u'\xd7\xa9\xd7\x9c\xd7\x95\xd7\x9d',
                 'male': True,
                 'happy': False,
-                'blob': b'+AFymWFzAL/LUOiU2huiADbugMH0AARATEO1'
+                'blob': b'+AFymWFzAL/LUOiU2huiADbugMH0AARATEO1',
+                'list_with_ints': [1, 2, 3],
+                'list_with_floats': [10.5, 20.5, 30.5],
+                'array_with_ints': _get_int_array(),
+                'array_with_floats': _get_float_array(),
+                'now': datetime.datetime.utcnow()
             }
         }
 
@@ -410,14 +456,10 @@ class TestEmd(Test):
         self.assertEqual(len(item[item_key].keys()), len(response.output.item.keys()))
 
         for key, value in response.output.item.items():
-            if item[item_key][key] != value:
-                self.fail('Values dont match')
+            self._compare_item_values(item[item_key][key], value)
 
         for key, value in item[item_key].items():
-
-            # can't guarantee strings as they might be converted to unicode
-            if type(value) is not str:
-                self.assertEqual(type(value), type(response.output.item[key]))
+            self._compare_item_types(item[item_key][key], response.output.item[key])
 
     def test_emd(self):
         items = {
@@ -601,6 +643,25 @@ class TestEmd(Test):
 
         # TODO: verify contents
         self.assertEqual(len(items), len(received_items))
+
+    def _compare_item_values(self, v1, v2):
+        if isinstance(v1, array.array):
+
+            # convert to list
+            v1 = list(v1)
+
+        if v1 != v2:
+            self.fail('Values dont match')
+
+    def _compare_item_types(self, v1, v2):
+        if isinstance(v1, array.array):
+
+            # convert to list
+            v1 = list(v1)
+
+        # can't guarantee strings as they might be converted to unicode
+        if type(v1) is not str:
+            self.assertEqual(type(v1), type(v2))
 
 
 class TestRaiseForStatus(Test):
