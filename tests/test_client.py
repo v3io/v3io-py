@@ -386,29 +386,29 @@ class TestEmd(Test):
         self._path = 'some_dir/v3io-py-test-emd'
         self._delete_dir(self._path)
 
-    # def test_emd_array(self):
-    #     item_key = 'item_with_arrays'
-    #     item = {
-    #         'list_with_ints': [1, 2, 3],
-    #         'list_with_floats': [10.25, 20.25, 30.25],
-    #     }
-    #
-    #     item_path = v3io.common.helpers.url_join(self._path, item_key)
-    #
-    #     self._client.put_item(container=self._container,
-    #                           path=item_path,
-    #                           attributes=item)
-    #
-    #     for attribute_name in item.keys():
-    #         self._client.update_item(container=self._container,
-    #                                  path=item_path,
-    #                                  expression=f'{attribute_name}[1]={attribute_name}[1]*2')
-    #
-    #     # get the item
-    #     response = self._client.get_item(container=self._container, path=item_path)
-    #
-    #     for attribute_name in item.keys():
-    #         self.assertEqual(response.output.item[attribute_name][1], item[attribute_name][1] * 2)
+    def test_emd_array(self):
+        item_key = 'item_with_arrays'
+        item = {
+            'list_with_ints': [1, 2, 3],
+            'list_with_floats': [10.25, 20.25, 30.25],
+        }
+
+        item_path = v3io.common.helpers.url_join(self._path, item_key)
+
+        self._client.put_item(container=self._container,
+                              path=item_path,
+                              attributes=item)
+
+        for attribute_name in item.keys():
+            self._client.update_item(container=self._container,
+                                     path=item_path,
+                                     expression=f'{attribute_name}[1]={attribute_name}[1]*2')
+
+        # get the item
+        response = self._client.get_item(container=self._container, path=item_path)
+
+        for attribute_name in item.keys():
+            self.assertEqual(response.output.item[attribute_name][1], item[attribute_name][1] * 2)
 
     def test_emd_values(self):
 
