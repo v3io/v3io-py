@@ -294,7 +294,7 @@ class Client(object):
                  condition=None):
         """Creates an item with the provided attributes. If an item with the same name (primary key) already exists in
         the specified table, the existing item is completely overwritten (replaced with a new item). If the item or
-        table do not exist, the operation creates them. The max number of values per item is 1000.
+        table do not exist, the operation creates them.
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/putitem/
@@ -303,6 +303,8 @@ class Client(object):
         1. To provide arrays, pass either a list of integers ([1, 2, 3]), a list of floats ([1.0, 2.0, 3.0]) an
            array.array with a typecode of either 'l' (integer) or 'd' (float). The response will always either be
            a list of integers or a list of floats (never an array.array)
+        2. To provide a timestamp, pass a datetime.datetime. Whatever the timezone, it will be stored as UTC and
+           a UTC datetime will be retreived when read
 
         Parameters
         ----------
@@ -781,7 +783,8 @@ class Client(object):
 
         You can optionally assign a record to specific stream shard by specifying a related shard ID, or associate
         the record with a specific partition key to ensure that similar records are assigned to the same shard.
-        By default, the platform assigns records to shards using a Round Robin algorithm.
+        By default, the platform assigns records to shards using a Round Robin algorithm. The max number of records
+        is 1000.
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/putrecords/
