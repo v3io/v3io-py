@@ -15,10 +15,9 @@ class Model(v3io.dataplane.model.Model):
 
     def new_cursor(self,
                    container,
-                   path,
+                   table_path,
                    access_key=None,
                    raise_for_status=None,
-                   table_name=None,
                    attribute_names='*',
                    filter_expression=None,
                    marker=None,
@@ -31,9 +30,9 @@ class Model(v3io.dataplane.model.Model):
         return v3io.dataplane.kv_cursor.Cursor(self._client,
                                                container,
                                                access_key or self._access_key,
-                                               path,
+                                               table_path,
                                                raise_for_status,
-                                               table_name,
+                                               None,
                                                attribute_names,
                                                filter_expression,
                                                marker,
@@ -46,7 +45,8 @@ class Model(v3io.dataplane.model.Model):
 
     def put(self,
             container,
-            path,
+            table_path,
+            key,
             attributes,
             access_key=None,
             raise_for_status=None,
@@ -70,8 +70,10 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
-            The path and collection (table) name of the item
+        table_path (Required) : str
+            The full path of the table
+        key (Required) : str
+            The item key name
         attributes (Required) : dict
             The item to add - an object containing zero or more attributes.
             For example:
@@ -99,7 +101,8 @@ class Model(v3io.dataplane.model.Model):
 
     def update(self,
                container,
-               path,
+               table_path,
+               key,
                access_key=None,
                raise_for_status=None,
                transport_actions=None,
@@ -158,7 +161,8 @@ class Model(v3io.dataplane.model.Model):
 
     def get(self,
             container,
-            path,
+            table_path,
+            key,
             access_key=None,
             raise_for_status=None,
             transport_actions=None,
@@ -193,7 +197,7 @@ class Model(v3io.dataplane.model.Model):
 
     def scan(self,
              container,
-             path,
+             table_path,
              access_key=None,
              raise_for_status=None,
              transport_actions=None,
@@ -265,7 +269,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `output` is `GetItemsOutput`.
         """
-        path = self._ensure_path_ends_with_slash(path)
+        table_path = self._ensure_path_ends_with_slash(table_path)
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -275,7 +279,7 @@ class Model(v3io.dataplane.model.Model):
                                        locals(),
                                        v3io.dataplane.output.GetItemsOutput)
 
-    def delete(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
+    def delete(self, container, table_path, key, access_key=None, raise_for_status=None, transport_actions=None):
         """Deletes an item.
 
         Parameters
@@ -291,11 +295,15 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object.
         """
-        return self._client.delete_object(container, path, access_key, raise_for_status, transport_actions)
+        return self._client.delete_object(container,
+                                          os.path.join(table_path, key),
+                                          access_key,
+                                          raise_for_status,
+                                          transport_actions)
 
     def create_schema(self,
                       container,
-                      path,
+                      table_path,
                       access_key=None,
                       raise_for_status=None,
                       transport_actions=None,
@@ -339,7 +347,7 @@ class Model(v3io.dataplane.model.Model):
         A `Response` object
         """
         put_object_args = locals()
-        put_object_args['path'] = os.path.join(put_object_args['path'], '.%23schema')
+        put_object_args['path'] = os.path.join(put_object_args['table_path'], '.%23schema')
         put_object_args['offset'] = 0
         put_object_args['append'] = None
         put_object_args['body'] = self._client._get_schema_contents(key, fields)

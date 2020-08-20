@@ -333,7 +333,7 @@ class TestSchema(Test):
     def test_create_schema(self):
         # write schema
         self._client.kv.create_schema(container=self._container,
-                                      path=self._schema_dir,
+                                      table_path=self._schema_dir,
                                       key='key_field',
                                       fields=[
                                           {
@@ -362,7 +362,8 @@ class TestSchema(Test):
 
         for item_key, item_attributes in future.utils.viewitems(items):
             self._client.kv.put(container=self._container,
-                                path=v3io.common.helpers.url_join(self._schema_dir, item_key),
+                                table_path=self._schema_dir,
+                                key=item_key,
                                 attributes=item_attributes)
 
         # verify the scehma
@@ -393,19 +394,21 @@ class TestKv(Test):
             'list_with_floats': [10.25, 20.25, 30.25],
         }
 
-        item_path = v3io.common.helpers.url_join(self._path, item_key)
-
         self._client.kv.put(container=self._container,
-                            path=item_path,
+                            table_path=self._path,
+                            key=item_key,
                             attributes=item)
 
         for attribute_name in item.keys():
             self._client.kv.update(container=self._container,
-                                   path=item_path,
+                                   table_path=self._path,
+                                   key=item_key,
                                    expression=f'{attribute_name}[1]={attribute_name}[1]*2')
 
         # get the item
-        response = self._client.kv.get(container=self._container, path=item_path)
+        response = self._client.kv.get(container=self._container,
+                                       table_path=self._path,
+                                       key=item_key)
 
         for attribute_name in item.keys():
             self.assertEqual(response.output.item[attribute_name][1], item[attribute_name][1] * 2)
@@ -447,11 +450,13 @@ class TestKv(Test):
         }
 
         self._client.kv.put(container=self._container,
-                            path=v3io.common.helpers.url_join(self._path, item_key),
+                            table_path=self._path,
+                            key=item_key,
                             attributes=item[item_key])
 
         response = self._client.kv.get(container=self._container,
-                                       path=v3io.common.helpers.url_join(self._path, item_key))
+                                       table_path=self._path,
+                                       key=item_key)
 
         self.assertEqual(len(item[item_key].keys()), len(response.output.item.keys()))
 
@@ -471,20 +476,23 @@ class TestKv(Test):
 
         for item_key, item_attributes in future.utils.viewitems(items):
             self._client.kv.put(container=self._container,
-                                path=v3io.common.helpers.url_join(self._path, item_key),
+                                table_path=self._path,
+                                key=item_key,
                                 attributes=item_attributes)
 
         self._verify_items(self._path, items)
 
         self._client.kv.update(container=self._container,
-                               path=v3io.common.helpers.url_join(self._path, 'louise'),
+                               table_path=self._path,
+                               key='louise',
                                attributes={
                                    'height': 130,
                                    'quip': 'i can smell fear on you'
                                })
 
         response = self._client.kv.get(container=self._container,
-                                       path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                       table_path=self._path,
+                                       key='louise',
                                        attribute_names=['__size', 'age', 'quip', 'height'])
 
         self.assertEqual(0, response.output.item['__size'])
@@ -494,7 +502,7 @@ class TestKv(Test):
 
         # get items with filter expression
         response = self._client.kv.scan(container=self._container,
-                                        path=self._path,
+                                        table_path=self._path,
                                         filter_expression="feature == 'singing'")
         self.assertEqual(1, len(response.output.items))
 
@@ -504,7 +512,7 @@ class TestKv(Test):
 
         for segment in range(total_segments):
             received_items = self._client.kv.new_cursor(container=self._container,
-                                                        path=self._path,
+                                                        table_path=self._path,
                                                         segment=segment,
                                                         total_segments=total_segments).all()
             total_items.append(received_items)
@@ -513,7 +521,7 @@ class TestKv(Test):
 
         # with limit = 0
         received_items = self._client.kv.new_cursor(container=self._container,
-                                                    path=self._path,
+                                                    table_path=self._path,
                                                     attribute_names=['age', 'feature'],
                                                     filter_expression='age > 15',
                                                     limit=0).all()
@@ -521,7 +529,7 @@ class TestKv(Test):
         self.assertEqual(0, len(received_items))
 
         received_items = self._client.kv.new_cursor(container=self._container,
-                                                    path=self._path,
+                                                    table_path=self._path,
                                                     attribute_names=['age', 'feature'],
                                                     filter_expression='age > 15').all()
 
@@ -534,11 +542,13 @@ class TestKv(Test):
         #
 
         self._client.kv.update(container=self._container,
-                               path=v3io.common.helpers.url_join(self._path, 'louise'),
+                               table_path=self._path,
+                               key='louise',
                                expression='age = age + 1')
 
         response = self._client.kv.get(container=self._container,
-                                       path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                       table_path=self._path,
+                                       key='louise',
                                        attribute_names=['age'])
 
         self.assertEqual(10, response.output.item['age'])
@@ -554,7 +564,8 @@ class TestKv(Test):
         # put the item in a batch
         for item_key, item_attributes in future.utils.viewitems(items):
             self._client.batch.kv.put(container=self._container,
-                                      path=v3io.common.helpers.url_join(self._path, item_key),
+                                      table_path=self._path,
+                                      key=item_key,
                                       attributes=item_attributes)
 
         responses = self._client.batch.wait()
@@ -563,7 +574,8 @@ class TestKv(Test):
 
         for item_key in items.keys():
             self._client.batch.kv.get(container=self._container,
-                                      path=v3io.common.helpers.url_join(self._path, item_key),
+                                      table_path=self._path,
+                                      key=item_key,
                                       attribute_names=['__size', 'age'])
 
         responses = self._client.batch.wait()
@@ -575,7 +587,8 @@ class TestKv(Test):
         # delete items
         for item_key, _ in future.utils.viewitems(items):
             self._client.kv.delete(container=self._container,
-                                   path=v3io.common.helpers.url_join(path, item_key))
+                                   table_path=path,
+                                   key=item_key)
 
         # delete dir
         self._client.object.delete(container=self._container,
@@ -583,7 +596,7 @@ class TestKv(Test):
 
     def _verify_items(self, path, items):
         items_cursor = self._client.kv.new_cursor(container=self._container,
-                                                  path=path,
+                                                  table_path=path,
                                                   attribute_names=['*'])
 
         received_items = items_cursor.all()

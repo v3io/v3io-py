@@ -1,6 +1,6 @@
 import base64
 import future.utils
-import datetime
+import os
 import array
 import datetime
 
@@ -135,7 +135,7 @@ def encode_put_item(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or os.path.join(kwargs['table_path'], kwargs['key']),
                    {'X-v3io-function': 'PutItem'},
                    body)
 
@@ -169,7 +169,7 @@ def encode_update_item(container_name, access_key, kwargs):
     return _encode(http_method,
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or os.path.join(kwargs['table_path'], kwargs['key']),
                    {'X-v3io-function': function_name},
                    body)
 
@@ -182,7 +182,7 @@ def encode_get_item(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or os.path.join(kwargs['table_path'], kwargs['key']),
                    {'X-v3io-function': 'GetItem'},
                    body)
 
@@ -222,7 +222,7 @@ def encode_get_items(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or kwargs['table_path'],
                    {'X-v3io-function': 'GetItems'},
                    body)
 
