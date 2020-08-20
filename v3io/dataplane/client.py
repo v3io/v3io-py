@@ -78,7 +78,7 @@ class Client(object):
         self.batch = self.create_batch()
 
         # create models
-        self.kv, self.object, self.container, self.stream = self._create_models()
+        self.kv, self.object, self.stream, self.container = self._create_models()
 
     def create_batch(self):
         return v3io.dataplane.batch.Batch(self)
@@ -975,9 +975,11 @@ class Client(object):
     def _create_models(self):
         import v3io.dataplane.kv
         import v3io.dataplane.object
+        import v3io.dataplane.stream
+        import v3io.dataplane.container
 
         # create models
         return v3io.dataplane.kv.Model(self), \
                v3io.dataplane.object.Model(self), \
-               None, \
-               None
+               v3io.dataplane.stream.Model(self), \
+               v3io.dataplane.container.Model(self)

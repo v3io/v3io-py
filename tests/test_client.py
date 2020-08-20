@@ -24,7 +24,7 @@ class Test(unittest.TestCase):
         self._client.close()
 
     def _delete_dir(self, path):
-        response = self._client.get_container_contents(container=self._container,
+        response = self._client.container.get_contents(container=self._container,
                                                        path=path,
                                                        raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
@@ -52,11 +52,11 @@ class TestContainer(Test):
         self._delete_dir(self._path)
 
     def test_get_containers(self):
-        response = self._client.get_containers()
+        response = self._client.container.get()
         self.assertGreater(len(response.output.containers), 0)
 
     def test_get_container_contents_invalid_path(self):
-        response = self._client.get_container_contents(container=self._container,
+        response = self._client.container.get_contents(container=self._container,
                                                        path='/no-such-path',
                                                        raise_for_status=v3io.dataplane.RaiseForStatus.never)
         self.assertEqual(404, response.status_code)
@@ -74,14 +74,14 @@ class TestContainer(Test):
             self._client.object.put(container=self._container,
                                     path=os.path.join(self._path, 'dir-{0}/'.format(object_index)))
 
-        response = self._client.get_container_contents(container=self._container,
+        response = self._client.container.get_contents(container=self._container,
                                                        path=self._path,
                                                        get_all_attributes=True,
                                                        directories_only=True)
         self.assertEqual(0, len(response.output.contents))
         self.assertNotEqual(0, len(response.output.common_prefixes))
 
-        response = self._client.get_container_contents(container=self._container,
+        response = self._client.container.get_contents(container=self._container,
                                                        path=self._path,
                                                        get_all_attributes=True)
         self.assertNotEqual(0, len(response.output.contents))
@@ -99,7 +99,7 @@ class TestStream(Test):
         self._path = 'v3io-py-test-stream'
 
         # clean up
-        self._client.delete_stream(container=self._container,
+        self._client.stream.delete(container=self._container,
                                    path=self._path,
                                    raise_for_status=[200, 204, 404])
 
@@ -110,17 +110,17 @@ class TestStream(Test):
         self.assertFalse(self._stream_exists())
 
         # create a stream
-        self._client.create_stream(container=self._container,
+        self._client.stream.create(container=self._container,
                                    path=self._path,
                                    shard_count=num_shards)
 
         # write data to all shards so there are files
         for shard_id in range(num_shards):
-            self._client.put_records(container=self._container,
-                                     path=self._path,
-                                     records=[
-                                         {'shard_id': shard_id, 'data': 'data for shard {}'.format(shard_id)}
-                                     ])
+            self._client.stream.put(container=self._container,
+                                    path=self._path,
+                                    records=[
+                                        {'shard_id': shard_id, 'data': 'data for shard {}'.format(shard_id)}
+                                    ])
 
         # write several "consumer group state" files
         for cg_id in range(3):
@@ -131,7 +131,7 @@ class TestStream(Test):
         self.assertTrue(self._stream_exists())
 
         # delete the stream
-        self._client.delete_stream(container=self._container, path=self._path)
+        self._client.stream.delete(container=self._container, path=self._path)
 
         # check that the stream doesn't exist
         self.assertFalse(self._stream_exists())
@@ -139,7 +139,7 @@ class TestStream(Test):
     def test_stream(self):
 
         # create a stream w/8 shards
-        self._client.create_stream(container=self._container,
+        self._client.stream.create(container=self._container,
                                    path=self._path,
                                    shard_count=8)
 
@@ -151,9 +151,9 @@ class TestStream(Test):
             {'data': 'some shard record #1'},
         ]
 
-        response = self._client.put_records(container=self._container,
-                                            path=self._path,
-                                            records=records)
+        response = self._client.stream.put(container=self._container,
+                                           path=self._path,
+                                           records=records)
         self.assertEqual(1, response.output.failed_record_count)
 
         for response_record_index, response_record in enumerate(response.output.records):
@@ -164,15 +164,15 @@ class TestStream(Test):
 
         shard_path = self._path + '/1'
 
-        response = self._client.seek_shard(container=self._container,
-                                           path=shard_path,
-                                           seek_type='EARLIEST')
+        response = self._client.stream.seek(container=self._container,
+                                            path=shard_path,
+                                            seek_type='EARLIEST')
 
         self.assertNotEqual('', response.output.location)
 
-        response = self._client.get_records(container=self._container,
-                                            path=shard_path,
-                                            location=response.output.location)
+        response = self._client.stream.get(container=self._container,
+                                           path=shard_path,
+                                           location=response.output.location)
 
         self.assertEqual(2, len(response.output.records))
         self.assertEqual(records[0]['data'], response.output.records[0].data.decode('utf-8'))
@@ -180,7 +180,7 @@ class TestStream(Test):
         self.assertEqual(records[1]['client_info'], response.output.records[1].client_info)
 
         # update the stream by adding 8 shards to it
-        self._client.update_stream(container=self._container,
+        self._client.stream.update(container=self._container,
                                    path=self._path,
                                    shard_count=16)
 
@@ -188,17 +188,17 @@ class TestStream(Test):
             {'shard_id': 10, 'data': 'Now valid shard record #1'},
         ]
 
-        response = self._client.put_records(container=self._container,
-                                            path=self._path,
-                                            records=records)
+        response = self._client.stream.put(container=self._container,
+                                           path=self._path,
+                                           records=records)
 
         self.assertEqual(0, response.output.failed_record_count)
 
-        self._client.delete_stream(container=self._container,
+        self._client.stream.delete(container=self._container,
                                    path=self._path)
 
     def _stream_exists(self):
-        response = self._client.describe_stream(container=self._container,
+        response = self._client.stream.describe(container=self._container,
                                                 path=self._path,
                                                 raise_for_status=v3io.dataplane.RaiseForStatus.never)
         return response.status_code == 200
@@ -616,15 +616,15 @@ class TestRaiseForStatus(Test):
 
     def test_always_raise_no_error(self):
         # should raise - since the status code is 500
-        self._client.get_containers(raise_for_status=v3io.dataplane.transport.RaiseForStatus.always)
+        self._client.container.get(raise_for_status=v3io.dataplane.transport.RaiseForStatus.always)
 
     def test_specific_status_code_match(self):
         # should raise - since the status code is 500
-        self._client.get_containers(raise_for_status=[200])
+        self._client.container.get(raise_for_status=[200])
 
     def test_specific_status_code_no_match(self):
         # should raise - since the status code is 500
-        self.assertRaises(Exception, self._client.get_containers, raise_for_status=[500])
+        self.assertRaises(Exception, self._client.container.get, raise_for_status=[500])
 
     def test_never_raise(self):
         self._client.object.get(container=self._container,
