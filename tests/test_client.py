@@ -553,18 +553,18 @@ class TestKv(Test):
 
         # put the item in a batch
         for item_key, item_attributes in future.utils.viewitems(items):
-            self._client.batch.put_item(container=self._container,
-                                        path=v3io.common.helpers.url_join(self._path, item_key),
-                                        attributes=item_attributes)
+            self._client.batch.kv.put(container=self._container,
+                                      path=v3io.common.helpers.url_join(self._path, item_key),
+                                      attributes=item_attributes)
 
         responses = self._client.batch.wait()
         for response in responses:
             self.assertEqual(200, response.status_code)
 
         for item_key in items.keys():
-            self._client.batch.get_item(container=self._container,
-                                        path=v3io.common.helpers.url_join(self._path, item_key),
-                                        attribute_names=['__size', 'age'])
+            self._client.batch.kv.get(container=self._container,
+                                      path=v3io.common.helpers.url_join(self._path, item_key),
+                                      attribute_names=['__size', 'age'])
 
         responses = self._client.batch.wait()
         for response in responses:
