@@ -361,9 +361,9 @@ class TestSchema(Test):
         }
 
         for item_key, item_attributes in future.utils.viewitems(items):
-            self._client.put_item(container=self._container,
-                                  path=v3io.common.helpers.url_join(self._schema_dir, item_key),
-                                  attributes=item_attributes)
+            self._client.kv.put(container=self._container,
+                                path=v3io.common.helpers.url_join(self._schema_dir, item_key),
+                                attributes=item_attributes)
 
         # verify the scehma
         response = self._client.get_object(container=self._container,
@@ -378,15 +378,15 @@ class TestSchema(Test):
         #     response.body.decode('utf-8'))
 
 
-class TestEmd(Test):
+class TestKv(Test):
 
     def setUp(self):
-        super(TestEmd, self).setUp()
+        super(TestKv, self).setUp()
 
         self._path = 'some_dir/v3io-py-test-emd'
         self._delete_dir(self._path)
 
-    def test_emd_array(self):
+    def test_kv_array(self):
         item_key = 'item_with_arrays'
         item = {
             'list_with_ints': [1, 2, 3],
@@ -395,22 +395,22 @@ class TestEmd(Test):
 
         item_path = v3io.common.helpers.url_join(self._path, item_key)
 
-        self._client.put_item(container=self._container,
-                              path=item_path,
-                              attributes=item)
+        self._client.kv.put(container=self._container,
+                            path=item_path,
+                            attributes=item)
 
         for attribute_name in item.keys():
-            self._client.update_item(container=self._container,
-                                     path=item_path,
-                                     expression=f'{attribute_name}[1]={attribute_name}[1]*2')
+            self._client.kv.update(container=self._container,
+                                   path=item_path,
+                                   expression=f'{attribute_name}[1]={attribute_name}[1]*2')
 
         # get the item
-        response = self._client.get_item(container=self._container, path=item_path)
+        response = self._client.kv.get(container=self._container, path=item_path)
 
         for attribute_name in item.keys():
             self.assertEqual(response.output.item[attribute_name][1], item[attribute_name][1] * 2)
 
-    def test_emd_values(self):
+    def test_kv_values(self):
 
         def _get_int_array():
             int_array = array.array('l')
@@ -446,12 +446,12 @@ class TestEmd(Test):
             }
         }
 
-        self._client.put_item(container=self._container,
-                              path=v3io.common.helpers.url_join(self._path, item_key),
-                              attributes=item[item_key])
+        self._client.kv.put(container=self._container,
+                            path=v3io.common.helpers.url_join(self._path, item_key),
+                            attributes=item[item_key])
 
-        response = self._client.get_item(container=self._container,
-                                         path=v3io.common.helpers.url_join(self._path, item_key))
+        response = self._client.kv.get(container=self._container,
+                                       path=v3io.common.helpers.url_join(self._path, item_key))
 
         self.assertEqual(len(item[item_key].keys()), len(response.output.item.keys()))
 
@@ -461,7 +461,7 @@ class TestEmd(Test):
         for key, value in item[item_key].items():
             self._compare_item_types(item[item_key][key], response.output.item[key])
 
-    def test_emd(self):
+    def test_kv(self):
         items = {
             'bob': {'age': 42, 'feature': 'mustache'},
             'linda': {'age': 41, 'feature': 'singing'},
@@ -470,22 +470,22 @@ class TestEmd(Test):
         }
 
         for item_key, item_attributes in future.utils.viewitems(items):
-            self._client.put_item(container=self._container,
-                                  path=v3io.common.helpers.url_join(self._path, item_key),
-                                  attributes=item_attributes)
+            self._client.kv.put(container=self._container,
+                                path=v3io.common.helpers.url_join(self._path, item_key),
+                                attributes=item_attributes)
 
         self._verify_items(self._path, items)
 
-        self._client.update_item(container=self._container,
-                                 path=v3io.common.helpers.url_join(self._path, 'louise'),
-                                 attributes={
-                                     'height': 130,
-                                     'quip': 'i can smell fear on you'
-                                 })
+        self._client.kv.update(container=self._container,
+                               path=v3io.common.helpers.url_join(self._path, 'louise'),
+                               attributes={
+                                   'height': 130,
+                                   'quip': 'i can smell fear on you'
+                               })
 
-        response = self._client.get_item(container=self._container,
-                                         path=v3io.common.helpers.url_join(self._path, 'louise'),
-                                         attribute_names=['__size', 'age', 'quip', 'height'])
+        response = self._client.kv.get(container=self._container,
+                                       path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                       attribute_names=['__size', 'age', 'quip', 'height'])
 
         self.assertEqual(0, response.output.item['__size'])
         self.assertEqual(9, response.output.item['age'])
@@ -493,9 +493,9 @@ class TestEmd(Test):
         self.assertEqual(130, response.output.item['height'])
 
         # get items with filter expression
-        response = self._client.get_items(container=self._container,
-                                          path=self._path,
-                                          filter_expression="feature == 'singing'")
+        response = self._client.kv.scan(container=self._container,
+                                        path=self._path,
+                                        filter_expression="feature == 'singing'")
         self.assertEqual(1, len(response.output.items))
 
         # get items with segment / total_segments
@@ -503,27 +503,27 @@ class TestEmd(Test):
         total_items = []
 
         for segment in range(total_segments):
-            received_items = self._client.new_items_cursor(container=self._container,
-                                                           path=self._path,
-                                                           segment=segment,
-                                                           total_segments=total_segments).all()
+            received_items = self._client.kv.new_cursor(container=self._container,
+                                                        path=self._path,
+                                                        segment=segment,
+                                                        total_segments=total_segments).all()
             total_items.append(received_items)
 
         self.assertEqual(4, len(total_items))
 
         # with limit = 0
-        received_items = self._client.new_items_cursor(container=self._container,
-                                                       path=self._path,
-                                                       attribute_names=['age', 'feature'],
-                                                       filter_expression='age > 15',
-                                                       limit=0).all()
+        received_items = self._client.kv.new_cursor(container=self._container,
+                                                    path=self._path,
+                                                    attribute_names=['age', 'feature'],
+                                                    filter_expression='age > 15',
+                                                    limit=0).all()
 
         self.assertEqual(0, len(received_items))
 
-        received_items = self._client.new_items_cursor(container=self._container,
-                                                       path=self._path,
-                                                       attribute_names=['age', 'feature'],
-                                                       filter_expression='age > 15').all()
+        received_items = self._client.kv.new_cursor(container=self._container,
+                                                    path=self._path,
+                                                    attribute_names=['age', 'feature'],
+                                                    filter_expression='age > 15').all()
 
         self.assertEqual(2, len(received_items))
         for item in received_items:
@@ -533,68 +533,15 @@ class TestEmd(Test):
         # Increment age
         #
 
-        self._client.update_item(container=self._container,
-                                 path=v3io.common.helpers.url_join(self._path, 'louise'),
-                                 expression='age = age + 1')
+        self._client.kv.update(container=self._container,
+                               path=v3io.common.helpers.url_join(self._path, 'louise'),
+                               expression='age = age + 1')
 
-        response = self._client.get_item(container=self._container,
-                                         path=v3io.common.helpers.url_join(self._path, 'louise'),
-                                         attribute_names=['age'])
+        response = self._client.kv.get(container=self._container,
+                                       path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                       attribute_names=['age'])
 
         self.assertEqual(10, response.output.item['age'])
-
-    def test_put_items(self):
-        items = {
-            'bob': {
-                'age': 42,
-                'feature': 'mustache',
-                'female': False
-            },
-            'linda': {
-                'age': 40,
-                'feature': 'singing',
-                'female': True,
-                'some_blob': bytearray('\x00\x11\x00\x11', encoding='utf-8')
-            },
-        }
-
-        response = self._client.put_items(container=self._container,
-                                          path=self._path,
-                                          items=items)
-
-        self.assertTrue(response.success)
-
-        self._verify_items(self._path, items)
-
-        # delete an item
-        self._client.delete_item(container=self._container, path=self._path + '/linda')
-        del(items['linda'])
-
-        self._verify_items(self._path, items)
-
-    def test_put_items_with_error(self):
-        items = {
-            'bob': {'age': 42, 'feature': 'mustache'},
-            'linda': {'age': 40, 'feature': 'singing'},
-            'invalid': {'__name': 'foo', 'feature': 'singing'}
-        }
-
-        response = self._client.put_items(container=self._container,
-                                          path=self._path,
-                                          items=items,
-                                          raise_for_status=v3io.dataplane.RaiseForStatus.never)
-
-        self.assertFalse(response.success)
-
-        # first two should've passed
-        response.responses[0].raise_for_status()
-        response.responses[1].raise_for_status()
-        self.assertEqual(403, response.responses[2].status_code)
-
-        # remove invalid so we can verify
-        del items['invalid']
-
-        self._verify_items(self._path, items)
 
     def test_batch(self):
         items = {
@@ -627,17 +574,17 @@ class TestEmd(Test):
 
         # delete items
         for item_key, _ in future.utils.viewitems(items):
-            self._client.delete_object(container=self._container,
-                                       path=v3io.common.helpers.url_join(path, item_key))
+            self._client.kv.delete(container=self._container,
+                                   path=v3io.common.helpers.url_join(path, item_key))
 
         # delete dir
         self._client.delete_object(container=self._container,
                                    path=path)
 
     def _verify_items(self, path, items):
-        items_cursor = self._client.new_items_cursor(container=self._container,
-                                                     path=path,
-                                                     attribute_names=['*'])
+        items_cursor = self._client.kv.new_cursor(container=self._container,
+                                                  path=path,
+                                                  attribute_names=['*'])
 
         received_items = items_cursor.all()
 
@@ -646,7 +593,6 @@ class TestEmd(Test):
 
     def _compare_item_values(self, v1, v2):
         if isinstance(v1, array.array):
-
             # convert to list
             v1 = list(v1)
 
@@ -655,7 +601,6 @@ class TestEmd(Test):
 
     def _compare_item_types(self, v1, v2):
         if isinstance(v1, array.array):
-
             # convert to list
             v1 = list(v1)
 
@@ -753,8 +698,8 @@ class TestConnectonErrorRecovery(Test):
         self._object_dir = '/v3io-py-test-connection-error'
         self._object_path = self._object_dir + '/object.txt'
 
-        self._emd_path = 'some_dir/v3io-py-test-emd'
-        self._delete_dir(self._emd_path)
+        self._kv_path = 'some_dir/v3io-py-test-emd'
+        self._delete_dir(self._kv_path)
 
         # clean up
         self._delete_dir(self._object_dir)
@@ -784,7 +729,7 @@ class TestConnectonErrorRecovery(Test):
             time.sleep(0.1)
 
     @unittest.skip("Manually executed")
-    def test_emd_batch(self):
+    def test_kv_batch(self):
         items = {
             'bob': {'age': 42, 'feature': 'mustache'},
             'linda': {'age': 41, 'feature': 'singing'},
@@ -795,7 +740,7 @@ class TestConnectonErrorRecovery(Test):
         # put the item in a batch
         for item_key, item_attributes in future.utils.viewitems(items):
             self._client.batch.put_item(container=self._container,
-                                        path=v3io.common.helpers.url_join(self._emd_path, item_key),
+                                        path=v3io.common.helpers.url_join(self._kv_path, item_key),
                                         attributes=item_attributes)
 
         responses = self._client.batch.wait()
@@ -806,7 +751,7 @@ class TestConnectonErrorRecovery(Test):
 
         for item_key in items.keys():
             self._client.batch.get_item(container=self._container,
-                                        path=v3io.common.helpers.url_join(self._emd_path, item_key),
+                                        path=v3io.common.helpers.url_join(self._kv_path, item_key),
                                         attribute_names=['__size', 'age'])
 
         responses = self._client.batch.wait()

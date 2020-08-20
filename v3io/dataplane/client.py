@@ -77,6 +77,9 @@ class Client(object):
         # create a default "batch" object
         self.batch = self.create_batch()
 
+        # create models
+        self.kv, self.object, self.container, self.stream = self._create_models()
+
     def create_batch(self):
         return v3io.dataplane.batch.Batch(self)
 
@@ -968,3 +971,9 @@ class Client(object):
         logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
 
         return logger
+
+    def _create_models(self):
+        import v3io.dataplane.kv
+
+        # create models
+        return v3io.dataplane.kv.Kv(self), None, None, None
