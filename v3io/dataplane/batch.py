@@ -12,6 +12,9 @@ class Batch(object):
         self._transport_actions = v3io.dataplane.transport.Actions.encode_only
         self._transport = self._client._transport
         self.kv = lambda: None
+        self.object = lambda: None
+        self.stream = lambda: None
+        self.container = lambda: None
 
         for client_call in [
             'get_containers',
@@ -38,6 +41,9 @@ class Batch(object):
             ('kv', 'scan'),
             ('kv', 'update'),
             ('kv', 'delete'),
+            ('object', 'put'),
+            ('object', 'get'),
+            ('object', 'delete'),
         ]:
             setattr(getattr(self, model_name),
                     model_call,

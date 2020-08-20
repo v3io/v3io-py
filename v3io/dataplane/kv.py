@@ -4,7 +4,7 @@ import v3io.dataplane.model
 import v3io.dataplane.kv_cursor
 
 
-class Kv(v3io.dataplane.model.Model):
+class Model(v3io.dataplane.model.Model):
 
     def __init__(self, client):
         self._client = client

@@ -941,7 +941,7 @@ class Client(object):
         put_object_args['offset'] = 0
         put_object_args['append'] = None
         put_object_args['body'] = self._get_schema_contents(key, fields)
-        del(put_object_args['key'])
+        del (put_object_args['key'])
         del (put_object_args['fields'])
 
         return self._transport.request(container,
@@ -974,6 +974,10 @@ class Client(object):
 
     def _create_models(self):
         import v3io.dataplane.kv
+        import v3io.dataplane.object
 
         # create models
-        return v3io.dataplane.kv.Kv(self), None, None, None
+        return v3io.dataplane.kv.Model(self), \
+               v3io.dataplane.object.Model(self), \
+               None, \
+               None

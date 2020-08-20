@@ -35,10 +35,10 @@ class Test(unittest.TestCase):
             raise RuntimeError(response.body)
 
         for content in response.output.contents:
-            self._client.delete_object(container=self._container, path=content.key)
+            self._client.object.delete(container=self._container, path=content.key)
 
         for common_prefixes in response.output.common_prefixes:
-            self._client.delete_object(container=self._container,
+            self._client.object.delete(container=self._container,
                                        path=common_prefixes.prefix)
 
 
@@ -66,12 +66,12 @@ class TestContainer(Test):
         body = 'If you cannot do great things, do small things in a great way.'
 
         for object_index in range(5):
-            self._client.put_object(container=self._container,
+            self._client.object.put(container=self._container,
                                     path=os.path.join(self._path, 'object-{0}.txt'.format(object_index)),
                                     body=body)
 
         for object_index in range(5):
-            self._client.put_object(container=self._container,
+            self._client.object.put(container=self._container,
                                     path=os.path.join(self._path, 'dir-{0}/'.format(object_index)))
 
         response = self._client.get_container_contents(container=self._container,
@@ -124,7 +124,7 @@ class TestStream(Test):
 
         # write several "consumer group state" files
         for cg_id in range(3):
-            self._client.put_object(container=self._container,
+            self._client.object.put(container=self._container,
                                     path=os.path.join(self._path, 'cg{}-state.json'.format(cg_id)))
 
         # check that the stream doesn't exist
@@ -218,19 +218,19 @@ class TestObject(Test):
     def test_object(self):
         contents = 'vegans are better than everyone'
 
-        response = self._client.get_object(container=self._container,
+        response = self._client.object.get(container=self._container,
                                            path=self._object_path,
                                            raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
         self.assertEqual(404, response.status_code)
 
         # put contents to some object
-        self._client.put_object(container=self._container,
+        self._client.object.put(container=self._container,
                                 path=self._object_path,
                                 body=contents)
 
         # get the contents
-        response = self._client.get_object(container=self._container,
+        response = self._client.object.get(container=self._container,
                                            path=self._object_path)
 
         if not isinstance(response.body, str):
@@ -239,11 +239,11 @@ class TestObject(Test):
         self.assertEqual(response.body, contents)
 
         # delete the object
-        self._client.delete_object(container=self._container,
+        self._client.object.delete(container=self._container,
                                    path=self._object_path)
 
         # get again
-        response = self._client.get_object(container=self._container,
+        response = self._client.object.get(container=self._container,
                                            path=self._object_path,
                                            raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
@@ -258,31 +258,31 @@ class TestObject(Test):
 
         # put the contents into the object
         for content in contents:
-            self._client.put_object(container=self._container,
+            self._client.object.put(container=self._container,
                                     path=self._object_path,
                                     body=content,
                                     append=True)
 
         # get the contents
-        response = self._client.get_object(container=self._container,
+        response = self._client.object.get(container=self._container,
                                            path=self._object_path)
 
         self.assertEqual(response.body.decode('utf-8'), ''.join(contents))
 
     def test_get_offset(self):
-        self._client.put_object(container=self._container,
+        self._client.object.put(container=self._container,
                                 path=self._object_path,
                                 body='1234567890')
 
         # get the contents without limit
-        response = self._client.get_object(container=self._container,
+        response = self._client.object.get(container=self._container,
                                            path=self._object_path,
                                            offset=4)
 
         self.assertEqual(response.body.decode('utf-8'), '567890')
 
         # get the contents with limit
-        response = self._client.get_object(container=self._container,
+        response = self._client.object.get(container=self._container,
                                            path=self._object_path,
                                            offset=4,
                                            num_bytes=3)
@@ -300,7 +300,7 @@ class TestObject(Test):
         num_objects = 16
 
         for object_idx in range(num_objects):
-            self._client.batch.put_object(self._container,
+            self._client.batch.object.put(self._container,
                                           _object_path(object_idx),
                                           body=_object_contents(object_idx))
 
@@ -310,7 +310,7 @@ class TestObject(Test):
             self.assertEqual(200, response.status_code)
 
         for object_idx in range(num_objects):
-            self._client.batch.get_object(self._container, _object_path(object_idx))
+            self._client.batch.object.get(self._container, _object_path(object_idx))
 
         responses = self._client.batch.wait()
 
@@ -366,7 +366,7 @@ class TestSchema(Test):
                                 attributes=item_attributes)
 
         # verify the scehma
-        response = self._client.get_object(container=self._container,
+        response = self._client.object.get(container=self._container,
                                            path=self._schema_path,
                                            raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
@@ -578,7 +578,7 @@ class TestKv(Test):
                                    path=v3io.common.helpers.url_join(path, item_key))
 
         # delete dir
-        self._client.delete_object(container=self._container,
+        self._client.object.delete(container=self._container,
                                    path=path)
 
     def _verify_items(self, path, items):
@@ -627,12 +627,12 @@ class TestRaiseForStatus(Test):
         self.assertRaises(Exception, self._client.get_containers, raise_for_status=[500])
 
     def test_never_raise(self):
-        self._client.get_object(container=self._container,
+        self._client.object.get(container=self._container,
                                 path='/non-existing',
                                 raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
     def test_default_raise(self):
-        self.assertRaises(Exception, self._client.get_object, container=self._container, path='/non-existing')
+        self.assertRaises(Exception, self._client.object.get, container=self._container, path='/non-existing')
 
 
 class TestBatchRaiseForStatus(Test):
@@ -656,7 +656,7 @@ class TestBatchRaiseForStatus(Test):
         err_idx = 1
 
         for object_idx in range(num_objects):
-            self._client.batch.put_object(self._container,
+            self._client.batch.object.put(self._container,
                                           _object_path(object_idx),
                                           body=_object_contents(object_idx))
 
@@ -668,7 +668,7 @@ class TestBatchRaiseForStatus(Test):
             if object_idx == err_idx:
                 object_idx = 10
 
-            self._client.batch.get_object(self._container, _object_path(object_idx))
+            self._client.batch.object.get(self._container, _object_path(object_idx))
 
         self.assertRaises(Exception, self._client.batch.wait)
 
@@ -679,7 +679,7 @@ class TestBatchRaiseForStatus(Test):
             if object_idx == 1:
                 object_idx = 10
 
-            self._client.batch.get_object(self._container, _object_path(object_idx))
+            self._client.batch.object.get(self._container, _object_path(object_idx))
 
         responses = self._client.batch.wait(raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
@@ -714,11 +714,11 @@ class TestConnectonErrorRecovery(Test):
                 self._restart_webapi()
 
             # put contents to some object
-            self._client.put_object(container=self._container,
+            self._client.object.put(container=self._container,
                                     path=self._object_path,
                                     body=body)
 
-            response = self._client.get_object(container=self._container,
+            response = self._client.object.get(container=self._container,
                                                path=self._object_path)
 
             if not isinstance(response.body, str):
