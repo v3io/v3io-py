@@ -93,6 +93,8 @@ class Client(object):
     def get_containers(self, access_key=None, raise_for_status=None, transport_actions=None):
         """Lists the containers that are visible to the user who sent the request, according to its tenant.
 
+        DEPRECATED: use container.get
+
         Parameters
         ----------
         access_key (Optional) : str
@@ -122,6 +124,8 @@ class Client(object):
                                limit=None,
                                marker=None):
         """Lists the containers contents.
+
+        DEPRECATED: use container.get_contents
 
         Parameters
         ----------
@@ -170,6 +174,8 @@ class Client(object):
                    num_bytes=None):
         """Retrieves an object from a container.
 
+        DEPRECATED: use object.get
+
         Parameters
         ----------
         container (Required) : str
@@ -205,6 +211,8 @@ class Client(object):
         """Adds a new object to a container, or appends data to an existing object. The option to append data is
         extension to the S3 PUT Object capabilities
 
+        DEPRECATED: use object.put
+
         Parameters
         ----------
         container (Required) : str
@@ -231,6 +239,8 @@ class Client(object):
 
     def delete_object(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Deletes an object from a container.
+
+        DEPRECATED: use object.delete
 
         Parameters
         ----------
@@ -299,6 +309,8 @@ class Client(object):
         the specified table, the existing item is completely overwritten (replaced with a new item). If the item or
         table do not exist, the operation creates them.
 
+        DEPRECATED: use kv.put
+
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/putitem/
 
@@ -340,7 +352,9 @@ class Client(object):
                                        locals())
 
     def put_items(self, container, path, items, access_key=None, raise_for_status=None, condition=None):
-        """[OBSOLETED] A helper to put several items, calling put_item for each.
+        """A helper to put several items, calling put_item for each.
+
+        DEPRECATED. Loop with kv.put
 
         Parameters
         ----------
@@ -393,6 +407,8 @@ class Client(object):
                     alternate_expression=None):
         """Updates the attributes of a table item. If the specified item or table don't exist,
         the operation creates them.
+
+        DEPRECATED. Use kv.update
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/updateitem/
@@ -448,6 +464,8 @@ class Client(object):
                  attribute_names='*'):
         """Retrieves the requested attributes of a table item.
 
+        DEPRECATED. Use kv.get
+
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/getitem/
 
@@ -492,6 +510,8 @@ class Client(object):
                   sort_key_range_end=None):
         """Retrieves (reads) attributes of multiple items in a table or in a data container's root directory,
         according to the specified criteria.
+
+        DEPRECATED. Use kv.scan
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/getitems/
@@ -561,6 +581,8 @@ class Client(object):
     def delete_item(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Deletes an item.
 
+        DEPRECATED. Use kv.delete
+
         Parameters
         ----------
         container (Required) : str
@@ -590,6 +612,8 @@ class Client(object):
                       retention_period_hours=None):
         """Creates and configures a new stream. The configuration includes the stream's shard count and retention
         period. The new stream is available immediately upon its creation.
+
+        DEPRECATED. Use stream.create
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/createstream/
@@ -630,6 +654,8 @@ class Client(object):
                       transport_actions=None):
         """Updates a stream's configuration by increasing its shard count. The changes are applied immediately.
 
+        DEPRECATED. Use stream.update
+
         See:
         https://www.iguazio.com/docs/latest-release/reference/api-reference/web-apis/streaming-web-api/updatestream/
 
@@ -659,6 +685,8 @@ class Client(object):
 
     def delete_stream(self, container, path, access_key=None, raise_for_status=None):
         """Deletes a stream object along with all of its shards.
+
+        DEPRECATED. Use stream.delete
 
         Parameters
         ----------
@@ -691,6 +719,8 @@ class Client(object):
 
     def describe_stream(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Retrieves a stream's configuration, including the shard count and retention period.
+
+        DEPRECATED. Use stream.describe
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/describestream/
@@ -729,6 +759,8 @@ class Client(object):
         """Returns the requested location within the specified stream shard, for use in a subsequent GetRecords
         operation. The operation supports different seek types, as outlined in the Stream Record Consumption
         overview and in the description of the Type request parameter below.
+
+        DEPRECATED. Use stream.seek
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/seek/
@@ -783,6 +815,8 @@ class Client(object):
 
     def put_records(self, container, path, records, access_key=None, raise_for_status=None, transport_actions=None):
         """Adds records to a stream.
+
+        DEPRECATED. Use stream.put
 
         You can optionally assign a record to specific stream shard by specifying a related shard ID, or associate
         the record with a specific partition key to ensure that similar records are assigned to the same shard.
@@ -857,6 +891,8 @@ class Client(object):
                     limit=None):
         """Retrieves (consumes) records from a stream shard.
 
+        DEPRECATED. Use stream.get
+
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/getrecords/
 
@@ -902,6 +938,8 @@ class Client(object):
                       key=None,
                       fields=None):
         """Creates a KV schema file
+
+        DEPRECATED. Use kv.create_schema
 
         Parameters
         ----------

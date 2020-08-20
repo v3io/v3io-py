@@ -332,26 +332,26 @@ class TestSchema(Test):
 
     def test_create_schema(self):
         # write schema
-        self._client.create_schema(container=self._container,
-                                   path=self._schema_dir,
-                                   key='key_field',
-                                   fields=[
-                                       {
-                                           'name': 'key_field',
-                                           'type': 'string',
-                                           'nullable': False
-                                       },
-                                       {
-                                           'name': 'data_field_0',
-                                           'type': 'long',
-                                           'nullable': True
-                                       },
-                                       {
-                                           'name': 'data_field_1',
-                                           'type': 'double',
-                                           'nullable': True
-                                       },
-                                   ])
+        self._client.kv.create_schema(container=self._container,
+                                      path=self._schema_dir,
+                                      key='key_field',
+                                      fields=[
+                                          {
+                                              'name': 'key_field',
+                                              'type': 'string',
+                                              'nullable': False
+                                          },
+                                          {
+                                              'name': 'data_field_0',
+                                              'type': 'long',
+                                              'nullable': True
+                                          },
+                                          {
+                                              'name': 'data_field_1',
+                                              'type': 'double',
+                                              'nullable': True
+                                          },
+                                      ])
 
         # write to test the values in the UI (requires breaking afterwards)
         items = {
