@@ -10,7 +10,7 @@ import v3io.dataplane.request
 import v3io.dataplane.batch
 import v3io.dataplane.response
 import v3io.dataplane.output
-import v3io.dataplane.items_cursor
+import v3io.dataplane.kv_cursor
 import v3io.common.helpers
 import v3io.logger
 
@@ -271,21 +271,21 @@ class Client(object):
                          total_segments=None,
                          sort_key_range_start=None,
                          sort_key_range_end=None):
-        return v3io.dataplane.items_cursor.ItemsCursor(self,
-                                                       container,
-                                                       access_key or self._access_key,
-                                                       path,
-                                                       raise_for_status,
-                                                       table_name,
-                                                       attribute_names,
-                                                       filter_expression,
-                                                       marker,
-                                                       sharding_key,
-                                                       limit,
-                                                       segment,
-                                                       total_segments,
-                                                       sort_key_range_start,
-                                                       sort_key_range_end)
+        return v3io.dataplane.kv_cursor.Cursor(self,
+                                               container,
+                                               access_key or self._access_key,
+                                               path,
+                                               raise_for_status,
+                                               table_name,
+                                               attribute_names,
+                                               filter_expression,
+                                               marker,
+                                               sharding_key,
+                                               limit,
+                                               segment,
+                                               total_segments,
+                                               sort_key_range_start,
+                                               sort_key_range_end)
 
     def put_item(self,
                  container,

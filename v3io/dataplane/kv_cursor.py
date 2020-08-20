@@ -1,4 +1,4 @@
-class ItemsCursor(object):
+class Cursor(object):
 
     def __init__(self,
                  context,
