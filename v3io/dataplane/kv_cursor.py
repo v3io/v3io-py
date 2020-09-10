@@ -6,7 +6,6 @@ class Cursor(object):
                  access_key,
                  table_path,
                  raise_for_status=None,
-                 table_name=None,
                  attribute_names='*',
                  filter_expression=None,
                  marker=None,
@@ -27,7 +26,6 @@ class Cursor(object):
         # get items params
         self.raise_for_status = raise_for_status
         self.table_path = table_path
-        self.table_name = table_name
         self.attribute_names = attribute_names
         self.filter_expression = filter_expression
         self.marker = marker
@@ -56,7 +54,6 @@ class Cursor(object):
                                                        self._access_key,
                                                        self.raise_for_status,
                                                        None,
-                                                       self.table_name,
                                                        self.attribute_names,
                                                        self.filter_expression,
                                                        self.marker,

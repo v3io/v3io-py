@@ -192,9 +192,6 @@ def encode_get_items(container_name, access_key, kwargs):
         'AttributesToGet': ','.join(kwargs['attribute_names']),
     }
 
-    if kwargs['table_name']:
-        body['TableName'] = kwargs['table_name']
-
     if kwargs['filter_expression']:
         body['FilterExpression'] = kwargs['filter_expression']
 

@@ -32,7 +32,6 @@ class Model(v3io.dataplane.model.Model):
                                                access_key or self._access_key,
                                                table_path,
                                                raise_for_status,
-                                               None,
                                                attribute_names,
                                                filter_expression,
                                                marker,
@@ -121,8 +120,10 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
-            The path and collection (table) name of the item.
+        table_path (Required) : str
+            The full path of the table
+        key (Required) : str
+            The item key name
         attributes (Required) : dict
             The item to update - an object containing zero or more attributes.
             For example:
@@ -176,8 +177,10 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
-            The path and collection (table) name of the item.
+        table_path (Required) : str
+            The full path of the table
+        key (Required) : str
+            The item key name
         attribute_names (Required) : []str or '*'
             A list of attribute names to get, or '*' which will retreive all attributes
         access_key (Optional) : str
@@ -201,7 +204,6 @@ class Model(v3io.dataplane.model.Model):
              access_key=None,
              raise_for_status=None,
              transport_actions=None,
-             table_name=None,
              attribute_names='*',
              filter_expression=None,
              marker=None,
@@ -221,12 +223,10 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
-            The path and collection (table) name of the item.
+        table_path (Required) : str
+            The full path of the table
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
-        table_name (Optional) : str
-            If passed, appended to the path to form the collection path
         attribute_names (Optional) : []str or '*'
             A list of attribute names to get, or '*' which will retreive all attributes
         filter_expression (Optional) : str
@@ -286,8 +286,10 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
-            The path of the item
+        table_path (Required) : str
+            The full path of the table
+        key (Required) : str
+            The item key name
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
 
@@ -317,8 +319,8 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
-            The path of the object
+        table_path (Required) : str
+            The full path of the table
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
         key (Required) : str
