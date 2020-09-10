@@ -625,7 +625,8 @@ class TestRaiseForStatus(Test):
 
     def test_always_raise_no_error(self):
         # should raise - since the status code is 500
-        self._client.container.list(self._container, '/',
+        self._client.container.list(self._container,
+                                    '/',
                                     raise_for_status=v3io.dataplane.transport.RaiseForStatus.always)
 
     def test_specific_status_code_match(self):

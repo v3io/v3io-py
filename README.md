@@ -38,27 +38,19 @@ The client supports a handful of low level APIs, each receiving different argume
 You would normally only access the `output` field unless an API was called that returns raw data like `object.get` (in which case `body` holds the response). Consult the reference for each API call to see how to handle its `Response` object. In the example below, we perform a simple request to get the containers available in our tenant, print the returned status code and containers:
 
 ```python
-# list the containers we can access
-response = v3io_client.container.get()
+# list the contents of a container
+response = v3io_client.container.list('users', '/')
 
 # print the status code. outputs:
 # 
 #  Status code: 200
 #
 print(f'Status code: {response.status_code}')
-
-# iterate over the containers and print them
-# 
-#   #0: bigdata
-#   #1: users
-#
-for container_idx, container in enumerate(response.output.containers):
-    print(f'#{container_idx}: {container.name}')
 ```
 
 We can also get help information about the parameters this API call receives:
 ```python
-help(v3io_client.container.get)
+help(v3io_client.container.list)
 ```
 
 ### Handling errors
@@ -66,8 +58,8 @@ By default, making a request will raise an exception if any non-200 status code 
 
 The first is to simply never raise an exception and handle the status manually:
 ```python
-# list the containers we can access and never raise an exception
-response = v3io_client.container.get(raise_for_status=v3io.dataplane.RaiseForStatus.never)
+# list the contents of a container and never raise an exception
+response = v3io_client.container.list('users', '/', raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
 # do anything we want with the status code
 # some_logic(response.status_code)
@@ -75,8 +67,8 @@ response = v3io_client.container.get(raise_for_status=v3io.dataplane.RaiseForSta
 
 The second is to indicate which status codes are acceptable:
 ```python
-# list the containers and raise if the status code is not 200 or 204
-response = v3io_client.container.get(raise_for_status=[200, 204])
+# list the contents of a container and raise if the status code is not 200 or 204
+response = v3io_client.container.list('users', '/', raise_for_status=[200, 204])
 ```
 
 ### Creating batches
@@ -136,19 +128,21 @@ items = {
 
 # add the records to the table
 for item_key, item_attributes in items.items():
-    v3io_client.kv.put(container='users', path='/bobs-burgers/' + item_key, attributes=item_attributes)
+    v3io_client.kv.put(container='users', table_path='/bobs-burgers', key=item_key, attributes=item_attributes)
 
 # adds two fields (height, quip) to the louise record
 v3io_client.kv.update(container='users',
-                      path='/bobs-burgers/louise',
+                      table_path='/bobs-burgers',
+                      key='louise',   
                       attributes={
                           'height': 130,
                           'quip': 'i can smell fear on you'
                       })
 
 # get a record by key, specifying specific arguments
-response = v3io_client.kv.get(container='users', 
-                              path='/bobs-burgers/louise', 
+response = v3io_client.kv.get(container='users',
+                              table_path='/bobs-burgers',
+                              key='louise',
                               attribute_names=['__size', 'age', 'quip', 'height'])
 
 
@@ -160,7 +154,7 @@ print(response.output.item)
 
 # create a query, and use an items cursor to iterate the results
 items_cursor = v3io_client.kv.new_cursor(container='users',
-                                         path='/bobs-burgers/',
+                                         table_path='/bobs-burgers',
                                          attribute_names=['age', 'feature'],
                                          filter_expression='age > 15')
 
@@ -175,7 +169,7 @@ Creates a stream with several partitions, writes records to it, reads the record
 ```python
 # create a stream w/8 shards
 v3io_client.stream.create(container='users',
-                          path='/my-test-stream',
+                          stream_path='/my-test-stream',
                           shard_count=8)
 
 # write 4 records - 3 with explicitly specifying the shard and 1 using hashing
@@ -186,13 +180,13 @@ records = [
     {'data': 'some shard record #1'}
 ]
 
-v3io_client.stream.put(container='users', path='/my-test-stream', records=records)
+v3io_client.stream.put_records(container='users', stream_path='/my-test-stream', records=records)
 
 # seek to the beginning of the shard of #1 so we know where to read from 
-response = v3io_client.stream.seek(container='users', path='/my-test-stream/1', seek_type='EARLIEST')
+response = v3io_client.stream.seek(container='users', stream_path='/my-test-stream', shard_id=1, seek_type='EARLIEST')
 
 # get records from the shard (should receive 2)
-response = v3io_client.stream.get(container='users', path='/my-test-stream/1', location=response.output.location)
+response = v3io_client.stream.get_records(container='users', path='/my-test-stream', shard_id=1, location=response.output.location)
 
 # print the records. outputs:
 #
@@ -203,7 +197,7 @@ for record in response.output.records:
     print(record.data.decode('utf-8'))
 
 # delete the stream
-v3io_client.stream.delete(container='users', path='/my-test-stream')
+v3io_client.stream.delete(container='users', stream_path='/my-test-stream')
 ```
 
 # Controlplane client
