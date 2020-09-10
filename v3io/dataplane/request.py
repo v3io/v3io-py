@@ -237,7 +237,7 @@ def encode_create_stream(container_name, access_key, kwargs):
     return _encode('POST',
                    container_name,
                    access_key,
-                   kwargs['stream_path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'CreateStream'},
                    body)
 
@@ -250,7 +250,7 @@ def encode_update_stream(container_name, access_key, kwargs):
     return _encode('POST',
                    container_name,
                    access_key,
-                   kwargs['stream_path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'UpdateStream'},
                    body)
 
@@ -259,7 +259,7 @@ def encode_describe_stream(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['stream_path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'DescribeStream'},
                    None)
 
@@ -281,7 +281,7 @@ def encode_seek_shard(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['stream_path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'SeekShard'},
                    body)
 
@@ -318,7 +318,7 @@ def encode_put_records(container_name, access_key, kwargs):
     return _encode('POST',
                    container_name,
                    access_key,
-                   kwargs['stream_path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'PutRecords'},
                    body)
 
@@ -335,7 +335,7 @@ def encode_get_records(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['stream_path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'GetRecords'},
                    body)
 
