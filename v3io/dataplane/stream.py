@@ -1,3 +1,5 @@
+import os
+
 import v3io.dataplane.request
 import v3io.dataplane.output
 import v3io.dataplane.model
@@ -13,7 +15,7 @@ class Model(v3io.dataplane.model.Model):
 
     def create(self,
                container,
-               path,
+               stream_path,
                shard_count,
                access_key=None,
                raise_for_status=None,
@@ -29,7 +31,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
+        stream_path (Required) : str
             A unique name for the new stream (collection) that will be created.
         shard_count (Required) : int
             The steam's shard count, i.e., the number of stream shards to create.
@@ -43,7 +45,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object.
         """
-        path = self._ensure_path_ends_with_slash(path)
+        stream_path = self._ensure_path_ends_with_slash(stream_path)
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -54,7 +56,7 @@ class Model(v3io.dataplane.model.Model):
 
     def update(self,
                container,
-               path,
+               stream_path,
                shard_count,
                access_key=None,
                raise_for_status=None,
@@ -68,7 +70,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
+        stream_path (Required) : str
             A unique name for the new stream (collection) that will be created.
         shard_count (Required) : int
             The steam's shard count, i.e., the number of stream shards to create.
@@ -79,7 +81,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object.
         """
-        path = self._ensure_path_ends_with_slash(path)
+        stream_path = self._ensure_path_ends_with_slash(stream_path)
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -88,15 +90,15 @@ class Model(v3io.dataplane.model.Model):
                                        v3io.dataplane.request.encode_update_stream,
                                        locals())
 
-    def delete(self, container, path, access_key=None, raise_for_status=None):
+    def delete(self, container, stream_path, access_key=None, raise_for_status=None):
         """Deletes a stream object along with all of its shards.
 
         Parameters
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
-            The path of the stream.
+        stream_path (Required) : str
+            The stream_path of the stream.
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
 
@@ -104,10 +106,10 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object.
         """
-        path = self._ensure_path_ends_with_slash(path)
+        stream_path = self._ensure_path_ends_with_slash(stream_path)
 
         response = self._client.get_container_contents(container,
-                                                       path,
+                                                       stream_path,
                                                        access_key,
                                                        raise_for_status)
 
@@ -118,9 +120,9 @@ class Model(v3io.dataplane.model.Model):
         for stream_shard in response.output.contents:
             self._client.object.delete(container, stream_shard.key, access_key, raise_for_status)
 
-        return self._client.object.delete(container, path, access_key, raise_for_status)
+        return self._client.object.delete(container, stream_path, access_key, raise_for_status)
 
-    def describe(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
+    def describe(self, container, stream_path, access_key=None, raise_for_status=None, transport_actions=None):
         """Retrieves a stream's configuration, including the shard count and retention period.
 
         See:
@@ -128,8 +130,8 @@ class Model(v3io.dataplane.model.Model):
 
         Parameters
         ----------
-        path (Required) : str
-            The path of the stream.
+        stream_path (Required) : str
+            The stream_path of the stream.
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
 
@@ -137,7 +139,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `output` is `DescribeStreamOutput`.
         """
-        path = self._ensure_path_ends_with_slash(path)
+        stream_path = self._ensure_path_ends_with_slash(stream_path)
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -149,7 +151,8 @@ class Model(v3io.dataplane.model.Model):
 
     def seek(self,
              container,
-             path,
+             stream_path,
+             shard_id,
              seek_type,
              access_key=None,
              raise_for_status=None,
@@ -168,8 +171,8 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
-            The path of the stream.
+        stream_path (Required) : str
+            The stream_path of the stream.
         seek_type (Required) : str
             'EARLIEST': the location of the earliest ingested record in the shard.
             'LATEST': the location of the end of the shard.
@@ -202,7 +205,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `output` is `SeekShardOutput`.
         """
-        path = self._ensure_path_ends_with_slash(path)
+        stream_path = self._ensure_path_ends_with_slash(os.path.join(stream_path, str(shard_id)))
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -212,7 +215,13 @@ class Model(v3io.dataplane.model.Model):
                                        locals(),
                                        v3io.dataplane.output.SeekShardOutput)
 
-    def put_records(self, container, path, records, access_key=None, raise_for_status=None, transport_actions=None):
+    def put_records(self,
+                    container,
+                    stream_path,
+                    records,
+                    access_key=None,
+                    raise_for_status=None,
+                    transport_actions=None):
         """Adds records to a stream.
 
         You can optionally assign a record to specific stream shard by specifying a related shard ID, or associate
@@ -227,8 +236,8 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
-            The path of the stream.
+        stream_path (Required) : str
+            The stream_path of the stream.
         records (Required) : []dict
             A list of dictionaries with the following keys:
             - shard_id: int, optional
@@ -268,7 +277,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `output` is `PutRecordsOutput`.
         """
-        path = self._ensure_path_ends_with_slash(path)
+        stream_path = self._ensure_path_ends_with_slash(stream_path)
 
         return self._transport.request(container,
                                        access_key or self._access_key,
@@ -280,7 +289,8 @@ class Model(v3io.dataplane.model.Model):
 
     def get_records(self,
                     container,
-                    path,
+                    stream_path,
+                    shard_id,
                     location,
                     access_key=None,
                     raise_for_status=None,
@@ -295,8 +305,8 @@ class Model(v3io.dataplane.model.Model):
         ----------
         container (Required) : str
             The container on which to operate.
-        path (Required) : str
-            The path of the stream, whose last element is the shard id (e.g. /my-stream/0)
+        stream_path (Required) : str
+            The stream_path of the stream
         location (Required) : str
             The location within the shard at which to begin consuming records.
         access_key (Optional) : str
@@ -310,7 +320,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `output` is `GetRecordsOutput`.
         """
-        path = self._ensure_path_ends_with_slash(path)
+        stream_path = self._ensure_path_ends_with_slash(os.path.join(stream_path, str(shard_id)))
 
         return self._transport.request(container,
                                        access_key or self._access_key,

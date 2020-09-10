@@ -96,7 +96,7 @@ class TestStream(Test):
 
         # clean up
         self._client.stream.delete(container=self._container,
-                                   path=self._path,
+                                   stream_path=self._path,
                                    raise_for_status=[200, 204, 404])
 
     def test_delete_stream_with_cg(self):
@@ -107,13 +107,13 @@ class TestStream(Test):
 
         # create a stream
         self._client.stream.create(container=self._container,
-                                   path=self._path,
+                                   stream_path=self._path,
                                    shard_count=num_shards)
 
         # write data to all shards so there are files
         for shard_id in range(num_shards):
             self._client.stream.put_records(container=self._container,
-                                            path=self._path,
+                                            stream_path=self._path,
                                             records=[
                                                 {'shard_id': shard_id, 'data': 'data for shard {}'.format(shard_id)}
                                             ])
@@ -127,7 +127,7 @@ class TestStream(Test):
         self.assertTrue(self._stream_exists())
 
         # delete the stream
-        self._client.stream.delete(container=self._container, path=self._path)
+        self._client.stream.delete(container=self._container, stream_path=self._path)
 
         # check that the stream doesn't exist
         self.assertFalse(self._stream_exists())
@@ -136,7 +136,7 @@ class TestStream(Test):
 
         # create a stream w/8 shards
         self._client.stream.create(container=self._container,
-                                   path=self._path,
+                                   stream_path=self._path,
                                    shard_count=8)
 
         records = [
@@ -148,7 +148,7 @@ class TestStream(Test):
         ]
 
         response = self._client.stream.put_records(container=self._container,
-                                                   path=self._path,
+                                                   stream_path=self._path,
                                                    records=records)
         self.assertEqual(1, response.output.failed_record_count)
 
@@ -158,16 +158,16 @@ class TestStream(Test):
             else:
                 self.assertIsNone(response_record.error_code)
 
-        shard_path = self._path + '/1'
-
         response = self._client.stream.seek(container=self._container,
-                                            path=shard_path,
+                                            stream_path=self._path,
+                                            shard_id=1,
                                             seek_type='EARLIEST')
 
         self.assertNotEqual('', response.output.location)
 
         response = self._client.stream.get_records(container=self._container,
-                                                   path=shard_path,
+                                                   stream_path=self._path,
+                                                   shard_id=1,
                                                    location=response.output.location)
 
         self.assertEqual(2, len(response.output.records))
@@ -177,7 +177,7 @@ class TestStream(Test):
 
         # update the stream by adding 8 shards to it
         self._client.stream.update(container=self._container,
-                                   path=self._path,
+                                   stream_path=self._path,
                                    shard_count=16)
 
         records = [
@@ -185,17 +185,17 @@ class TestStream(Test):
         ]
 
         response = self._client.stream.put_records(container=self._container,
-                                                   path=self._path,
+                                                   stream_path=self._path,
                                                    records=records)
 
         self.assertEqual(0, response.output.failed_record_count)
 
         self._client.stream.delete(container=self._container,
-                                   path=self._path)
+                                   stream_path=self._path)
 
     def _stream_exists(self):
         response = self._client.stream.describe(container=self._container,
-                                                path=self._path,
+                                                stream_path=self._path,
                                                 raise_for_status=v3io.dataplane.RaiseForStatus.never)
         return response.status_code == 200
 
