@@ -180,13 +180,21 @@ records = [
     {'data': 'some shard record #1'}
 ]
 
-v3io_client.stream.put_records(container='users', stream_path='/my-test-stream', records=records)
+v3io_client.stream.put_records(container='users',
+                               stream_path='/my-test-stream',
+                               records=records)
 
 # seek to the beginning of the shard of #1 so we know where to read from 
-response = v3io_client.stream.seek(container='users', stream_path='/my-test-stream', shard_id=1, seek_type='EARLIEST')
+response = v3io_client.stream.seek(container='users',
+                                   stream_path='/my-test-stream',
+                                   shard_id=1,
+                                   seek_type='EARLIEST')
 
 # get records from the shard (should receive 2)
-response = v3io_client.stream.get_records(container='users', path='/my-test-stream', shard_id=1, location=response.output.location)
+response = v3io_client.stream.get_records(container='users',
+                                          stream_path='/my-test-stream',
+                                          shard_id=1,
+                                          location=response.output.location)
 
 # print the records. outputs:
 #
