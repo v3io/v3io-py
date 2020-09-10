@@ -212,7 +212,7 @@ class Model(v3io.dataplane.model.Model):
                                        locals(),
                                        v3io.dataplane.output.SeekShardOutput)
 
-    def put(self, container, path, records, access_key=None, raise_for_status=None, transport_actions=None):
+    def put_records(self, container, path, records, access_key=None, raise_for_status=None, transport_actions=None):
         """Adds records to a stream.
 
         You can optionally assign a record to specific stream shard by specifying a related shard ID, or associate
@@ -278,14 +278,14 @@ class Model(v3io.dataplane.model.Model):
                                        locals(),
                                        v3io.dataplane.output.PutRecordsOutput)
 
-    def get(self,
-            container,
-            path,
-            location,
-            access_key=None,
-            raise_for_status=None,
-            transport_actions=None,
-            limit=None):
+    def get_records(self,
+                    container,
+                    path,
+                    location,
+                    access_key=None,
+                    raise_for_status=None,
+                    transport_actions=None,
+                    limit=None):
         """Retrieves (consumes) records from a stream shard.
 
         See:

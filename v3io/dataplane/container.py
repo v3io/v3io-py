@@ -11,37 +11,16 @@ class Model(v3io.dataplane.model.Model):
         self._access_key = client._access_key
         self._transport = client._transport
 
-    def get(self, access_key=None, raise_for_status=None, transport_actions=None):
-        """Lists the containers that are visible to the user who sent the request, according to its tenant.
-
-        Parameters
-        ----------
-        access_key (Optional) : str
-            The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
-
-        Return Value
-        ----------
-        A `Response` object, whose `output` is `GetContainersOutput`.
-        """
-
-        return self._transport.request(None,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_get_containers,
-                                       locals(),
-                                       v3io.dataplane.output.GetContainersOutput)
-
-    def get_contents(self,
-                     container,
-                     path,
-                     access_key=None,
-                     raise_for_status=None,
-                     transport_actions=None,
-                     get_all_attributes=None,
-                     directories_only=None,
-                     limit=None,
-                     marker=None):
+    def list(self,
+             container,
+             path,
+             access_key=None,
+             raise_for_status=None,
+             transport_actions=None,
+             get_all_attributes=None,
+             directories_only=None,
+             limit=None,
+             marker=None):
         """Lists the containers contents.
 
         Parameters
