@@ -1,6 +1,6 @@
 import os
 import sys
-import asyncio
+import ujson
 
 import v3io.dataplane.transport.requests
 import v3io.dataplane.transport.httpclient
@@ -77,13 +77,22 @@ class Client(object):
 
         return logger
 
+    @staticmethod
+    def _get_schema_contents(key, fields):
+        return ujson.dumps({
+            'hashingBucketNum': 0,
+            'key': key,
+            'fields': fields
+        })
+
     def _create_models(self):
         import v3io.aio.dataplane.object
         import v3io.aio.dataplane.kv
+        import v3io.aio.dataplane.stream
         import v3io.aio.dataplane.container
 
         # create models
         return v3io.aio.dataplane.kv.Model(self), \
                v3io.aio.dataplane.object.Model(self), \
-               None, \
+               v3io.aio.dataplane.stream.Model(self), \
                v3io.aio.dataplane.container.Model(self)

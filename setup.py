@@ -65,6 +65,8 @@ setup(
         'v3io.common',
         'v3io.dataplane',
         'v3io.dataplane.transport',
+        'v3io.aio.dataplane',
+        'v3io.aio.dataplane.transport',
         'v3io.logger'
     ],
     install_requires=install_requires,
@@ -80,6 +82,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Software Development :: Libraries',

@@ -83,6 +83,120 @@ class TestContainer(Test):
         await self._delete_dir(self._path)
 
 
+class TestStream(Test):
+
+    async def asyncSetUp(self):
+        await super(TestStream, self).asyncSetUp()
+
+        self._path = 'v3io-py-test-stream'
+
+        # clean up
+        await self._client.stream.delete(container=self._container,
+                                         stream_path=self._path,
+                                         raise_for_status=[200, 204, 404])
+
+    async def test_delete_stream_with_cg(self):
+        num_shards = 8
+
+        # check that the stream doesn't exist
+        self.assertFalse(await self._stream_exists())
+
+        # create a stream
+        await self._client.stream.create(container=self._container,
+                                         stream_path=self._path,
+                                         shard_count=num_shards)
+
+        # write data to all shards so there are files
+        for shard_id in range(num_shards):
+            await self._client.stream.put_records(container=self._container,
+                                                  stream_path=self._path,
+                                                  records=[
+                                                      {'shard_id': shard_id,
+                                                       'data': 'data for shard {}'.format(shard_id)}
+                                                  ])
+
+        # write several "consumer group state" files
+        for cg_id in range(3):
+            await self._client.object.put(container=self._container,
+                                          path=os.path.join(self._path, 'cg{}-state.json'.format(cg_id)))
+
+        # check that the stream doesn't exist
+        self.assertTrue(await self._stream_exists())
+
+        # delete the stream
+        await self._client.stream.delete(container=self._container, stream_path=self._path)
+
+        # check that the stream doesn't exist
+        self.assertFalse(await self._stream_exists())
+
+    async def test_stream(self):
+
+        # create a stream w/8 shards
+        await self._client.stream.create(container=self._container,
+                                         stream_path=self._path,
+                                         shard_count=8)
+
+        records = [
+            {'shard_id': 1, 'data': 'first shard record #1'},
+            {'shard_id': 1, 'data': 'first shard record #2', 'client_info': bytearray(b'some info')},
+            {'shard_id': 10, 'data': 'invalid shard record #1'},
+            {'shard_id': 2, 'data': 'second shard record #1'},
+            {'data': 'some shard record #1'},
+        ]
+
+        response = await self._client.stream.put_records(container=self._container,
+                                                         stream_path=self._path,
+                                                         records=records)
+        self.assertEqual(1, response.output.failed_record_count)
+
+        for response_record_index, response_record in enumerate(response.output.records):
+            if response_record_index == 2:
+                self.assertIsNotNone(response_record.error_code)
+            else:
+                self.assertIsNone(response_record.error_code)
+
+        response = await self._client.stream.seek(container=self._container,
+                                                  stream_path=self._path,
+                                                  shard_id=1,
+                                                  seek_type='EARLIEST')
+
+        self.assertNotEqual('', response.output.location)
+
+        response = await self._client.stream.get_records(container=self._container,
+                                                         stream_path=self._path,
+                                                         shard_id=1,
+                                                         location=response.output.location)
+
+        self.assertEqual(2, len(response.output.records))
+        self.assertEqual(records[0]['data'], response.output.records[0].data.decode('utf-8'))
+        self.assertEqual(records[1]['data'], response.output.records[1].data.decode('utf-8'))
+        self.assertEqual(records[1]['client_info'], response.output.records[1].client_info)
+
+        # update the stream by adding 8 shards to it
+        await self._client.stream.update(container=self._container,
+                                         stream_path=self._path,
+                                         shard_count=16)
+
+        records = [
+            {'shard_id': 10, 'data': 'Now valid shard record #1'},
+        ]
+
+        response = await self._client.stream.put_records(container=self._container,
+                                                         stream_path=self._path,
+                                                         records=records)
+
+        self.assertEqual(0, response.output.failed_record_count)
+
+        await self._client.stream.delete(container=self._container,
+                                         stream_path=self._path)
+
+    async def _stream_exists(self):
+        response = await self._client.stream.describe(container=self._container,
+                                                      stream_path=self._path,
+                                                      raise_for_status=v3io.dataplane.RaiseForStatus.never)
+        return response.status_code == 200
+
+
 class TestObject(Test):
 
     async def asyncSetUp(self):
@@ -167,6 +281,65 @@ class TestObject(Test):
                                                  num_bytes=3)
 
         self.assertEqual(response.body.decode('utf-8'), '567')
+
+
+# class TestSchema(Test):
+#
+#     async def asyncSetUp(self):
+#         await super(TestSchema, self).asyncSetUp()
+#
+#         self._schema_dir = '/v3io-py-test-schemaa'
+#         self._schema_path = os.path.join(self._schema_dir, '.%23schema')
+#
+#         # clean up
+#         await self._delete_dir(self._schema_dir)
+#
+#     async def test_create_schema(self):
+#         await self._client.kv.create_schema(container=self._container,
+#                                             table_path=self._schema_dir,
+#                                             key='key_field',
+#                                             fields=[
+#                                                 {
+#                                                     'name': 'key_field',
+#                                                     'type': 'string',
+#                                                     'nullable': False
+#                                                 },
+#                                                 {
+#                                                     'name': 'data_field_0',
+#                                                     'type': 'long',
+#                                                     'nullable': True
+#                                                 },
+#                                                 {
+#                                                     'name': 'data_field_1',
+#                                                     'type': 'double',
+#                                                     'nullable': True
+#                                                 },
+#                                             ])
+#
+#         # write to test the values in the UI (requires breaking afterwards)
+#         items = {
+#             'a': {'data_field_0': 30, 'data_field_1': 100},
+#             'b': {'data_field_0': 300, 'data_field_1': 1000},
+#             'c': {'data_field_0': 3000, 'data_field_1': 10000},
+#         }
+#
+#         for item_key, item_attributes in future.utils.viewitems(items):
+#             await self._client.kv.put(container=self._container,
+#                                       table_path=self._schema_dir,
+#                                       key=item_key,
+#                                       attributes=item_attributes)
+#
+#         # verify the scehma
+#         response = await self._client.object.get(container=self._container,
+#                                                  path=self._schema_path,
+#                                                  raise_for_status=v3io.dataplane.RaiseForStatus.never)
+#
+#         # find a way to assert this without assuming serialization order
+#         # self.assertEqual(
+#         #     '{"hashingBucketNum":0,"key":"key_field","fields":[{"name":"key_field","type":"string","nullable":false},'
+#         #     '{"name":"data_field_0","type":"long","nullable":true},{"name":"data_field_1","type":"double"'
+#         #     ',"nullable":true}]}',
+#         #     response.body.decode('utf-8'))
 
 
 class TestKv(Test):
