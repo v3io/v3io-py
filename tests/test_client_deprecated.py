@@ -24,9 +24,9 @@ class Test(unittest.TestCase):
         self._client.close()
 
     def _delete_dir(self, path):
-        response = self._client.container.list(container=self._container,
-                                               path=path,
-                                               raise_for_status=v3io.dataplane.RaiseForStatus.never)
+        response = self._client.get_container_contents(container=self._container,
+                                                       path=path,
+                                                       raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
         if response.status_code == 404:
             return
@@ -35,10 +35,10 @@ class Test(unittest.TestCase):
             raise RuntimeError(response.body)
 
         for content in response.output.contents:
-            self._client.object.delete(container=self._container, path=content.key)
+            self._client.delete_object(container=self._container, path=content.key)
 
         for common_prefixes in response.output.common_prefixes:
-            self._client.object.delete(container=self._container,
+            self._client.delete_object(container=self._container,
                                        path=common_prefixes.prefix)
 
 
@@ -51,10 +51,14 @@ class TestContainer(Test):
         # clean up
         self._delete_dir(self._path)
 
+    def test_get_containers(self):
+        response = self._client.get_containers()
+        self.assertGreater(len(response.output.containers), 0)
+
     def test_get_container_contents_invalid_path(self):
-        response = self._client.container.list(container=self._container,
-                                               path='/no-such-path',
-                                               raise_for_status=v3io.dataplane.RaiseForStatus.never)
+        response = self._client.get_container_contents(container=self._container,
+                                                       path='/no-such-path',
+                                                       raise_for_status=v3io.dataplane.RaiseForStatus.never)
         self.assertEqual(404, response.status_code)
         self.assertIn('No such file', str(response.body))
 
@@ -62,24 +66,24 @@ class TestContainer(Test):
         body = 'If you cannot do great things, do small things in a great way.'
 
         for object_index in range(5):
-            self._client.object.put(container=self._container,
+            self._client.put_object(container=self._container,
                                     path=os.path.join(self._path, 'object-{0}.txt'.format(object_index)),
                                     body=body)
 
         for object_index in range(5):
-            self._client.object.put(container=self._container,
+            self._client.put_object(container=self._container,
                                     path=os.path.join(self._path, 'dir-{0}/'.format(object_index)))
 
-        response = self._client.container.list(container=self._container,
-                                               path=self._path,
-                                               get_all_attributes=True,
-                                               directories_only=True)
+        response = self._client.get_container_contents(container=self._container,
+                                                       path=self._path,
+                                                       get_all_attributes=True,
+                                                       directories_only=True)
         self.assertEqual(0, len(response.output.contents))
         self.assertNotEqual(0, len(response.output.common_prefixes))
 
-        response = self._client.container.list(container=self._container,
-                                               path=self._path,
-                                               get_all_attributes=True)
+        response = self._client.get_container_contents(container=self._container,
+                                                       path=self._path,
+                                                       get_all_attributes=True)
         self.assertNotEqual(0, len(response.output.contents))
         self.assertNotEqual(0, len(response.output.common_prefixes))
 
@@ -95,8 +99,8 @@ class TestStream(Test):
         self._path = 'v3io-py-test-stream'
 
         # clean up
-        self._client.stream.delete(container=self._container,
-                                   stream_path=self._path,
+        self._client.delete_stream(container=self._container,
+                                   path=self._path,
                                    raise_for_status=[200, 204, 404])
 
     def test_delete_stream_with_cg(self):
@@ -106,28 +110,28 @@ class TestStream(Test):
         self.assertFalse(self._stream_exists())
 
         # create a stream
-        self._client.stream.create(container=self._container,
-                                   stream_path=self._path,
+        self._client.create_stream(container=self._container,
+                                   path=self._path,
                                    shard_count=num_shards)
 
         # write data to all shards so there are files
         for shard_id in range(num_shards):
-            self._client.stream.put_records(container=self._container,
-                                            stream_path=self._path,
-                                            records=[
-                                                {'shard_id': shard_id, 'data': 'data for shard {}'.format(shard_id)}
-                                            ])
+            self._client.put_records(container=self._container,
+                                     path=self._path,
+                                     records=[
+                                         {'shard_id': shard_id, 'data': 'data for shard {}'.format(shard_id)}
+                                     ])
 
         # write several "consumer group state" files
         for cg_id in range(3):
-            self._client.object.put(container=self._container,
+            self._client.put_object(container=self._container,
                                     path=os.path.join(self._path, 'cg{}-state.json'.format(cg_id)))
 
         # check that the stream doesn't exist
         self.assertTrue(self._stream_exists())
 
         # delete the stream
-        self._client.stream.delete(container=self._container, stream_path=self._path)
+        self._client.delete_stream(container=self._container, path=self._path)
 
         # check that the stream doesn't exist
         self.assertFalse(self._stream_exists())
@@ -135,8 +139,8 @@ class TestStream(Test):
     def test_stream(self):
 
         # create a stream w/8 shards
-        self._client.stream.create(container=self._container,
-                                   stream_path=self._path,
+        self._client.create_stream(container=self._container,
+                                   path=self._path,
                                    shard_count=8)
 
         records = [
@@ -147,9 +151,9 @@ class TestStream(Test):
             {'data': 'some shard record #1'},
         ]
 
-        response = self._client.stream.put_records(container=self._container,
-                                                   stream_path=self._path,
-                                                   records=records)
+        response = self._client.put_records(container=self._container,
+                                            path=self._path,
+                                            records=records)
         self.assertEqual(1, response.output.failed_record_count)
 
         for response_record_index, response_record in enumerate(response.output.records):
@@ -158,17 +162,17 @@ class TestStream(Test):
             else:
                 self.assertIsNone(response_record.error_code)
 
-        response = self._client.stream.seek(container=self._container,
-                                            stream_path=self._path,
-                                            shard_id=1,
-                                            seek_type='EARLIEST')
+        shard_path = self._path + '/1'
+
+        response = self._client.seek_shard(container=self._container,
+                                           path=shard_path,
+                                           seek_type='EARLIEST')
 
         self.assertNotEqual('', response.output.location)
 
-        response = self._client.stream.get_records(container=self._container,
-                                                   stream_path=self._path,
-                                                   shard_id=1,
-                                                   location=response.output.location)
+        response = self._client.get_records(container=self._container,
+                                            path=shard_path,
+                                            location=response.output.location)
 
         self.assertEqual(2, len(response.output.records))
         self.assertEqual(records[0]['data'], response.output.records[0].data.decode('utf-8'))
@@ -176,26 +180,26 @@ class TestStream(Test):
         self.assertEqual(records[1]['client_info'], response.output.records[1].client_info)
 
         # update the stream by adding 8 shards to it
-        self._client.stream.update(container=self._container,
-                                   stream_path=self._path,
+        self._client.update_stream(container=self._container,
+                                   path=self._path,
                                    shard_count=16)
 
         records = [
             {'shard_id': 10, 'data': 'Now valid shard record #1'},
         ]
 
-        response = self._client.stream.put_records(container=self._container,
-                                                   stream_path=self._path,
-                                                   records=records)
+        response = self._client.put_records(container=self._container,
+                                            path=self._path,
+                                            records=records)
 
         self.assertEqual(0, response.output.failed_record_count)
 
-        self._client.stream.delete(container=self._container,
-                                   stream_path=self._path)
+        self._client.delete_stream(container=self._container,
+                                   path=self._path)
 
     def _stream_exists(self):
-        response = self._client.stream.describe(container=self._container,
-                                                stream_path=self._path,
+        response = self._client.describe_stream(container=self._container,
+                                                path=self._path,
                                                 raise_for_status=v3io.dataplane.RaiseForStatus.never)
         return response.status_code == 200
 
@@ -214,19 +218,19 @@ class TestObject(Test):
     def test_object(self):
         contents = 'vegans are better than everyone'
 
-        response = self._client.object.get(container=self._container,
+        response = self._client.get_object(container=self._container,
                                            path=self._object_path,
                                            raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
         self.assertEqual(404, response.status_code)
 
         # put contents to some object
-        self._client.object.put(container=self._container,
+        self._client.put_object(container=self._container,
                                 path=self._object_path,
                                 body=contents)
 
         # get the contents
-        response = self._client.object.get(container=self._container,
+        response = self._client.get_object(container=self._container,
                                            path=self._object_path)
 
         if not isinstance(response.body, str):
@@ -235,11 +239,11 @@ class TestObject(Test):
         self.assertEqual(response.body, contents)
 
         # delete the object
-        self._client.object.delete(container=self._container,
+        self._client.delete_object(container=self._container,
                                    path=self._object_path)
 
         # get again
-        response = self._client.object.get(container=self._container,
+        response = self._client.get_object(container=self._container,
                                            path=self._object_path,
                                            raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
@@ -254,31 +258,31 @@ class TestObject(Test):
 
         # put the contents into the object
         for content in contents:
-            self._client.object.put(container=self._container,
+            self._client.put_object(container=self._container,
                                     path=self._object_path,
                                     body=content,
                                     append=True)
 
         # get the contents
-        response = self._client.object.get(container=self._container,
+        response = self._client.get_object(container=self._container,
                                            path=self._object_path)
 
         self.assertEqual(response.body.decode('utf-8'), ''.join(contents))
 
     def test_get_offset(self):
-        self._client.object.put(container=self._container,
+        self._client.put_object(container=self._container,
                                 path=self._object_path,
                                 body='1234567890')
 
         # get the contents without limit
-        response = self._client.object.get(container=self._container,
+        response = self._client.get_object(container=self._container,
                                            path=self._object_path,
                                            offset=4)
 
         self.assertEqual(response.body.decode('utf-8'), '567890')
 
         # get the contents with limit
-        response = self._client.object.get(container=self._container,
+        response = self._client.get_object(container=self._container,
                                            path=self._object_path,
                                            offset=4,
                                            num_bytes=3)
@@ -296,7 +300,7 @@ class TestObject(Test):
         num_objects = 16
 
         for object_idx in range(num_objects):
-            self._client.batch.object.put(self._container,
+            self._client.batch.put_object(self._container,
                                           _object_path(object_idx),
                                           body=_object_contents(object_idx))
 
@@ -306,7 +310,7 @@ class TestObject(Test):
             self.assertEqual(200, response.status_code)
 
         for object_idx in range(num_objects):
-            self._client.batch.object.get(self._container, _object_path(object_idx))
+            self._client.batch.get_object(self._container, _object_path(object_idx))
 
         responses = self._client.batch.wait()
 
@@ -328,26 +332,26 @@ class TestSchema(Test):
 
     def test_create_schema(self):
         # write schema
-        self._client.kv.create_schema(container=self._container,
-                                      table_path=self._schema_dir,
-                                      key='key_field',
-                                      fields=[
-                                          {
-                                              'name': 'key_field',
-                                              'type': 'string',
-                                              'nullable': False
-                                          },
-                                          {
-                                              'name': 'data_field_0',
-                                              'type': 'long',
-                                              'nullable': True
-                                          },
-                                          {
-                                              'name': 'data_field_1',
-                                              'type': 'double',
-                                              'nullable': True
-                                          },
-                                      ])
+        self._client.create_schema(container=self._container,
+                                   path=self._schema_dir,
+                                   key='key_field',
+                                   fields=[
+                                       {
+                                           'name': 'key_field',
+                                           'type': 'string',
+                                           'nullable': False
+                                       },
+                                       {
+                                           'name': 'data_field_0',
+                                           'type': 'long',
+                                           'nullable': True
+                                       },
+                                       {
+                                           'name': 'data_field_1',
+                                           'type': 'double',
+                                           'nullable': True
+                                       },
+                                   ])
 
         # write to test the values in the UI (requires breaking afterwards)
         items = {
@@ -357,13 +361,12 @@ class TestSchema(Test):
         }
 
         for item_key, item_attributes in future.utils.viewitems(items):
-            self._client.kv.put(container=self._container,
-                                table_path=self._schema_dir,
-                                key=item_key,
-                                attributes=item_attributes)
+            self._client.put_item(container=self._container,
+                                  path=v3io.common.helpers.url_join(self._schema_dir, item_key),
+                                  attributes=item_attributes)
 
         # verify the scehma
-        response = self._client.object.get(container=self._container,
+        response = self._client.get_object(container=self._container,
                                            path=self._schema_path,
                                            raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
@@ -375,41 +378,39 @@ class TestSchema(Test):
         #     response.body.decode('utf-8'))
 
 
-class TestKv(Test):
+class TestEmd(Test):
 
     def setUp(self):
-        super(TestKv, self).setUp()
+        super(TestEmd, self).setUp()
 
         self._path = 'some_dir/v3io-py-test-emd'
         self._delete_dir(self._path)
 
-    def test_kv_array(self):
+    def test_emd_array(self):
         item_key = 'item_with_arrays'
         item = {
             'list_with_ints': [1, 2, 3],
             'list_with_floats': [10.25, 20.25, 30.25],
         }
 
-        self._client.kv.put(container=self._container,
-                            table_path=self._path,
-                            key=item_key,
-                            attributes=item)
+        item_path = v3io.common.helpers.url_join(self._path, item_key)
+
+        self._client.put_item(container=self._container,
+                              path=item_path,
+                              attributes=item)
 
         for attribute_name in item.keys():
-            self._client.kv.update(container=self._container,
-                                   table_path=self._path,
-                                   key=item_key,
-                                   expression=f'{attribute_name}[1]={attribute_name}[1]*2')
+            self._client.update_item(container=self._container,
+                                     path=item_path,
+                                     expression=f'{attribute_name}[1]={attribute_name}[1]*2')
 
         # get the item
-        response = self._client.kv.get(container=self._container,
-                                       table_path=self._path,
-                                       key=item_key)
+        response = self._client.get_item(container=self._container, path=item_path)
 
         for attribute_name in item.keys():
             self.assertEqual(response.output.item[attribute_name][1], item[attribute_name][1] * 2)
 
-    def test_kv_values(self):
+    def test_emd_values(self):
 
         def _get_int_array():
             int_array = array.array('l')
@@ -445,14 +446,12 @@ class TestKv(Test):
             }
         }
 
-        self._client.kv.put(container=self._container,
-                            table_path=self._path,
-                            key=item_key,
-                            attributes=item[item_key])
+        self._client.put_item(container=self._container,
+                              path=v3io.common.helpers.url_join(self._path, item_key),
+                              attributes=item[item_key])
 
-        response = self._client.kv.get(container=self._container,
-                                       table_path=self._path,
-                                       key=item_key)
+        response = self._client.get_item(container=self._container,
+                                         path=v3io.common.helpers.url_join(self._path, item_key))
 
         self.assertEqual(len(item[item_key].keys()), len(response.output.item.keys()))
 
@@ -462,7 +461,7 @@ class TestKv(Test):
         for key, value in item[item_key].items():
             self._compare_item_types(item[item_key][key], response.output.item[key])
 
-    def test_kv(self):
+    def test_emd(self):
         items = {
             'bob': {'age': 42, 'feature': 'mustache'},
             'linda': {'age': 41, 'feature': 'singing'},
@@ -471,25 +470,22 @@ class TestKv(Test):
         }
 
         for item_key, item_attributes in future.utils.viewitems(items):
-            self._client.kv.put(container=self._container,
-                                table_path=self._path,
-                                key=item_key,
-                                attributes=item_attributes)
+            self._client.put_item(container=self._container,
+                                  path=v3io.common.helpers.url_join(self._path, item_key),
+                                  attributes=item_attributes)
 
         self._verify_items(self._path, items)
 
-        self._client.kv.update(container=self._container,
-                               table_path=self._path,
-                               key='louise',
-                               attributes={
-                                   'height': 130,
-                                   'quip': 'i can smell fear on you'
-                               })
+        self._client.update_item(container=self._container,
+                                 path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                 attributes={
+                                     'height': 130,
+                                     'quip': 'i can smell fear on you'
+                                 })
 
-        response = self._client.kv.get(container=self._container,
-                                       table_path=self._path,
-                                       key='louise',
-                                       attribute_names=['__size', 'age', 'quip', 'height'])
+        response = self._client.get_item(container=self._container,
+                                         path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                         attribute_names=['__size', 'age', 'quip', 'height'])
 
         self.assertEqual(0, response.output.item['__size'])
         self.assertEqual(9, response.output.item['age'])
@@ -497,9 +493,9 @@ class TestKv(Test):
         self.assertEqual(130, response.output.item['height'])
 
         # get items with filter expression
-        response = self._client.kv.scan(container=self._container,
-                                        table_path=self._path,
-                                        filter_expression="feature == 'singing'")
+        response = self._client.get_items(container=self._container,
+                                          path=self._path,
+                                          filter_expression="feature == 'singing'")
         self.assertEqual(1, len(response.output.items))
 
         # get items with segment / total_segments
@@ -507,27 +503,27 @@ class TestKv(Test):
         total_items = []
 
         for segment in range(total_segments):
-            received_items = self._client.kv.new_cursor(container=self._container,
-                                                        table_path=self._path,
-                                                        segment=segment,
-                                                        total_segments=total_segments).all()
+            received_items = self._client.new_items_cursor(container=self._container,
+                                                           path=self._path,
+                                                           segment=segment,
+                                                           total_segments=total_segments).all()
             total_items.append(received_items)
 
         self.assertEqual(4, len(total_items))
 
         # with limit = 0
-        received_items = self._client.kv.new_cursor(container=self._container,
-                                                    table_path=self._path,
-                                                    attribute_names=['age', 'feature'],
-                                                    filter_expression='age > 15',
-                                                    limit=0).all()
+        received_items = self._client.new_items_cursor(container=self._container,
+                                                       path=self._path,
+                                                       attribute_names=['age', 'feature'],
+                                                       filter_expression='age > 15',
+                                                       limit=0).all()
 
         self.assertEqual(0, len(received_items))
 
-        received_items = self._client.kv.new_cursor(container=self._container,
-                                                    table_path=self._path,
-                                                    attribute_names=['age', 'feature'],
-                                                    filter_expression='age > 15').all()
+        received_items = self._client.new_items_cursor(container=self._container,
+                                                       path=self._path,
+                                                       attribute_names=['age', 'feature'],
+                                                       filter_expression='age > 15').all()
 
         self.assertEqual(2, len(received_items))
         for item in received_items:
@@ -537,17 +533,68 @@ class TestKv(Test):
         # Increment age
         #
 
-        self._client.kv.update(container=self._container,
-                               table_path=self._path,
-                               key='louise',
-                               expression='age = age + 1')
+        self._client.update_item(container=self._container,
+                                 path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                 expression='age = age + 1')
 
-        response = self._client.kv.get(container=self._container,
-                                       table_path=self._path,
-                                       key='louise',
-                                       attribute_names=['age'])
+        response = self._client.get_item(container=self._container,
+                                         path=v3io.common.helpers.url_join(self._path, 'louise'),
+                                         attribute_names=['age'])
 
         self.assertEqual(10, response.output.item['age'])
+
+    def test_put_items(self):
+        items = {
+            'bob': {
+                'age': 42,
+                'feature': 'mustache',
+                'female': False
+            },
+            'linda': {
+                'age': 40,
+                'feature': 'singing',
+                'female': True,
+                'some_blob': bytearray('\x00\x11\x00\x11', encoding='utf-8')
+            },
+        }
+
+        response = self._client.put_items(container=self._container,
+                                          path=self._path,
+                                          items=items)
+
+        self.assertTrue(response.success)
+
+        self._verify_items(self._path, items)
+
+        # delete an item
+        self._client.delete_item(container=self._container, path=self._path + '/linda')
+        del(items['linda'])
+
+        self._verify_items(self._path, items)
+
+    def test_put_items_with_error(self):
+        items = {
+            'bob': {'age': 42, 'feature': 'mustache'},
+            'linda': {'age': 40, 'feature': 'singing'},
+            'invalid': {'__name': 'foo', 'feature': 'singing'}
+        }
+
+        response = self._client.put_items(container=self._container,
+                                          path=self._path,
+                                          items=items,
+                                          raise_for_status=v3io.dataplane.RaiseForStatus.never)
+
+        self.assertFalse(response.success)
+
+        # first two should've passed
+        response.responses[0].raise_for_status()
+        response.responses[1].raise_for_status()
+        self.assertEqual(403, response.responses[2].status_code)
+
+        # remove invalid so we can verify
+        del items['invalid']
+
+        self._verify_items(self._path, items)
 
     def test_batch(self):
         items = {
@@ -559,20 +606,18 @@ class TestKv(Test):
 
         # put the item in a batch
         for item_key, item_attributes in future.utils.viewitems(items):
-            self._client.batch.kv.put(container=self._container,
-                                      table_path=self._path,
-                                      key=item_key,
-                                      attributes=item_attributes)
+            self._client.batch.put_item(container=self._container,
+                                        path=v3io.common.helpers.url_join(self._path, item_key),
+                                        attributes=item_attributes)
 
         responses = self._client.batch.wait()
         for response in responses:
             self.assertEqual(200, response.status_code)
 
         for item_key in items.keys():
-            self._client.batch.kv.get(container=self._container,
-                                      table_path=self._path,
-                                      key=item_key,
-                                      attribute_names=['__size', 'age'])
+            self._client.batch.get_item(container=self._container,
+                                        path=v3io.common.helpers.url_join(self._path, item_key),
+                                        attribute_names=['__size', 'age'])
 
         responses = self._client.batch.wait()
         for response in responses:
@@ -582,18 +627,17 @@ class TestKv(Test):
 
         # delete items
         for item_key, _ in future.utils.viewitems(items):
-            self._client.kv.delete(container=self._container,
-                                   table_path=path,
-                                   key=item_key)
+            self._client.delete_object(container=self._container,
+                                       path=v3io.common.helpers.url_join(path, item_key))
 
         # delete dir
-        self._client.object.delete(container=self._container,
+        self._client.delete_object(container=self._container,
                                    path=path)
 
     def _verify_items(self, path, items):
-        items_cursor = self._client.kv.new_cursor(container=self._container,
-                                                  table_path=path,
-                                                  attribute_names=['*'])
+        items_cursor = self._client.new_items_cursor(container=self._container,
+                                                     path=path,
+                                                     attribute_names=['*'])
 
         received_items = items_cursor.all()
 
@@ -602,6 +646,7 @@ class TestKv(Test):
 
     def _compare_item_values(self, v1, v2):
         if isinstance(v1, array.array):
+
             # convert to list
             v1 = list(v1)
 
@@ -610,6 +655,7 @@ class TestKv(Test):
 
     def _compare_item_types(self, v1, v2):
         if isinstance(v1, array.array):
+
             # convert to list
             v1 = list(v1)
 
@@ -625,25 +671,23 @@ class TestRaiseForStatus(Test):
 
     def test_always_raise_no_error(self):
         # should raise - since the status code is 500
-        self._client.container.list(self._container,
-                                    '/',
-                                    raise_for_status=v3io.dataplane.transport.RaiseForStatus.always)
+        self._client.get_containers(raise_for_status=v3io.dataplane.transport.RaiseForStatus.always)
 
     def test_specific_status_code_match(self):
         # should raise - since the status code is 500
-        self._client.container.list(self._container, '/', raise_for_status=[200])
+        self._client.get_containers(raise_for_status=[200])
 
     def test_specific_status_code_no_match(self):
         # should raise - since the status code is 500
-        self.assertRaises(Exception, self._client.container.list, self._container, '/', raise_for_status=[500])
+        self.assertRaises(Exception, self._client.get_containers, raise_for_status=[500])
 
     def test_never_raise(self):
-        self._client.object.get(container=self._container,
+        self._client.get_object(container=self._container,
                                 path='/non-existing',
                                 raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
     def test_default_raise(self):
-        self.assertRaises(Exception, self._client.object.get, container=self._container, path='/non-existing')
+        self.assertRaises(Exception, self._client.get_object, container=self._container, path='/non-existing')
 
 
 class TestBatchRaiseForStatus(Test):
@@ -667,7 +711,7 @@ class TestBatchRaiseForStatus(Test):
         err_idx = 1
 
         for object_idx in range(num_objects):
-            self._client.batch.object.put(self._container,
+            self._client.batch.put_object(self._container,
                                           _object_path(object_idx),
                                           body=_object_contents(object_idx))
 
@@ -679,7 +723,7 @@ class TestBatchRaiseForStatus(Test):
             if object_idx == err_idx:
                 object_idx = 10
 
-            self._client.batch.object.get(self._container, _object_path(object_idx))
+            self._client.batch.get_object(self._container, _object_path(object_idx))
 
         self.assertRaises(Exception, self._client.batch.wait)
 
@@ -690,7 +734,7 @@ class TestBatchRaiseForStatus(Test):
             if object_idx == 1:
                 object_idx = 10
 
-            self._client.batch.object.get(self._container, _object_path(object_idx))
+            self._client.batch.get_object(self._container, _object_path(object_idx))
 
         responses = self._client.batch.wait(raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
@@ -709,8 +753,8 @@ class TestConnectonErrorRecovery(Test):
         self._object_dir = '/v3io-py-test-connection-error'
         self._object_path = self._object_dir + '/object.txt'
 
-        self._kv_path = 'some_dir/v3io-py-test-emd'
-        self._delete_dir(self._kv_path)
+        self._emd_path = 'some_dir/v3io-py-test-emd'
+        self._delete_dir(self._emd_path)
 
         # clean up
         self._delete_dir(self._object_dir)
@@ -725,11 +769,11 @@ class TestConnectonErrorRecovery(Test):
                 self._restart_webapi()
 
             # put contents to some object
-            self._client.object.put(container=self._container,
+            self._client.put_object(container=self._container,
                                     path=self._object_path,
                                     body=body)
 
-            response = self._client.object.get(container=self._container,
+            response = self._client.get_object(container=self._container,
                                                path=self._object_path)
 
             if not isinstance(response.body, str):
@@ -740,7 +784,7 @@ class TestConnectonErrorRecovery(Test):
             time.sleep(0.1)
 
     @unittest.skip("Manually executed")
-    def test_kv_batch(self):
+    def test_emd_batch(self):
         items = {
             'bob': {'age': 42, 'feature': 'mustache'},
             'linda': {'age': 41, 'feature': 'singing'},
@@ -751,7 +795,7 @@ class TestConnectonErrorRecovery(Test):
         # put the item in a batch
         for item_key, item_attributes in future.utils.viewitems(items):
             self._client.batch.put_item(container=self._container,
-                                        path=v3io.common.helpers.url_join(self._kv_path, item_key),
+                                        path=v3io.common.helpers.url_join(self._emd_path, item_key),
                                         attributes=item_attributes)
 
         responses = self._client.batch.wait()
@@ -762,7 +806,7 @@ class TestConnectonErrorRecovery(Test):
 
         for item_key in items.keys():
             self._client.batch.get_item(container=self._container,
-                                        path=v3io.common.helpers.url_join(self._kv_path, item_key),
+                                        path=v3io.common.helpers.url_join(self._emd_path, item_key),
                                         attribute_names=['__size', 'age'])
 
         responses = self._client.batch.wait()

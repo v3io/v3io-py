@@ -1,6 +1,6 @@
 import base64
 import future.utils
-import datetime
+import os
 import array
 import datetime
 
@@ -12,8 +12,8 @@ except BaseException:
 import ujson
 
 import v3io.common.helpers
-import v3io.dataplane.item_array
-import v3io.dataplane.item_timestamp
+import v3io.dataplane.kv_array
+import v3io.dataplane.kv_timestamp
 
 #
 # Request
@@ -135,7 +135,7 @@ def encode_put_item(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or os.path.join(kwargs['table_path'], kwargs['key']),
                    {'X-v3io-function': 'PutItem'},
                    body)
 
@@ -169,7 +169,7 @@ def encode_update_item(container_name, access_key, kwargs):
     return _encode(http_method,
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or os.path.join(kwargs['table_path'], kwargs['key']),
                    {'X-v3io-function': function_name},
                    body)
 
@@ -182,7 +182,7 @@ def encode_get_item(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or os.path.join(kwargs['table_path'], kwargs['key']),
                    {'X-v3io-function': 'GetItem'},
                    body)
 
@@ -191,9 +191,6 @@ def encode_get_items(container_name, access_key, kwargs):
     body = {
         'AttributesToGet': ','.join(kwargs['attribute_names']),
     }
-
-    if kwargs['table_name']:
-        body['TableName'] = kwargs['table_name']
 
     if kwargs['filter_expression']:
         body['FilterExpression'] = kwargs['filter_expression']
@@ -222,7 +219,7 @@ def encode_get_items(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or kwargs['table_path'],
                    {'X-v3io-function': 'GetItems'},
                    body)
 
@@ -240,7 +237,7 @@ def encode_create_stream(container_name, access_key, kwargs):
     return _encode('POST',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'CreateStream'},
                    body)
 
@@ -253,7 +250,7 @@ def encode_update_stream(container_name, access_key, kwargs):
     return _encode('POST',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'UpdateStream'},
                    body)
 
@@ -262,7 +259,7 @@ def encode_describe_stream(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'DescribeStream'},
                    None)
 
@@ -284,7 +281,7 @@ def encode_seek_shard(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'SeekShard'},
                    body)
 
@@ -321,7 +318,7 @@ def encode_put_records(container_name, access_key, kwargs):
     return _encode('POST',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'PutRecords'},
                    body)
 
@@ -338,7 +335,7 @@ def encode_get_records(container_name, access_key, kwargs):
     return _encode('PUT',
                    container_name,
                    access_key,
-                   kwargs['path'],
+                   kwargs.get('path') or kwargs['stream_path'],
                    {'X-v3io-function': 'GetRecords'},
                    body)
 
@@ -400,13 +397,13 @@ def _dict_to_typed_attributes(d):
             type_value = value
         elif isinstance(value, list):
             type_key = 'B'
-            type_value = v3io.dataplane.item_array.encode_list(value)
+            type_value = v3io.dataplane.kv_array.encode_list(value)
         elif isinstance(value, array.array):
             type_key = 'B'
-            type_value = v3io.dataplane.item_array.encode_array(value, value.typecode)
+            type_value = v3io.dataplane.kv_array.encode_array(value, value.typecode)
         elif isinstance(value, datetime.datetime):
             type_key = 'TS'
-            type_value = v3io.dataplane.item_timestamp.encode(value)
+            type_value = v3io.dataplane.kv_timestamp.encode(value)
         else:
             raise AttributeError('Attribute {0} has unsupported type {1}'.format(key, attribute_type))
 

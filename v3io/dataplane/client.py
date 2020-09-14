@@ -10,7 +10,7 @@ import v3io.dataplane.request
 import v3io.dataplane.batch
 import v3io.dataplane.response
 import v3io.dataplane.output
-import v3io.dataplane.items_cursor
+import v3io.dataplane.kv_cursor
 import v3io.common.helpers
 import v3io.logger
 
@@ -77,6 +77,9 @@ class Client(object):
         # create a default "batch" object
         self.batch = self.create_batch()
 
+        # create models
+        self.kv, self.object, self.stream, self.container = self._create_models()
+
     def create_batch(self):
         return v3io.dataplane.batch.Batch(self)
 
@@ -89,6 +92,8 @@ class Client(object):
 
     def get_containers(self, access_key=None, raise_for_status=None, transport_actions=None):
         """Lists the containers that are visible to the user who sent the request, according to its tenant.
+
+        DEPRECATED: use container.get
 
         Parameters
         ----------
@@ -119,6 +124,8 @@ class Client(object):
                                limit=None,
                                marker=None):
         """Lists the containers contents.
+
+        DEPRECATED: use container.get_contents
 
         Parameters
         ----------
@@ -167,6 +174,8 @@ class Client(object):
                    num_bytes=None):
         """Retrieves an object from a container.
 
+        DEPRECATED: use object.get
+
         Parameters
         ----------
         container (Required) : str
@@ -202,6 +211,8 @@ class Client(object):
         """Adds a new object to a container, or appends data to an existing object. The option to append data is
         extension to the S3 PUT Object capabilities
 
+        DEPRECATED: use object.put
+
         Parameters
         ----------
         container (Required) : str
@@ -228,6 +239,8 @@ class Client(object):
 
     def delete_object(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Deletes an object from a container.
+
+        DEPRECATED: use object.delete
 
         Parameters
         ----------
@@ -258,7 +271,6 @@ class Client(object):
                          path,
                          access_key=None,
                          raise_for_status=None,
-                         table_name=None,
                          attribute_names='*',
                          filter_expression=None,
                          marker=None,
@@ -268,21 +280,20 @@ class Client(object):
                          total_segments=None,
                          sort_key_range_start=None,
                          sort_key_range_end=None):
-        return v3io.dataplane.items_cursor.ItemsCursor(self,
-                                                       container,
-                                                       access_key or self._access_key,
-                                                       path,
-                                                       raise_for_status,
-                                                       table_name,
-                                                       attribute_names,
-                                                       filter_expression,
-                                                       marker,
-                                                       sharding_key,
-                                                       limit,
-                                                       segment,
-                                                       total_segments,
-                                                       sort_key_range_start,
-                                                       sort_key_range_end)
+        return v3io.dataplane.kv_cursor.Cursor(self,
+                                               container,
+                                               access_key or self._access_key,
+                                               path,
+                                               raise_for_status,
+                                               attribute_names,
+                                               filter_expression,
+                                               marker,
+                                               sharding_key,
+                                               limit,
+                                               segment,
+                                               total_segments,
+                                               sort_key_range_start,
+                                               sort_key_range_end)
 
     def put_item(self,
                  container,
@@ -295,6 +306,8 @@ class Client(object):
         """Creates an item with the provided attributes. If an item with the same name (primary key) already exists in
         the specified table, the existing item is completely overwritten (replaced with a new item). If the item or
         table do not exist, the operation creates them.
+
+        DEPRECATED: use kv.put
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/putitem/
@@ -337,7 +350,9 @@ class Client(object):
                                        locals())
 
     def put_items(self, container, path, items, access_key=None, raise_for_status=None, condition=None):
-        """[OBSOLETED] A helper to put several items, calling put_item for each.
+        """A helper to put several items, calling put_item for each.
+
+        DEPRECATED. Loop with kv.put
 
         Parameters
         ----------
@@ -390,6 +405,8 @@ class Client(object):
                     alternate_expression=None):
         """Updates the attributes of a table item. If the specified item or table don't exist,
         the operation creates them.
+
+        DEPRECATED. Use kv.update
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/updateitem/
@@ -445,6 +462,8 @@ class Client(object):
                  attribute_names='*'):
         """Retrieves the requested attributes of a table item.
 
+        DEPRECATED. Use kv.get
+
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/getitem/
 
@@ -489,6 +508,8 @@ class Client(object):
                   sort_key_range_end=None):
         """Retrieves (reads) attributes of multiple items in a table or in a data container's root directory,
         according to the specified criteria.
+
+        DEPRECATED. Use kv.scan
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/getitems/
@@ -558,6 +579,8 @@ class Client(object):
     def delete_item(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Deletes an item.
 
+        DEPRECATED. Use kv.delete
+
         Parameters
         ----------
         container (Required) : str
@@ -587,6 +610,8 @@ class Client(object):
                       retention_period_hours=None):
         """Creates and configures a new stream. The configuration includes the stream's shard count and retention
         period. The new stream is available immediately upon its creation.
+
+        DEPRECATED. Use stream.create
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/createstream/
@@ -627,6 +652,8 @@ class Client(object):
                       transport_actions=None):
         """Updates a stream's configuration by increasing its shard count. The changes are applied immediately.
 
+        DEPRECATED. Use stream.update
+
         See:
         https://www.iguazio.com/docs/latest-release/reference/api-reference/web-apis/streaming-web-api/updatestream/
 
@@ -656,6 +683,8 @@ class Client(object):
 
     def delete_stream(self, container, path, access_key=None, raise_for_status=None):
         """Deletes a stream object along with all of its shards.
+
+        DEPRECATED. Use stream.delete
 
         Parameters
         ----------
@@ -688,6 +717,8 @@ class Client(object):
 
     def describe_stream(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Retrieves a stream's configuration, including the shard count and retention period.
+
+        DEPRECATED. Use stream.describe
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/describestream/
@@ -726,6 +757,8 @@ class Client(object):
         """Returns the requested location within the specified stream shard, for use in a subsequent GetRecords
         operation. The operation supports different seek types, as outlined in the Stream Record Consumption
         overview and in the description of the Type request parameter below.
+
+        DEPRECATED. Use stream.seek
 
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/seek/
@@ -780,6 +813,8 @@ class Client(object):
 
     def put_records(self, container, path, records, access_key=None, raise_for_status=None, transport_actions=None):
         """Adds records to a stream.
+
+        DEPRECATED. Use stream.put
 
         You can optionally assign a record to specific stream shard by specifying a related shard ID, or associate
         the record with a specific partition key to ensure that similar records are assigned to the same shard.
@@ -854,6 +889,8 @@ class Client(object):
                     limit=None):
         """Retrieves (consumes) records from a stream shard.
 
+        DEPRECATED. Use stream.get
+
         See:
         https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/getrecords/
 
@@ -900,6 +937,8 @@ class Client(object):
                       fields=None):
         """Creates a KV schema file
 
+        DEPRECATED. Use kv.create_schema
+
         Parameters
         ----------
         container (Required) : str
@@ -938,7 +977,7 @@ class Client(object):
         put_object_args['offset'] = 0
         put_object_args['append'] = None
         put_object_args['body'] = self._get_schema_contents(key, fields)
-        del(put_object_args['key'])
+        del (put_object_args['key'])
         del (put_object_args['fields'])
 
         return self._transport.request(container,
@@ -968,3 +1007,15 @@ class Client(object):
         logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
 
         return logger
+
+    def _create_models(self):
+        import v3io.dataplane.kv
+        import v3io.dataplane.object
+        import v3io.dataplane.stream
+        import v3io.dataplane.container
+
+        # create models
+        return v3io.dataplane.kv.Model(self), \
+               v3io.dataplane.object.Model(self), \
+               v3io.dataplane.stream.Model(self), \
+               v3io.dataplane.container.Model(self)

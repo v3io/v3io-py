@@ -4,8 +4,8 @@ import struct
 import future.utils
 
 
-import v3io.dataplane.item_array
-import v3io.dataplane.item_timestamp
+import v3io.dataplane.kv_array
+import v3io.dataplane.kv_timestamp
 
 
 class Output(object):
@@ -25,7 +25,7 @@ class Output(object):
 
                     # try to decode as an array
                     try:
-                        decoded_attribute = v3io.dataplane.item_array.decode(decoded_attribute)
+                        decoded_attribute = v3io.dataplane.kv_array.decode(decoded_attribute)
                     except:
                         pass
 
@@ -36,7 +36,7 @@ class Output(object):
                         decoded_attribute = attribute_value
 
                 elif attribute_type == 'TS':
-                    decoded_attribute = v3io.dataplane.item_timestamp.decode(attribute_value)
+                    decoded_attribute = v3io.dataplane.kv_timestamp.decode(attribute_value)
                 else:
                     decoded_attribute = attribute_value
 

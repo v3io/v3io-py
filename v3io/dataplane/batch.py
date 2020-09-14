@@ -11,6 +11,10 @@ class Batch(object):
         self._inflight_requests = []
         self._transport_actions = v3io.dataplane.transport.Actions.encode_only
         self._transport = self._client._transport
+        self.kv = lambda: None
+        self.object = lambda: None
+        self.stream = lambda: None
+        self.container = lambda: None
 
         for client_call in [
             'get_containers',
@@ -27,14 +31,49 @@ class Batch(object):
             'describe_stream',
             'seek_shard',
             'put_records',
-            'get_records'
+            'get_records',
         ]:
             setattr(self, client_call, functools.partial(self._call_client, client_call))
+
+        for model_name, model_call in [
+            ('kv', 'put'),
+            ('kv', 'get'),
+            ('kv', 'scan'),
+            ('kv', 'update'),
+            ('kv', 'delete'),
+            ('object', 'put'),
+            ('object', 'get'),
+            ('object', 'delete'),
+            ('stream', 'create'),
+            ('stream', 'update'),
+            ('stream', 'delete'),
+            ('stream', 'describe'),
+            ('stream', 'seek'),
+            ('stream', 'put'),
+            ('stream', 'get'),
+            ('container', 'get'),
+            ('container', 'get_contents'),
+        ]:
+            setattr(getattr(self, model_name),
+                    model_call,
+                    functools.partial(self._call_model, model_name, model_call))
 
     def _call_client(self, name, *args, **kw_args):
         kw_args['transport_actions'] = self._transport_actions
         request = getattr(self._client, name)(*args, **kw_args)
 
+        self._encoded_requests.append(request)
+
+    def _call_model(self, model_name, model_call, *args, **kw_args):
+        kw_args['transport_actions'] = self._transport_actions
+
+        # get the model (kv, object, ...)
+        model = getattr(self._client, model_name)
+
+        # do the request on it
+        request = getattr(model, model_call)(*args, **kw_args)
+
+        # shove to encoded requests
         self._encoded_requests.append(request)
 
     def wait(self, raise_for_status=None):
