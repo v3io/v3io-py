@@ -13,14 +13,13 @@ class Model(v3io.dataplane.model.Model):
         self._access_key = client._access_key
         self._transport = client._transport
 
-    def create(self,
-               container,
-               stream_path,
-               shard_count,
-               access_key=None,
-               raise_for_status=None,
-               transport_actions=None,
-               retention_period_hours=None):
+    async def create(self,
+                     container,
+                     stream_path,
+                     shard_count,
+                     access_key=None,
+                     raise_for_status=None,
+                     retention_period_hours=None):
         """Creates and configures a new stream. The configuration includes the stream's shard count and retention
         period. The new stream is available immediately upon its creation.
 
@@ -47,20 +46,18 @@ class Model(v3io.dataplane.model.Model):
         """
         stream_path = self._ensure_path_ends_with_slash(stream_path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_create_stream,
-                                       locals())
+        return await self._transport.request(container,
+                                             access_key or self._access_key,
+                                             raise_for_status,
+                                             v3io.dataplane.request.encode_create_stream,
+                                             locals())
 
-    def update(self,
-               container,
-               stream_path,
-               shard_count,
-               access_key=None,
-               raise_for_status=None,
-               transport_actions=None):
+    async def update(self,
+                     container,
+                     stream_path,
+                     shard_count,
+                     access_key=None,
+                     raise_for_status=None):
         """Updates a stream's configuration by increasing its shard count. The changes are applied immediately.
 
         See:
@@ -83,14 +80,13 @@ class Model(v3io.dataplane.model.Model):
         """
         stream_path = self._ensure_path_ends_with_slash(stream_path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_update_stream,
-                                       locals())
+        return await self._transport.request(container,
+                                             access_key or self._access_key,
+                                             raise_for_status,
+                                             v3io.dataplane.request.encode_update_stream,
+                                             locals())
 
-    def delete(self, container, stream_path, access_key=None, raise_for_status=None):
+    async def delete(self, container, stream_path, access_key=None, raise_for_status=None):
         """Deletes a stream object along with all of its shards.
 
         Parameters
@@ -108,21 +104,21 @@ class Model(v3io.dataplane.model.Model):
         """
         stream_path = self._ensure_path_ends_with_slash(stream_path)
 
-        response = self._client.container.list(container,
-                                               stream_path,
-                                               access_key,
-                                               raise_for_status)
+        response = await self._client.container.list(container,
+                                                     stream_path,
+                                                     access_key,
+                                                     raise_for_status)
 
         # nothing to do
         if response.status_code == 404:
             return response
 
         for stream_shard in response.output.contents:
-            self._client.object.delete(container, stream_shard.key, access_key, raise_for_status)
+            await self._client.object.delete(container, stream_shard.key, access_key, raise_for_status)
 
-        return self._client.object.delete(container, stream_path, access_key, raise_for_status)
+        return await self._client.object.delete(container, stream_path, access_key, raise_for_status)
 
-    def describe(self, container, stream_path, access_key=None, raise_for_status=None, transport_actions=None):
+    async def describe(self, container, stream_path, access_key=None, raise_for_status=None):
         """Retrieves a stream's configuration, including the shard count and retention period.
 
         See:
@@ -141,25 +137,23 @@ class Model(v3io.dataplane.model.Model):
         """
         stream_path = self._ensure_path_ends_with_slash(stream_path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_describe_stream,
-                                       locals(),
-                                       v3io.dataplane.output.DescribeStreamOutput)
+        return await self._transport.request(container,
+                                             access_key or self._access_key,
+                                             raise_for_status,
+                                             v3io.dataplane.request.encode_describe_stream,
+                                             locals(),
+                                             v3io.dataplane.output.DescribeStreamOutput)
 
-    def seek(self,
-             container,
-             stream_path,
-             shard_id,
-             seek_type,
-             access_key=None,
-             raise_for_status=None,
-             transport_actions=None,
-             starting_sequence_number=None,
-             timestamp_sec=None,
-             timestamp_nsec=None):
+    async def seek(self,
+                   container,
+                   stream_path,
+                   shard_id,
+                   seek_type,
+                   access_key=None,
+                   raise_for_status=None,
+                   starting_sequence_number=None,
+                   timestamp_sec=None,
+                   timestamp_nsec=None):
         """Returns the requested location within the specified stream shard, for use in a subsequent GetRecords
         operation. The operation supports different seek types, as outlined in the Stream Record Consumption
         overview and in the description of the Type request parameter below.
@@ -207,21 +201,19 @@ class Model(v3io.dataplane.model.Model):
         """
         stream_path = self._ensure_path_ends_with_slash(os.path.join(stream_path, str(shard_id)))
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_seek_shard,
-                                       locals(),
-                                       v3io.dataplane.output.SeekShardOutput)
+        return await self._transport.request(container,
+                                             access_key or self._access_key,
+                                             raise_for_status,
+                                             v3io.dataplane.request.encode_seek_shard,
+                                             locals(),
+                                             v3io.dataplane.output.SeekShardOutput)
 
-    def put_records(self,
-                    container,
-                    stream_path,
-                    records,
-                    access_key=None,
-                    raise_for_status=None,
-                    transport_actions=None):
+    async def put_records(self,
+                          container,
+                          stream_path,
+                          records,
+                          access_key=None,
+                          raise_for_status=None):
         """Adds records to a stream.
 
         You can optionally assign a record to specific stream shard by specifying a related shard ID, or associate
@@ -279,23 +271,21 @@ class Model(v3io.dataplane.model.Model):
         """
         stream_path = self._ensure_path_ends_with_slash(stream_path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_put_records,
-                                       locals(),
-                                       v3io.dataplane.output.PutRecordsOutput)
+        return await self._transport.request(container,
+                                             access_key or self._access_key,
+                                             raise_for_status,
+                                             v3io.dataplane.request.encode_put_records,
+                                             locals(),
+                                             v3io.dataplane.output.PutRecordsOutput)
 
-    def get_records(self,
-                    container,
-                    stream_path,
-                    shard_id,
-                    location,
-                    access_key=None,
-                    raise_for_status=None,
-                    transport_actions=None,
-                    limit=None):
+    async def get_records(self,
+                          container,
+                          stream_path,
+                          shard_id,
+                          location,
+                          access_key=None,
+                          raise_for_status=None,
+                          limit=None):
         """Retrieves (consumes) records from a stream shard.
 
         See:
@@ -322,10 +312,9 @@ class Model(v3io.dataplane.model.Model):
         """
         stream_path = self._ensure_path_ends_with_slash(os.path.join(stream_path, str(shard_id)))
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_get_records,
-                                       locals(),
-                                       v3io.dataplane.output.GetRecordsOutput)
+        return await self._transport.request(container,
+                                             access_key or self._access_key,
+                                             raise_for_status,
+                                             v3io.dataplane.request.encode_get_records,
+                                             locals(),
+                                             v3io.dataplane.output.GetRecordsOutput)
