@@ -208,5 +208,36 @@ for record in response.output.records:
 v3io_client.stream.delete(container='users', stream_path='/my-test-stream')
 ```
 
+## Support for asyncio (experimental)
+
+All synchronous APIs are available as `async` interfaces through the `aio` module. The differences between the sync and async API is as follows:
+1. You must initialize a different client (`v3io.aio.dataplane.Client`) from `v3io.aio.dataplane`
+2. All interfaces should be called with `await`
+3. `v3io.aio.dataplane.RaiseForStatus.never` should be used over `v3io.dataplane.RaiseForStatus.never` (although they are the same)
+4. The batching functionality doesn't exist, as you can achieve the same through standard asyncio practices
+
+```python
+import v3io.aio.dataplane
+
+v3io_client = v3io.aio.dataplane.Client(endpoint='https://v3io-webapi:8081', access_key='some_access_key')
+
+# put contents to some object
+await v3io_client.object.put(container='users',
+                             path='/my-object',
+                             body='hello, there')
+
+# get the object
+response = await v3io_client.object.get(container='users', path='/my-object')
+
+# print the contents. outputs:
+#
+#   hello, there
+#
+print(response.body.decode('utf-8'))
+
+# delete the object
+await v3io_client.object.delete(container='users', path='/my-object')
+```
+
 # Controlplane client
 Coming soon.

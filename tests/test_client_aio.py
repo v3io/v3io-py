@@ -5,14 +5,14 @@ import datetime
 import future.utils
 
 import v3io.dataplane
-import v3io.aio.dataplane.client
+import v3io.aio.dataplane
 
 
 class Test(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
-        self._client = v3io.aio.dataplane.client.Client(logger_verbosity='DEBUG',
-                                                        transport_verbosity='DEBUG')
+        self._client = v3io.aio.dataplane.Client(logger_verbosity='DEBUG',
+                                                 transport_verbosity='DEBUG')
 
         self._container = 'bigdata'
 
@@ -22,7 +22,7 @@ class Test(unittest.IsolatedAsyncioTestCase):
     async def _delete_dir(self, path):
         response = await self._client.container.list(container=self._container,
                                                      path=path,
-                                                     raise_for_status=v3io.dataplane.RaiseForStatus.never)
+                                                     raise_for_status=v3io.aio.dataplane.RaiseForStatus.never)
 
         if response.status_code == 404:
             return
@@ -50,7 +50,7 @@ class TestContainer(Test):
     async def test_get_container_contents_invalid_path(self):
         response = await self._client.container.list(container=self._container,
                                                      path='/no-such-path',
-                                                     raise_for_status=v3io.dataplane.RaiseForStatus.never)
+                                                     raise_for_status=v3io.aio.dataplane.RaiseForStatus.never)
         self.assertEqual(404, response.status_code)
         self.assertIn('No such file', str(response.body))
 
@@ -193,7 +193,7 @@ class TestStream(Test):
     async def _stream_exists(self):
         response = await self._client.stream.describe(container=self._container,
                                                       stream_path=self._path,
-                                                      raise_for_status=v3io.dataplane.RaiseForStatus.never)
+                                                      raise_for_status=v3io.aio.dataplane.RaiseForStatus.never)
         return response.status_code == 200
 
 
@@ -213,7 +213,7 @@ class TestObject(Test):
 
         response = await self._client.object.get(container=self._container,
                                                  path=self._object_path,
-                                                 raise_for_status=v3io.dataplane.RaiseForStatus.never)
+                                                 raise_for_status=v3io.aio.dataplane.RaiseForStatus.never)
 
         self.assertEqual(404, response.status_code)
 
@@ -238,7 +238,7 @@ class TestObject(Test):
         # get again
         response = await self._client.object.get(container=self._container,
                                                  path=self._object_path,
-                                                 raise_for_status=v3io.dataplane.RaiseForStatus.never)
+                                                 raise_for_status=v3io.aio.dataplane.RaiseForStatus.never)
 
         self.assertEqual(404, response.status_code)
 
@@ -332,7 +332,7 @@ class TestObject(Test):
 #         # verify the scehma
 #         response = await self._client.object.get(container=self._container,
 #                                                  path=self._schema_path,
-#                                                  raise_for_status=v3io.dataplane.RaiseForStatus.never)
+#                                                  raise_for_status=v3io.aio.dataplane.RaiseForStatus.never)
 #
 #         # find a way to assert this without assuming serialization order
 #         # self.assertEqual(
@@ -583,7 +583,7 @@ class TestRaiseForStatus(Test):
     async def test_never_raise(self):
         await self._client.object.get(container=self._container,
                                       path='/non-existing',
-                                      raise_for_status=v3io.dataplane.RaiseForStatus.never)
+                                      raise_for_status=v3io.aio.dataplane.RaiseForStatus.never)
 
     async def test_default_raise(self):
         try:
