@@ -381,3 +381,41 @@ class TestKv(Test):
         # can't guarantee strings as they might be converted to unicode
         if type(v1) is not str:
             self.assertEqual(type(v1), type(v2))
+
+
+class TestRaiseForStatus(Test):
+
+    def setUp(self):
+        super(TestRaiseForStatus, self).setUp()
+
+    async def test_always_raise_no_error(self):
+        # should raise - since the status code is 500
+        await self._client.container.list(self._container,
+                                          '/',
+                                          raise_for_status=v3io.dataplane.transport.RaiseForStatus.always)
+
+    async def test_specific_status_code_match(self):
+        # should raise - since the status code is 500
+        await self._client.container.list(self._container, '/', raise_for_status=[200])
+
+    async def test_specific_status_code_no_match(self):
+        # should raise - since the status code is 500
+        try:
+            await self._client.container.list(self._container, '/', raise_for_status=[500])
+        except Exception:
+            return
+
+        self.fail('Expected an exception')
+
+    async def test_never_raise(self):
+        await self._client.object.get(container=self._container,
+                                      path='/non-existing',
+                                      raise_for_status=v3io.dataplane.RaiseForStatus.never)
+
+    async def test_default_raise(self):
+        try:
+            await self._client.object.get(container=self._container, path='/non-existing')
+        except Exception:
+            return
+
+        self.fail('Expected an exception')
