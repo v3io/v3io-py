@@ -1,6 +1,7 @@
-import asyncio
-
 import unittest
+import os
+import array
+import datetime
 import future.utils
 
 import v3io.dataplane
@@ -14,6 +15,9 @@ class Test(unittest.IsolatedAsyncioTestCase):
                                                         transport_verbosity='DEBUG')
 
         self._container = 'bigdata'
+
+    async def asyncTearDown(self):
+        await self._client.close()
 
     async def _delete_dir(self, path):
         response = await self._client.container.list(container=self._container,
@@ -34,40 +38,223 @@ class Test(unittest.IsolatedAsyncioTestCase):
                                              path=common_prefixes.prefix)
 
 
-# class TestObject(aiounittest.AsyncTestCase):
-#
-#     async def test_object(self):
-#         self._client = v3io.aio.dataplane.client.Client(logger_verbosity='DEBUG',
-#                                                         transport_verbosity='DEBUG')
-#
-#         response = await self._client.object.get(container='users',
-#                                                  path='/foo',
-#                                                  raise_for_status=v3io.dataplane.RaiseForStatus.never)
-#         print(response.status_code)
-#
-#         await self._client.object.put(container='users',
-#                                       path='/foo',
-#                                       body='this is a test')
-#
-#         response = await self._client.object.get(container='users',
-#                                                  path='/foo')
-#
-#         print(response.body)
-#
-#         await self._client.object.delete(container='users',
-#                                          path='/foo')
-#
-#         await self._client.close()
-#
+class TestContainer(Test):
+
+    async def asyncSetUp(self):
+        await super(TestContainer, self).asyncSetUp()
+        self._path = 'v3io-py-test-container'
+
+        # clean up
+        await self._delete_dir(self._path)
+
+    async def test_get_container_contents_invalid_path(self):
+        response = await self._client.container.list(container=self._container,
+                                                     path='/no-such-path',
+                                                     raise_for_status=v3io.dataplane.RaiseForStatus.never)
+        self.assertEqual(404, response.status_code)
+        self.assertIn('No such file', str(response.body))
+
+    async def test_get_container_contents(self):
+        body = 'If you cannot do great things, do small things in a great way.'
+
+        for object_index in range(5):
+            await self._client.object.put(container=self._container,
+                                          path=os.path.join(self._path, 'object-{0}.txt'.format(object_index)),
+                                          body=body)
+
+        for object_index in range(5):
+            await self._client.object.put(container=self._container,
+                                          path=os.path.join(self._path, 'dir-{0}/'.format(object_index)))
+
+        response = await self._client.container.list(container=self._container,
+                                                     path=self._path,
+                                                     get_all_attributes=True,
+                                                     directories_only=True)
+        self.assertEqual(0, len(response.output.contents))
+        self.assertNotEqual(0, len(response.output.common_prefixes))
+
+        response = await self._client.container.list(container=self._container,
+                                                     path=self._path,
+                                                     get_all_attributes=True)
+        self.assertNotEqual(0, len(response.output.contents))
+        self.assertNotEqual(0, len(response.output.common_prefixes))
+
+        # clean up
+        await self._delete_dir(self._path)
+
+
+class TestObject(Test):
+
+    async def asyncSetUp(self):
+        await super(TestObject, self).asyncSetUp()
+
+        self._object_dir = '/v3io-py-test-object'
+        self._object_path = self._object_dir + '/object.txt'
+
+        # clean up
+        await self._delete_dir(self._object_dir)
+
+    async def test_object(self):
+        contents = 'vegans are better than everyone'
+
+        response = await self._client.object.get(container=self._container,
+                                                 path=self._object_path,
+                                                 raise_for_status=v3io.dataplane.RaiseForStatus.never)
+
+        self.assertEqual(404, response.status_code)
+
+        # put contents to some object
+        await self._client.object.put(container=self._container,
+                                      path=self._object_path,
+                                      body=contents)
+
+        # get the contents
+        response = await self._client.object.get(container=self._container,
+                                                 path=self._object_path)
+
+        if not isinstance(response.body, str):
+            response.body = response.body.decode('utf-8')
+
+        self.assertEqual(response.body, contents)
+
+        # delete the object
+        await self._client.object.delete(container=self._container,
+                                         path=self._object_path)
+
+        # get again
+        response = await self._client.object.get(container=self._container,
+                                                 path=self._object_path,
+                                                 raise_for_status=v3io.dataplane.RaiseForStatus.never)
+
+        self.assertEqual(404, response.status_code)
+
+    async def test_append(self):
+        contents = [
+            'First part',
+            'Second part',
+            'Third part',
+        ]
+
+        # put the contents into the object
+        for content in contents:
+            await self._client.object.put(container=self._container,
+                                          path=self._object_path,
+                                          body=content,
+                                          append=True)
+
+        # get the contents
+        response = await self._client.object.get(container=self._container,
+                                                 path=self._object_path)
+
+        self.assertEqual(response.body.decode('utf-8'), ''.join(contents))
+
+    async def test_get_offset(self):
+        await self._client.object.put(container=self._container,
+                                      path=self._object_path,
+                                      body='1234567890')
+
+        # get the contents without limit
+        response = await self._client.object.get(container=self._container,
+                                                 path=self._object_path,
+                                                 offset=4)
+
+        self.assertEqual(response.body.decode('utf-8'), '567890')
+
+        # get the contents with limit
+        response = await self._client.object.get(container=self._container,
+                                                 path=self._object_path,
+                                                 offset=4,
+                                                 num_bytes=3)
+
+        self.assertEqual(response.body.decode('utf-8'), '567')
+
 
 class TestKv(Test):
 
     async def asyncSetUp(self):
-        await super().asyncSetUp()
+        await super(TestKv, self).asyncSetUp()
 
         self._path = 'some_dir/v3io-py-test-emd'
-
         await self._delete_dir(self._path)
+
+    async def test_kv_array(self):
+        item_key = 'item_with_arrays'
+        item = {
+            'list_with_ints': [1, 2, 3],
+            'list_with_floats': [10.25, 20.25, 30.25],
+        }
+
+        await self._client.kv.put(container=self._container,
+                                  table_path=self._path,
+                                  key=item_key,
+                                  attributes=item)
+
+        for attribute_name in item.keys():
+            await self._client.kv.update(container=self._container,
+                                         table_path=self._path,
+                                         key=item_key,
+                                         expression=f'{attribute_name}[1]={attribute_name}[1]*2')
+
+        # get the item
+        response = await self._client.kv.get(container=self._container,
+                                             table_path=self._path,
+                                             key=item_key)
+
+        for attribute_name in item.keys():
+            self.assertEqual(response.output.item[attribute_name][1], item[attribute_name][1] * 2)
+
+    async def test_kv_values(self):
+
+        def _get_int_array():
+            int_array = array.array('l')
+            for value in range(10):
+                int_array.append(value)
+
+            return int_array
+
+        def _get_float_array():
+            float_array = array.array('d')
+            for value in range(10):
+                float_array.append(value)
+
+            return float_array
+
+        item_key = 'bob'
+        item = {
+            item_key: {
+                'age': 42,
+                'pi': 3.14,
+                'feature_str': 'mustache',
+                'feature_unicode': u'mustache',
+                'numeric_str': '1',
+                'unicode': u'\xd7\xa9\xd7\x9c\xd7\x95\xd7\x9d',
+                'male': True,
+                'happy': False,
+                'blob': b'+AFymWFzAL/LUOiU2huiADbugMH0AARATEO1',
+                'list_with_ints': [1, 2, 3],
+                'list_with_floats': [10.5, 20.5, 30.5],
+                'array_with_ints': _get_int_array(),
+                'array_with_floats': _get_float_array(),
+                'now': datetime.datetime.utcnow()
+            }
+        }
+
+        await self._client.kv.put(container=self._container,
+                                  table_path=self._path,
+                                  key=item_key,
+                                  attributes=item[item_key])
+
+        response = await self._client.kv.get(container=self._container,
+                                             table_path=self._path,
+                                             key=item_key)
+
+        self.assertEqual(len(item[item_key].keys()), len(response.output.item.keys()))
+
+        for key, value in response.output.item.items():
+            self._compare_item_values(item[item_key][key], value)
+
+        for key, value in item[item_key].items():
+            self._compare_item_types(item[item_key][key], response.output.item[key])
 
     async def test_kv(self):
         items = {
@@ -156,7 +343,17 @@ class TestKv(Test):
 
         self.assertEqual(10, response.output.item['age'])
 
-        await self._client.close()
+    async def _delete_items(self, path, items):
+
+        # delete items
+        for item_key, _ in future.utils.viewitems(items):
+            await self._client.kv.delete(container=self._container,
+                                         table_path=path,
+                                         key=item_key)
+
+        # delete dir
+        await self._client.object.delete(container=self._container,
+                                         path=path)
 
     async def _verify_items(self, path, items):
         items_cursor = self._client.kv.new_cursor(container=self._container,
@@ -167,3 +364,20 @@ class TestKv(Test):
 
         # TODO: verify contents
         self.assertEqual(len(items), len(received_items))
+
+    def _compare_item_values(self, v1, v2):
+        if isinstance(v1, array.array):
+            # convert to list
+            v1 = list(v1)
+
+        if v1 != v2:
+            self.fail('Values dont match')
+
+    def _compare_item_types(self, v1, v2):
+        if isinstance(v1, array.array):
+            # convert to list
+            v1 = list(v1)
+
+        # can't guarantee strings as they might be converted to unicode
+        if type(v1) is not str:
+            self.assertEqual(type(v1), type(v2))
