@@ -216,6 +216,8 @@ All synchronous APIs are available as `async` interfaces through the `aio` modul
 3. `v3io.aio.dataplane.RaiseForStatus.never` should be used over `v3io.dataplane.RaiseForStatus.never` (although they are the same)
 4. The batching functionality doesn't exist, as you can achieve the same through standard asyncio practices
 
+Note: For the time being, `aiohttp` must be provided externally - it is not a v3io-py dependency. This will be fixed in future versions.
+
 ```python
 import v3io.aio.dataplane
 
