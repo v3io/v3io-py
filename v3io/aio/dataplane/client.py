@@ -1,5 +1,6 @@
 import os
 import sys
+import asyncio
 
 import v3io.dataplane.transport.requests
 import v3io.dataplane.transport.httpclient

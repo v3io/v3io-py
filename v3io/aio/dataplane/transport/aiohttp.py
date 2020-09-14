@@ -13,7 +13,8 @@ class Transport(object):
         self._endpoint = self._get_endpoint(endpoint)
         self._timeout = timeout
         self.max_connections = max_connections or 8
-
+        # self._connector = None
+        # self._client_session = None
         self._connector = aiohttp.TCPConnector()
         self._client_session = aiohttp.ClientSession(connector=self._connector)
 
@@ -39,6 +40,8 @@ class Transport(object):
                                                  encoder_args,
                                                  output)
 
+        self.log('Tx', method=request.method, path=request.path, headers=request.headers, body=request.body)
+
         # call the encoder to get the response
         async with self._client_session.request(request.method,
                                                 self._endpoint + '/' + request.path,
@@ -57,6 +60,8 @@ class Transport(object):
 
             # enforce raise for status
             response.raise_for_status(request.raise_for_status or raise_for_status)
+
+            self.log('Rx', status_code=response.status_code, headers=response.headers, body=contents)
 
             return response
 

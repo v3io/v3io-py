@@ -1,27 +1,19 @@
 import asyncio
 
-import aiounittest
+import unittest
 import future.utils
 
 import v3io.dataplane
 import v3io.aio.dataplane.client
 
 
-class Test(aiounittest.AsyncTestCase):
+class Test(unittest.IsolatedAsyncioTestCase):
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        self._client = v3io.aio.dataplane.client.Client(logger_verbosity='DEBUG',
+                                                        transport_verbosity='DEBUG')
 
-        # create a new event loop
-        self.event_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.event_loop)
-
-        self.event_loop.run_until_complete(self._set_up)
-
-    def tearDown(self):
-        self.event_loop.run_until_complete(self._set_up)
-
-    def get_event_loop(self):
-        return self.event_loop
+        self._container = 'bigdata'
 
     async def _delete_dir(self, path):
         response = await self._client.container.list(container=self._container,
@@ -40,15 +32,6 @@ class Test(aiounittest.AsyncTestCase):
         for common_prefixes in response.output.common_prefixes:
             await self._client.object.delete(container=self._container,
                                              path=common_prefixes.prefix)
-
-    async def set_up(self):
-        self._client = v3io.aio.dataplane.client.Client(logger_verbosity='DEBUG',
-                                                        transport_verbosity='DEBUG')
-
-        self._container = 'bigdata'
-
-    async def tear_down(self):
-        pass
 
 
 # class TestObject(aiounittest.AsyncTestCase):
@@ -79,8 +62,8 @@ class Test(aiounittest.AsyncTestCase):
 
 class TestKv(Test):
 
-    async def set_up(self):
-        await super(self).set_up()
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
 
         self._path = 'some_dir/v3io-py-test-emd'
 
