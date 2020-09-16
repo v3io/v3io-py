@@ -50,7 +50,8 @@ class Model(v3io.dataplane.model.Model):
             access_key=None,
             raise_for_status=None,
             transport_actions=None,
-            condition=None):
+            condition=None,
+            update_mode=None):
         """Creates an item with the provided attributes. If an item with the same name (primary key) already exists in
         the specified table, the existing item is completely overwritten (replaced with a new item). If the item or
         table do not exist, the operation creates them.
@@ -85,6 +86,8 @@ class Model(v3io.dataplane.model.Model):
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
         condition (Optional) : str
             A Boolean condition expression that defines a conditional logic for executing the put-item operation.
+        update_mode (Optional) : str
+            CreateOrReplaceAttributes (default): Creates or replaces attributes
 
         Return Value
         ----------
