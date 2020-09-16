@@ -87,7 +87,7 @@ class Model(v3io.dataplane.model.Model):
         condition (Optional) : str
             A Boolean condition expression that defines a conditional logic for executing the put-item operation.
         update_mode (Optional) : str
-            CreateOrReplaceAttributes (default): Creates or replaces attributes
+            OverWriteAttributes (default): Overwrite all attributes
 
         Return Value
         ----------
