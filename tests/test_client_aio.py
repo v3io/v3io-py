@@ -202,8 +202,8 @@ class TestObject(Test):
     async def asyncSetUp(self):
         await super(TestObject, self).asyncSetUp()
 
-        self._object_dir = '/v3io-py-test-object'
-        self._object_path = self._object_dir + '/object.txt'
+        self._object_dir = '/v3io-py-test object'
+        self._object_path = self._object_dir + '/obj ect.txt'
 
         # clean up
         await self._delete_dir(self._object_dir)

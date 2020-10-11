@@ -27,9 +27,9 @@ class Transport(abstract.Transport):
         # python 2 and 3 have different exceptions
         if sys.version_info[0] >= 3:
             self._wait_response_exceptions = (
-            http.client.RemoteDisconnected, ConnectionResetError, ConnectionRefusedError)
+                http.client.RemoteDisconnected, ConnectionResetError, ConnectionRefusedError)
             self._send_request_exceptions = (
-            BrokenPipeError, http.client.CannotSendRequest, http.client.RemoteDisconnected)
+                BrokenPipeError, http.client.CannotSendRequest, http.client.RemoteDisconnected)
             self._get_status_and_headers = self._get_status_and_headers_py3
         else:
             self._wait_response_exceptions = (http.client.BadStatusLine, socket.error)

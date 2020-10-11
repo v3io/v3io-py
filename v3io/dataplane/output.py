@@ -26,7 +26,7 @@ class Output(object):
                     # try to decode as an array
                     try:
                         decoded_attribute = v3io.dataplane.kv_array.decode(decoded_attribute)
-                    except:
+                    except BaseException:
                         pass
 
                 elif attribute_type == 'S':

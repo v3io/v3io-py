@@ -46,7 +46,7 @@ class Request(object):
         if self.query is None:
             return quote(self.path)
 
-        return quote(self.path + '?') + urlencode(self.query)
+        return quote(self.path) + '?' + urlencode(self.query, quote_via=quote)
 
 #
 # Encoders
@@ -58,7 +58,7 @@ class Request(object):
 #
 
 def encode_get_containers(container_name, access_key, kwargs):
-    return _encode('GET', None, access_key, '/', None, {}, None)
+    return _encode('GET', '/', access_key, None, None, {}, None)
 
 
 def encode_get_container_contents(container_name, access_key, kwargs):
@@ -442,5 +442,3 @@ def _resolve_body_and_headers(access_key, headers, body):
     headers['Content-Type'] = 'application/json'
 
     return headers, body
-
-

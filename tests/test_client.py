@@ -205,8 +205,8 @@ class TestObject(Test):
     def setUp(self):
         super(TestObject, self).setUp()
 
-        self._object_dir = '/v3io-py-test-object'
-        self._object_path = self._object_dir + '/object.txt'
+        self._object_dir = '/v3io-py-test object'
+        self._object_path = self._object_dir + '/obj ect.txt'
 
         # clean up
         self._delete_dir(self._object_dir)
