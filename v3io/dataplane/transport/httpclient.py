@@ -115,24 +115,26 @@ class Transport(abstract.Transport):
                 raise e
 
     def _send_request_on_connection(self, request, connection_idx):
+        path = request.encode_path()
+
         self.log('Tx',
                  connection_idx=connection_idx,
                  method=request.method,
-                 path=request.path,
+                 path=path,
                  headers=request.headers,
                  body=request.body)
 
         connection = self._connections[connection_idx]
 
         try:
-            connection.request(request.method, request.path, request.body, request.headers)
+            connection.request(request.method, path, request.body, request.headers)
         except self._send_request_exceptions as e:
             self._logger.debug_with('Disconnected while attempting to send. Recreating connection', e=type(e))
 
             connection = self._recreate_connection_at_index(connection_idx)
 
             # re-request
-            connection.request(request.method, request.path, request.body, request.headers)
+            connection.request(request.method, path, request.body, request.headers)
         except BaseException as e:
             self._logger.warn_with('Unhandled exception while sending request', e=type(e))
             raise e
