@@ -27,9 +27,9 @@ class Transport(abstract.Transport):
         # python 2 and 3 have different exceptions
         if sys.version_info[0] >= 3:
             self._wait_response_exceptions = (
-            http.client.RemoteDisconnected, ConnectionResetError, ConnectionRefusedError)
+                http.client.RemoteDisconnected, ConnectionResetError, ConnectionRefusedError)
             self._send_request_exceptions = (
-            BrokenPipeError, http.client.CannotSendRequest, http.client.RemoteDisconnected)
+                BrokenPipeError, http.client.CannotSendRequest, http.client.RemoteDisconnected)
             self._get_status_and_headers = self._get_status_and_headers_py3
         else:
             self._wait_response_exceptions = (http.client.BadStatusLine, socket.error)
@@ -115,24 +115,26 @@ class Transport(abstract.Transport):
                 raise e
 
     def _send_request_on_connection(self, request, connection_idx):
+        path = request.encode_path()
+
         self.log('Tx',
                  connection_idx=connection_idx,
                  method=request.method,
-                 path=request.path,
+                 path=path,
                  headers=request.headers,
                  body=request.body)
 
         connection = self._connections[connection_idx]
 
         try:
-            connection.request(request.method, request.path, request.body, request.headers)
+            connection.request(request.method, path, request.body, request.headers)
         except self._send_request_exceptions as e:
             self._logger.debug_with('Disconnected while attempting to send. Recreating connection', e=type(e))
 
             connection = self._recreate_connection_at_index(connection_idx)
 
             # re-request
-            connection.request(request.method, request.path, request.body, request.headers)
+            connection.request(request.method, path, request.body, request.headers)
         except BaseException as e:
             self._logger.warn_with('Unhandled exception while sending request', e=type(e))
             raise e

@@ -40,11 +40,13 @@ class Transport(object):
                                                  encoder_args,
                                                  output)
 
-        self.log('Tx', method=request.method, path=request.path, headers=request.headers, body=request.body)
+        path = request.encode_path()
+
+        self.log('Tx', method=request.method, path=path, headers=request.headers, body=request.body)
 
         # call the encoder to get the response
         async with self._client_session.request(request.method,
-                                                self._endpoint + '/' + request.path,
+                                                self._endpoint + '/' + path,
                                                 headers=request.headers,
                                                 data=request.body,
                                                 ssl=False) as http_response:

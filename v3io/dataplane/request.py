@@ -5,15 +5,16 @@ import array
 import datetime
 
 try:
-    from urllib.parse import urlencode
+    from urllib.parse import urlencode, quote
 except BaseException:
-    from urllib import urlencode
+    from urllib import urlencode, quote
 
 import ujson
 
 import v3io.common.helpers
 import v3io.dataplane.kv_array
 import v3io.dataplane.kv_timestamp
+
 
 #
 # Request
@@ -36,22 +37,28 @@ class Request(object):
         self.output = output
 
         # get request params with the encoder
-        self.method, self.path, self.headers, self.body = encoder(container, access_key, encoder_args)
+        self.method, self.path, self.query, self.headers, self.body = encoder(container, access_key, encoder_args)
 
         # used by the transport
         self.transport = lambda: None
 
+    def encode_path(self):
+        if self.query is None:
+            return quote(self.path)
+
+        return quote(self.path) + '?' + urlencode(self.query, quote_via=quote)
 
 #
 # Encoders
 #
+
 
 #
 # Container
 #
 
 def encode_get_containers(container_name, access_key, kwargs):
-    return _encode('GET', None, access_key, '/', {}, None)
+    return _encode('GET', '/', access_key, None, None, {}, None)
 
 
 def encode_get_container_contents(container_name, access_key, kwargs):
@@ -72,9 +79,10 @@ def encode_get_container_contents(container_name, access_key, kwargs):
         query['marker'] = kwargs['marker']
 
     return _encode('GET',
-                   None,
+                   '/' + container_name,
                    access_key,
-                   '/{0}?{1}'.format(container_name, urlencode(query)),
+                   None,
+                   query,
                    {},
                    None)
 
@@ -100,7 +108,7 @@ def encode_get_object(container_name, access_key, kwargs):
             'Range': range_value
         }
 
-    return _encode('GET', container_name, access_key, kwargs['path'], headers, None)
+    return _encode('GET', container_name, access_key, kwargs['path'], None, headers, None)
 
 
 def encode_put_object(container_name, access_key, kwargs):
@@ -112,11 +120,11 @@ def encode_put_object(container_name, access_key, kwargs):
             'Range': '-1'
         }
 
-    return _encode('PUT', container_name, access_key, kwargs['path'], headers, kwargs['body'])
+    return _encode('PUT', container_name, access_key, kwargs['path'], None, headers, kwargs['body'])
 
 
 def encode_delete_object(container_name, access_key, kwargs):
-    return _encode('DELETE', container_name, access_key, kwargs['path'], None, None)
+    return _encode('DELETE', container_name, access_key, kwargs['path'], None, None, None)
 
 
 #
@@ -136,6 +144,7 @@ def encode_put_item(container_name, access_key, kwargs):
                    container_name,
                    access_key,
                    kwargs.get('path') or os.path.join(kwargs['table_path'], kwargs['key']),
+                   None,
                    {'X-v3io-function': 'PutItem'},
                    body)
 
@@ -170,6 +179,7 @@ def encode_update_item(container_name, access_key, kwargs):
                    container_name,
                    access_key,
                    kwargs.get('path') or os.path.join(kwargs['table_path'], kwargs['key']),
+                   None,
                    {'X-v3io-function': function_name},
                    body)
 
@@ -183,6 +193,7 @@ def encode_get_item(container_name, access_key, kwargs):
                    container_name,
                    access_key,
                    kwargs.get('path') or os.path.join(kwargs['table_path'], kwargs['key']),
+                   None,
                    {'X-v3io-function': 'GetItem'},
                    body)
 
@@ -220,6 +231,7 @@ def encode_get_items(container_name, access_key, kwargs):
                    container_name,
                    access_key,
                    kwargs.get('path') or kwargs['table_path'],
+                   None,
                    {'X-v3io-function': 'GetItems'},
                    body)
 
@@ -238,6 +250,7 @@ def encode_create_stream(container_name, access_key, kwargs):
                    container_name,
                    access_key,
                    kwargs.get('path') or kwargs['stream_path'],
+                   None,
                    {'X-v3io-function': 'CreateStream'},
                    body)
 
@@ -251,6 +264,7 @@ def encode_update_stream(container_name, access_key, kwargs):
                    container_name,
                    access_key,
                    kwargs.get('path') or kwargs['stream_path'],
+                   None,
                    {'X-v3io-function': 'UpdateStream'},
                    body)
 
@@ -260,6 +274,7 @@ def encode_describe_stream(container_name, access_key, kwargs):
                    container_name,
                    access_key,
                    kwargs.get('path') or kwargs['stream_path'],
+                   None,
                    {'X-v3io-function': 'DescribeStream'},
                    None)
 
@@ -282,6 +297,7 @@ def encode_seek_shard(container_name, access_key, kwargs):
                    container_name,
                    access_key,
                    kwargs.get('path') or kwargs['stream_path'],
+                   None,
                    {'X-v3io-function': 'SeekShard'},
                    body)
 
@@ -319,6 +335,7 @@ def encode_put_records(container_name, access_key, kwargs):
                    container_name,
                    access_key,
                    kwargs.get('path') or kwargs['stream_path'],
+                   None,
                    {'X-v3io-function': 'PutRecords'},
                    body)
 
@@ -336,6 +353,7 @@ def encode_get_records(container_name, access_key, kwargs):
                    container_name,
                    access_key,
                    kwargs.get('path') or kwargs['stream_path'],
+                   None,
                    {'X-v3io-function': 'GetRecords'},
                    body)
 
@@ -344,15 +362,15 @@ def encode_get_records(container_name, access_key, kwargs):
 # Helpers
 #
 
-def _encode(method, container_name, access_key, path, headers, body):
-    if container_name:
-        path = _resolve_path(container_name, path)
+def _encode(method, container_name, access_key, path, query, headers, body):
+    if path is not None:
+        path = v3io.common.helpers.url_join(container_name, path)
     else:
-        path = path
+        path = container_name
 
     headers, body = _resolve_body_and_headers(access_key, headers, body)
 
-    return method, path, headers, body
+    return method, path, query, headers, body
 
 
 def _typed_attributes_to_dict(self):
@@ -424,7 +442,3 @@ def _resolve_body_and_headers(access_key, headers, body):
     headers['Content-Type'] = 'application/json'
 
     return headers, body
-
-
-def _resolve_path(container_name, path):
-    return v3io.common.helpers.url_join(container_name, path)

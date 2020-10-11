@@ -37,8 +37,8 @@ def decode(encoded_array):
         raise ValueError('Not an encoded array')
 
     # get header (which contains number of items and type
-    header = encoded_array[static_header_len:static_header_len+8]
-    values = encoded_array[static_header_len+len(header):]
+    header = encoded_array[static_header_len:static_header_len + 8]
+    values = encoded_array[static_header_len + len(header):]
 
     # unpack the header to get the size and operand
     unpacked_header = struct.unpack('II', header)
@@ -48,4 +48,4 @@ def decode(encoded_array):
     num_items = int(unpacked_header[0] / 8)
 
     # decode the values
-    return list(struct.unpack(typecode*num_items, values))
+    return list(struct.unpack(typecode * num_items, values))

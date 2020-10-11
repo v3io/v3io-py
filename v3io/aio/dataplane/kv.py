@@ -304,8 +304,6 @@ class Model(v3io.dataplane.model.Model):
                             fields=None):
         """Creates a KV schema file
 
-        DEPRECATED. Use kv.create_schema
-
         Parameters
         ----------
         container (Required) : str
