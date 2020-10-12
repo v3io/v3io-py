@@ -49,10 +49,10 @@ class Batch(object):
             ('stream', 'delete'),
             ('stream', 'describe'),
             ('stream', 'seek'),
-            ('stream', 'put'),
-            ('stream', 'get'),
+            ('stream', 'put_records'),
+            ('stream', 'get_records'),
             ('container', 'get'),
-            ('container', 'get_contents'),
+            ('container', 'list'),
         ]:
             setattr(getattr(self, model_name),
                     model_call,
