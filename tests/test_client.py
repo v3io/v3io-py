@@ -441,7 +441,7 @@ class TestKv(Test):
                 'list_with_floats': [10.5, 20.5, 30.5],
                 'array_with_ints': _get_int_array(),
                 'array_with_floats': _get_float_array(),
-                'now': datetime.datetime.utcnow()
+                'now': datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
             }
         }
 

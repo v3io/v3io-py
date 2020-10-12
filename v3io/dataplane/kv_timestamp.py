@@ -6,7 +6,7 @@ BASE_DATETIME = datetime.datetime(1970, 1, 1)
 
 
 def _get_timestamp_from_datetime_py3(dt):
-    return dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+    return dt.astimezone(datetime.timezone.utc).timestamp()
 
 
 def _get_timestamp_from_datetime_py2(dt):
@@ -35,4 +35,4 @@ def decode(encoded_dt):
 
     timestamp = int(seconds_str) + (int(nanoseconds_str) / 10e9)
 
-    return datetime.datetime.utcfromtimestamp(timestamp)
+    return datetime.datetime.fromtimestamp(timestamp, datetime.timezone.utc)
