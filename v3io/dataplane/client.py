@@ -973,7 +973,7 @@ class Client(object):
         A `Response` object
         """
         put_object_args = locals()
-        put_object_args['path'] = os.path.join(put_object_args['path'], '.%23schema')
+        put_object_args['path'] = os.path.join(put_object_args['path'], '.#schema')
         put_object_args['offset'] = 0
         put_object_args['append'] = None
         put_object_args['body'] = self._get_schema_contents(key, fields)

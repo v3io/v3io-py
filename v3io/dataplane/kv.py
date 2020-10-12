@@ -347,7 +347,7 @@ class Model(v3io.dataplane.model.Model):
         A `Response` object
         """
         put_object_args = locals()
-        put_object_args['path'] = os.path.join(put_object_args['table_path'], '.%23schema')
+        put_object_args['path'] = os.path.join(put_object_args['table_path'], '.#schema')
         put_object_args['offset'] = 0
         put_object_args['append'] = None
         put_object_args['body'] = self._client._get_schema_contents(key, fields)
