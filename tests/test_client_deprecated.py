@@ -325,7 +325,7 @@ class TestSchema(Test):
         super(TestSchema, self).setUp()
 
         self._schema_dir = '/v3io-py-test-schema'
-        self._schema_path = os.path.join(self._schema_dir, '.%23schema')
+        self._schema_path = os.path.join(self._schema_dir, '.#schema')
 
         # clean up
         self._delete_dir(self._schema_dir)
