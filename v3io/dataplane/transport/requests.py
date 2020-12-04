@@ -12,6 +12,9 @@ class Transport(abstract.Transport):
         self._next_connection_pool = 0
         self._session = requests.Session()
 
+    def requires_access_key(self):
+        return True
+
     def close(self):
         self._session.close()
 

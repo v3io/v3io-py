@@ -1,5 +1,6 @@
 import os.path
 import unittest
+import unittest.mock
 import time
 import array
 import datetime
@@ -9,6 +10,8 @@ import future.utils
 import v3io.common.helpers
 import v3io.dataplane
 import v3io.logger
+import v3io.dataplane.response
+import v3io.dataplane.output
 
 
 class Test(unittest.TestCase):
@@ -772,3 +775,65 @@ class TestConnectonErrorRecovery(Test):
     def _restart_webapi(self):
         print('Restart webapi now')
         time.sleep(15)
+
+
+class TestCustomTransport(unittest.TestCase):
+
+    def test_verifier_transport(self):
+        container_name = 'some_container'
+
+        #
+        # Register a set of verifiers
+        #
+
+        def _verify_object_get(request):
+
+            # verify some stuff from the request
+            self.assertEqual(request.container, container_name)
+            self.assertEqual(request.path, os.path.join(os.sep, container_name, 'some/path'))
+
+            # return a mocked response
+            return unittest.mock.MagicMock(status_code=200,
+                                           body='some body')
+
+        def _verify_kv_get(request):
+
+            # verify some stuff from the request
+            self.assertEqual(request.container, container_name)
+            self.assertEqual(request.path, os.path.join(os.sep, container_name, 'some/table/path/some_item_key'))
+
+            # prepare and output mock
+            output = unittest.mock.MagicMock(item={
+                'some_key': 'some_value'
+            })
+
+            # prepare a response mock
+            return unittest.mock.MagicMock(output=output)
+
+        # create a verifier transport. pass it a set of request verifiers
+        verifier_transport = v3io.dataplane.transport.verifier.Transport(request_verifiers=[
+            _verify_object_get,
+            _verify_kv_get,
+        ])
+
+        #
+        # Run some flow
+        #
+
+        # create a client with a verifier transport
+        client = v3io.dataplane.Client(transport_kind=verifier_transport)
+
+        # do an object get
+        response = client.object.get(container='some_container', path='some/path')
+
+        # verify that we got some body from the verifier
+        self.assertEqual(response.body, 'some body')
+        self.assertEqual(response.status_code, 200)
+
+        # do an item get
+        response = client.kv.get(container=container_name,
+                                 table_path='some/table/path',
+                                 key='some_item_key')
+
+        # verify that we got a proper
+        self.assertEqual(response.output.item['some_key'], 'some_value')

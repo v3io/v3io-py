@@ -1,3 +1,6 @@
+from .verifier import Transport
+
+
 class RaiseForStatus(object):
     never = 'never'
     always = 'always'

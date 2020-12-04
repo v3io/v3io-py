@@ -43,8 +43,8 @@ class Client(object):
             operations towards v3io. Defaults to 8
         timeout (Optional) : None
             For future use
-        transport_kind (Optional) : str
-            Defines the underlying transport to use towards v3io (of of httpclient, requests). Should
+        transport_kind (Optional) : str/cls
+            Defines the underlying transport to use towards v3io (one of httpclient, requests or a custom class). Should
             normally be left httpclient unless an underlying issue is found, in which case requests may
             be used as a temporary workaround at the expense of performance
         logger_verbosity (Optional) : INFO / DEBUG
@@ -61,18 +61,23 @@ class Client(object):
         self._logger = logger or self._create_logger(logger_verbosity)
         self._access_key = access_key or os.environ.get('V3IO_ACCESS_KEY')
 
-        if not self._access_key:
+        # get the transport class. if it's a string, create according to the kind. if it's a class, just
+        # use that as the transport. this allows passing custom transports for testing and such
+        if isinstance(transport_kind, str):
+            transport_cls = getattr(v3io.dataplane.transport, transport_kind)
+
+            self._transport = transport_cls.Transport(self._logger,
+                                                      endpoint,
+                                                      max_connections,
+                                                      timeout,
+                                                      transport_verbosity)
+
+        else:
+            self._transport = transport_kind
+
+        if self._transport.requires_access_key() and not self._access_key:
             raise ValueError('Access key must be provided in Client() arguments or in the '
                              'V3IO_ACCESS_KEY environment variable')
-
-        # get the transport class
-        transport_cls = getattr(v3io.dataplane.transport, transport_kind)
-
-        self._transport = transport_cls.Transport(self._logger,
-                                                  endpoint,
-                                                  max_connections,
-                                                  timeout,
-                                                  transport_verbosity)
 
         # create a default "batch" object
         self.batch = self.create_batch()
