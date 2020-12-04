@@ -14,6 +14,12 @@ class Transport(object):
 
         self._set_log_method(verbosity)
 
+    def close(self):
+        pass
+
+    def requires_access_key(self):
+        return False
+
     def restart(self):
         pass
 
@@ -46,6 +52,9 @@ class Transport(object):
 
         # wait for the response
         return self.wait_response(inflight_request)
+
+    def send_request(self, request, transport_state=None):
+        return request
 
     @staticmethod
     def _get_endpoint(endpoint):

@@ -36,6 +36,9 @@ class Transport(abstract.Transport):
             self._send_request_exceptions = (http.client.CannotSendRequest, http.client.BadStatusLine)
             self._get_status_and_headers = self._get_status_and_headers_py2
 
+    def requires_access_key(self):
+        return True
+
     def restart(self):
         self.close()
 

@@ -241,5 +241,86 @@ print(response.body.decode('utf-8'))
 await v3io_client.object.delete(container='users', path='/my-object')
 ```
 
-# Controlplane client
-Coming soon.
+
+## Support for unit tests (experimental)
+
+To facilitate unit tests, v3io-py can pass along all requests to the user rather than communicate over the network with the dataplane layer. This is done by passing the `Client` object a `verifier` transport. This transport receives a list of callables that will be called in the order of requests the `Client` generates. The user can then verify the content of the request and either return a response or raise an exception. With this mechanism, users can test snippets of their code for various positive and negative behvior.
+
+In the below example, two requests are sent and verified. Using `MagicMock` for outputs/responses is recommended:
+
+```python
+def test_verifier_transport(self):
+    container_name = 'some_container'
+
+    #
+    # Register a set of verifiers
+    #
+
+    def _verify_object_get(request):
+
+        # verify some stuff from the request
+        self.assertEqual(request.container, container_name)
+        self.assertEqual(request.path, os.path.join(os.sep, container_name, 'some/path'))
+
+        # return a mocked response
+        return unittest.mock.MagicMock(status_code=200,
+                                       body='some body')
+
+    def _verify_kv_get(request):
+
+        # verify some stuff from the request
+        self.assertEqual(request.container, container_name)
+        self.assertEqual(request.path, os.path.join(os.sep, container_name, 'some/table/path/some_item_key'))
+
+        # prepare and output mock
+        output = unittest.mock.MagicMock(item={
+            'some_key': 'some_value'
+        })
+
+        # prepare a response mock
+        return unittest.mock.MagicMock(output=output)
+
+    # create a verifier transport. pass it a set of request verifiers
+    verifier_transport = v3io.dataplane.transport.verifier.Transport(request_verifiers=[
+        _verify_object_get,
+        _verify_kv_get,
+    ])
+
+    #
+    # Run some flow. This can be a call to the actual code you want to test. By specfiying all
+    # the verifying behavior beforehand, the actual code under test remains untouched
+    #
+
+    # create a client with a verifier transport
+    client = v3io.dataplane.Client(transport_kind=verifier_transport)
+
+    # do an object get
+    response = client.object.get(container='some_container', path='some/path')
+
+    # verify that we got some body from the verifier
+    self.assertEqual(response.body, 'some body')
+    self.assertEqual(response.status_code, 200)
+
+    # do an item get
+    response = client.kv.get(container=container_name,
+                             table_path='some/table/path',
+                             key='some_item_key')
+
+    # verify that we got a proper response
+    self.assertEqual(response.output.item['some_key'], 'some_value')
+```
+
+### Custom transports
+
+If the `verifier` transport is inadequate for your use case, a custom transport can be provided. It must conform to the following minimal interface:
+
+```python
+class Transport(v3io.dataplane.transport.abstract.Transport):
+
+    def __init__(self):
+        super().__init__(None, '', 0, None, 'DEBUG')
+
+    # receives a request and returns a response
+    def wait_response(self, request, raise_for_status=None):
+        pass
+```
