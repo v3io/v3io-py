@@ -10,5 +10,5 @@ twine = "*"
 [packages]
 requests = ">=2.19.1"
 future = ">=0.18.2"
-ujson = "~=2.0"
+ujson = ">=3.0.0"
 
