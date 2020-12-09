@@ -438,7 +438,7 @@ def _resolve_body_and_headers(access_key, headers, body):
     if not isinstance(body, dict):
         return headers, body
 
-    body = ujson.dumps(body)
+    body = ujson.dumps(body, reject_bytes=False)
     headers['Content-Type'] = 'application/json'
 
     return headers, body
