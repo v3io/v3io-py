@@ -22,6 +22,7 @@ class Cursor(object):
         self._current_items = None
         self._current_item = None
         self._current_item_index = 0
+        self._total_items_read = 0
 
         # get items params
         self.raise_for_status = raise_for_status
@@ -37,9 +38,22 @@ class Cursor(object):
         self.sort_key_range_end = sort_key_range_end
 
     async def next_item(self):
+        calculated_limit = self.limit
+
+        # check if we already reached the limit we were asked for
+        if self.limit is not None:
+
+            # if we already passed the limit, stop here
+            if self._total_items_read >= self.limit:
+                return None
+
+            # don't ask for more items than we'll read
+            calculated_limit -= self._total_items_read
+
         if self._current_item_index < len(self._current_items or []):
             self._current_item = self._current_items[self._current_item_index]
             self._current_item_index += 1
+            self._total_items_read += 1
 
             return self._current_item
 
@@ -57,7 +71,7 @@ class Cursor(object):
                                                              self.filter_expression,
                                                              self.marker,
                                                              self.sharding_key,
-                                                             self.limit,
+                                                             calculated_limit,
                                                              self.segment,
                                                              self.total_segments,
                                                              self.sort_key_range_start,
