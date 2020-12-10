@@ -482,15 +482,6 @@ class TestKv(Test):
 
         self.assertEqual(4, len(total_items))
 
-        # with limit = 0
-        received_items = await self._client.kv.new_cursor(container=self._container,
-                                                          table_path=self._path,
-                                                          attribute_names=['age', 'feature'],
-                                                          filter_expression='age > 15',
-                                                          limit=0).all()
-
-        self.assertEqual(0, len(received_items))
-
         received_items = await self._client.kv.new_cursor(container=self._container,
                                                           table_path=self._path,
                                                           attribute_names=['age', 'feature'],
@@ -515,6 +506,23 @@ class TestKv(Test):
                                              attribute_names=['age'])
 
         self.assertEqual(10, response.output.item['age'])
+
+    async def test_limit(self):
+
+        for idx in range(100):
+            await self._client.kv.put(container=self._container,
+                                      table_path=self._path,
+                                      key=f'key-{idx}',
+                                      attributes={
+                                          'attr': idx,
+                                      })
+
+        # limit using all()
+        received_items = await self._client.kv.new_cursor(container=self._container,
+                                                          table_path=self._path,
+                                                          limit=30).all()
+
+        self.assertEqual(len(received_items), 30)
 
     async def _delete_items(self, path, items):
 

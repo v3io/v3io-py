@@ -518,15 +518,6 @@ class TestKv(Test):
 
         self.assertEqual(4, len(total_items))
 
-        # with limit = 0
-        received_items = self._client.kv.new_cursor(container=self._container,
-                                                    table_path=self._path,
-                                                    attribute_names=['age', 'feature'],
-                                                    filter_expression='age > 15',
-                                                    limit=0).all()
-
-        self.assertEqual(0, len(received_items))
-
         received_items = self._client.kv.new_cursor(container=self._container,
                                                     table_path=self._path,
                                                     attribute_names=['age', 'feature'],
@@ -551,6 +542,22 @@ class TestKv(Test):
                                        attribute_names=['age'])
 
         self.assertEqual(10, response.output.item['age'])
+
+    def test_limit(self):
+        for idx in range(100):
+            self._client.kv.put(container=self._container,
+                                table_path=self._path,
+                                key=f'key-{idx}',
+                                attributes={
+                                    'attr': idx,
+                                })
+
+        # limit using all()
+        received_items = self._client.kv.new_cursor(container=self._container,
+                                                    table_path=self._path,
+                                                    limit=30).all()
+
+        self.assertEqual(len(received_items), 30)
 
     def test_batch(self):
         items = {
@@ -787,7 +794,6 @@ class TestCustomTransport(unittest.TestCase):
         #
 
         def _verify_object_get(request):
-
             # verify some stuff from the request
             self.assertEqual(request.container, container_name)
             self.assertEqual(request.path, os.path.join(os.sep, container_name, 'some/path'))
@@ -797,7 +803,6 @@ class TestCustomTransport(unittest.TestCase):
                                            body='some body')
 
         def _verify_kv_get(request):
-
             # verify some stuff from the request
             self.assertEqual(request.container, container_name)
             self.assertEqual(request.path, os.path.join(os.sep, container_name, 'some/table/path/some_item_key'))
