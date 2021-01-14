@@ -384,6 +384,7 @@ class TestEmd(Test):
         super(TestEmd, self).setUp()
 
         self._path = 'some_dir/v3io-py-test-emd'
+        self._delete_dir(v3io.common.helpers.url_join(self._path, 'my_table'))
         self._delete_dir(self._path)
 
     def test_emd_array(self):
@@ -460,6 +461,31 @@ class TestEmd(Test):
 
         for key, value in item[item_key].items():
             self._compare_item_types(item[item_key][key], response.output.item[key])
+
+    def test_emd_with_table_name(self):
+        self._client.put_item(container=self._container,
+                              path=v3io.common.helpers.url_join(self._path, 'my_table', 'my_key'),
+                              attributes={
+                                  'a': 's',
+                                  'i': 30
+                              })
+
+        items = []
+
+        response = self._client.get_items(container=self._container,
+                                          path=self._path,
+                                          table_name='my_table')
+
+        items.extend(response.output.items)
+
+        while response.output.next_marker and not response.output.last:
+            response = self._client.get_items(container=self._container,
+                                              path=self._path,
+                                              table_name='my_table',
+                                              marker=response.output.next_marker)
+            items.extend(response.output.items)
+
+        self.assertEqual(len(items), 1)
 
     def test_emd(self):
         items = {
