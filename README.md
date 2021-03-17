@@ -15,7 +15,7 @@ With the dataplane client you can manipulate data in the platform's multi-model 
 * Streams
 * Containers
 
-Under the hood, the client connects through the platform's web API (https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/) and wraps each low level API with an interface. Calls are blocking, but you can use the batching interface to send multiple requests in parallel for greater performance. 
+Under the hood, the client connects through the platform's web API (https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/) and wraps each low level API with an interface. Calls are blocking, but you can use the batching interface to send multiple requests in parallel for greater performance. 
 
 ## Creating a client
 Create a dataplane client, passing in the web API endpoint and your access key:
