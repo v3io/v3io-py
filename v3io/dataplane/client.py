@@ -314,8 +314,7 @@ class Client(object):
 
         DEPRECATED: use kv.put
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/putitem/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/nosql-web-api/putitem/.
 
         Notes:
         1. To provide arrays, pass either a list of integers ([1, 2, 3]), a list of floats ([1.0, 2.0, 3.0]) an
@@ -413,8 +412,7 @@ class Client(object):
 
         DEPRECATED. Use kv.update
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/updateitem/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/nosql-web-api/updateitem/.
 
         Parameters
         ----------
@@ -435,7 +433,7 @@ class Client(object):
             An update expression that specifies the changes to make to the item's attributes.
         condition (Optional) : str
             A Boolean condition expression that defines a conditional logic for executing the put-item operation.
-            See https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/putitem/
+            See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/nosql-web-api/putitem/.
         update_mode (Optional) : str
             CreateOrReplaceAttributes (default): Creates or replaces attributes
         alternate_expression (Optional) : str
@@ -469,8 +467,7 @@ class Client(object):
 
         DEPRECATED. Use kv.get
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/getitem/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/nosql-web-api/getitem/.
 
         Parameters
         ----------
@@ -516,8 +513,7 @@ class Client(object):
 
         DEPRECATED. Use kv.scan
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/nosql-web-api/getitems/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/nosql-web-api/getitems/.
 
         Parameters
         ----------
@@ -533,7 +529,8 @@ class Client(object):
             A list of attribute names to get, or '*' which will retreive all attributes
         filter_expression (Optional) : str
             A filter expression that restricts the items to retrieve. Only items that match the filter criteria
-            are returned. See https://www.iguazio.com/docs/reference/latest-release/expressions/condition-expression/#filter-expression.md
+            are returned.
+            See https://www.iguazio.com/docs/latest-release/data-layer/reference/expressions/condition-expression/#filter-expression.
         marker (Optional) : str
             An opaque identifier that was returned in the NextMarker element of a response to a previous GetItems
             request that did not return all the requested items. This marker identifies the location in the table
@@ -618,8 +615,7 @@ class Client(object):
 
         DEPRECATED. Use stream.create
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/createstream/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/createstream/.
 
         Parameters
         ----------
@@ -659,8 +655,7 @@ class Client(object):
 
         DEPRECATED. Use stream.update
 
-        See:
-        https://www.iguazio.com/docs/latest-release/reference/api-reference/web-apis/streaming-web-api/updatestream/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/updatestream/.
 
         Parameters
         ----------
@@ -725,8 +720,7 @@ class Client(object):
 
         DEPRECATED. Use stream.describe
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/describestream/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/describestream/.
 
         Parameters
         ----------
@@ -765,8 +759,7 @@ class Client(object):
 
         DEPRECATED. Use stream.seek
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/seek/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/seek/.
 
         Parameters
         ----------
@@ -826,8 +819,7 @@ class Client(object):
         By default, the platform assigns records to shards using a Round Robin algorithm. The max number of records
         is 1000.
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/putrecords/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/putrecords/.
 
         Parameters
         ----------
@@ -896,8 +888,7 @@ class Client(object):
 
         DEPRECATED. Use stream.get
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/getrecords/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/getrecords/.
 
         Parameters
         ----------

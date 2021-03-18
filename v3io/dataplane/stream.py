@@ -24,8 +24,7 @@ class Model(v3io.dataplane.model.Model):
         """Creates and configures a new stream. The configuration includes the stream's shard count and retention
         period. The new stream is available immediately upon its creation.
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/createstream/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/createstream/.
 
         Parameters
         ----------
@@ -63,8 +62,7 @@ class Model(v3io.dataplane.model.Model):
                transport_actions=None):
         """Updates a stream's configuration by increasing its shard count. The changes are applied immediately.
 
-        See:
-        https://www.iguazio.com/docs/latest-release/reference/api-reference/web-apis/streaming-web-api/updatestream/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/updatestream/.
 
         Parameters
         ----------
@@ -125,8 +123,7 @@ class Model(v3io.dataplane.model.Model):
     def describe(self, container, stream_path, access_key=None, raise_for_status=None, transport_actions=None):
         """Retrieves a stream's configuration, including the shard count and retention period.
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/describestream/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/describestream/.
 
         Parameters
         ----------
@@ -164,8 +161,7 @@ class Model(v3io.dataplane.model.Model):
         operation. The operation supports different seek types, as outlined in the Stream Record Consumption
         overview and in the description of the Type request parameter below.
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/seek/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/seek/.
 
         Parameters
         ----------
@@ -229,8 +225,7 @@ class Model(v3io.dataplane.model.Model):
         By default, the platform assigns records to shards using a Round Robin algorithm. The max number of records
         is 1000.
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/putrecords/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/putrecords/.
 
         Parameters
         ----------
@@ -298,8 +293,7 @@ class Model(v3io.dataplane.model.Model):
                     limit=None):
         """Retrieves (consumes) records from a stream shard.
 
-        See:
-        https://www.iguazio.com/docs/reference/latest-release/api-reference/web-apis/streaming-web-api/getrecords/
+        See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/getrecords/.
 
         Parameters
         ----------
