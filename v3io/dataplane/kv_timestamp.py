@@ -25,7 +25,7 @@ def encode(dt):
 
     # get integer and float part of nanoseconds
     seconds, nanoseconds_float = divmod(timestamp, 1)
-    nanoseconds = int(nanoseconds_float * 10e9)
+    nanoseconds = int(nanoseconds_float * 1e9)
 
     return '{}:{}'.format(int(seconds), nanoseconds)
 
@@ -33,6 +33,6 @@ def encode(dt):
 def decode(encoded_dt):
     seconds_str, nanoseconds_str = encoded_dt.split(':')
 
-    timestamp = int(seconds_str) + (int(nanoseconds_str) / 10e9)
+    timestamp = int(seconds_str) + (int(nanoseconds_str) / 1e9)
 
     return datetime.datetime.fromtimestamp(timestamp, datetime.timezone.utc)
