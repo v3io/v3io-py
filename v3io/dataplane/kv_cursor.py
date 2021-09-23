@@ -81,7 +81,7 @@ class Cursor(object):
                                                        self.sort_key_range_end)
 
         # raise if there was an issue
-        self._current_response.raise_for_status()
+        self._current_response.raise_for_status(self.raise_for_status)
 
         # set items
         self._current_items = self._current_response.output.items
