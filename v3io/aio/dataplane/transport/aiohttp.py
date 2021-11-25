@@ -44,28 +44,38 @@ class Transport(object):
 
         self.log('Tx', method=request.method, path=path, headers=request.headers, body=request.body)
 
-        # call the encoder to get the response
-        async with self._client_session.request(request.method,
-                                                self._endpoint + '/' + path,
-                                                headers=request.headers,
-                                                data=request.body,
-                                                ssl=False) as http_response:
+        retry_intervals = [0,0.1,0.3,1.0,5.0]
+        retry_counter = 0
 
-            # get contents
-            contents = await http_response.content.read()
+        while (True):
+            try:
+                # call the encoder to get the response
+                async with self._client_session.request(request.method,
+                                                        self._endpoint + '/' + path,
+                                                        headers=request.headers,
+                                                        data=request.body,
+                                                        ssl=False) as http_response:
 
-            # create a response
-            response = v3io.dataplane.response.Response(output,
-                                                        http_response.status,
-                                                        http_response.headers,
-                                                        contents)
+                    # get contents
+                    contents = await http_response.content.read()
 
-            # enforce raise for status
-            response.raise_for_status(request.raise_for_status or raise_for_status)
+                    # create a response
+                    response = v3io.dataplane.response.Response(output,
+                                                                http_response.status,
+                                                                http_response.headers,
+                                                                contents)
 
-            self.log('Rx', status_code=response.status_code, headers=response.headers, body=contents)
+                    # enforce raise for status
+                    response.raise_for_status(request.raise_for_status or raise_for_status)
 
-            return response
+                    self.log('Rx', status_code=response.status_code, headers=response.headers, body=contents)
+
+                    return response
+            except Exception as err:
+                await asyncio.sleep(retry_intervals[retry_counter])
+                retry_counter=retry_counter+1
+                if (retry_counter == len(retry_intervals)):
+                    raise;
 
     @staticmethod
     def _get_endpoint(endpoint):
