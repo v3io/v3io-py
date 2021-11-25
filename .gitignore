@@ -12,6 +12,8 @@
 .vagrant
 .vscode
 .testoutputs
+.python-version
+Pipfile.lock
 __pycache__
 test/http-bench/out/
 .DS_Store
