@@ -44,7 +44,8 @@ class Transport(object):
 
         self.log('Tx', method=request.method, path=path, headers=request.headers, body=request.body)
 
-        retry_intervals = [0,0.1,0.3,1.0,5.0]
+        # spend ~1 min in retries before raising the exception to the user
+        retry_intervals = [0,0.1,0.3,1.0] + 12 * [5.0]
         retry_counter = 0
 
         while (True):
