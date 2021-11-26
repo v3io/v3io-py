@@ -1,6 +1,6 @@
 import os
 import aiohttp
-
+import asyncio
 import v3io.dataplane.request
 import v3io.dataplane.response
 import v3io.dataplane.transport
@@ -17,7 +17,8 @@ class Transport(object):
         # self._client_session = None
         self._connector = aiohttp.TCPConnector()
         self._client_session = aiohttp.ClientSession(connector=self._connector)
-
+        # spend ~1 min in retries before raising the exception to the user
+        self.retry_intervals = (0,0,0.1,0.3,1.0) + 12 * (5.0,)
         self._set_log_method(verbosity)
 
     async def close(self):
@@ -44,9 +45,7 @@ class Transport(object):
 
         self.log('Tx', method=request.method, path=path, headers=request.headers, body=request.body)
 
-        # spend ~1 min in retries before raising the exception to the user
-        retry_intervals = [0,0.1,0.3,1.0] + 12 * [5.0]
-        retry_counter = 0
+        client_os_error_retry_counter = 0
 
         while (True):
             try:
@@ -72,11 +71,12 @@ class Transport(object):
                     self.log('Rx', status_code=response.status_code, headers=response.headers, body=contents)
 
                     return response
-            except Exception as err:
-                await asyncio.sleep(retry_intervals[retry_counter])
-                retry_counter=retry_counter+1
-                if (retry_counter == len(retry_intervals)):
-                    raise;
+            except aiohttp.ClientOSError:
+                client_os_error_retry_counter+=1
+                if (client_os_error_retry_counter == len(self.retry_intervals)):
+                    raise
+
+            await asyncio.sleep(self.retry_intervals[client_os_error_retry_counter])
 
     @staticmethod
     def _get_endpoint(endpoint):
