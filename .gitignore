@@ -55,6 +55,9 @@ bld/
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 
+# Pyright
+pyrightconfig.json
+
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*

@@ -13,8 +13,6 @@ class Transport(object):
         self._endpoint = self._get_endpoint(endpoint)
         self._timeout = timeout
         self.max_connections = max_connections or 8
-        # self._connector = None
-        # self._client_session = None
         self._connector = aiohttp.TCPConnector()
         self._client_session = aiohttp.ClientSession(connector=self._connector)
         # spend ~1 min in retries before raising the exception to the user
