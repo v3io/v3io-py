@@ -53,7 +53,7 @@ class Transport(object):
         # wait for the response
         return self.wait_response(inflight_request)
 
-    def send_request(self, request, transport_state=None):
+    def send_request(self, request):
         return request
 
     @staticmethod
