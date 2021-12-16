@@ -18,7 +18,7 @@ class Transport(abstract.Transport):
     def close(self):
         self._session.close()
 
-    def send_request(self, request, transport_state=None):
+    def send_request(self, request):
         # call the encoder to get the response
         http_response = self._http_request(request.method,
                                            request.path,

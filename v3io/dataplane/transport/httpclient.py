@@ -6,21 +6,20 @@ import socket
 import v3io.dataplane.response
 import v3io.dataplane.request
 from . import abstract
-
+import queue
 
 class Transport(abstract.Transport):
 
     def __init__(self, logger, endpoint=None, max_connections=None, timeout=None, verbosity=None):
         super(Transport, self).__init__(logger, endpoint, max_connections, timeout, verbosity)
 
-        # holds which connection index we'll use
-        self._next_connection_idx = 0
+        self._free_connections = queue.Queue()
 
         # based on scheme, create a host and context for _create_connection
         self._host, self._ssl_context = self._parse_endpoint(self._endpoint)
 
         # create the pool connection
-        self._connections = self._create_connections(self.max_connections,
+        self._create_connections(self.max_connections,
                                                      self._host,
                                                      self._ssl_context)
 
@@ -38,34 +37,24 @@ class Transport(abstract.Transport):
 
     def requires_access_key(self):
         return True
-
-    def restart(self):
-        self.close()
-
-        # recreate the connections
-        self._connections = self._create_connections(self.max_connections,
-                                                     self._host,
-                                                     self._ssl_context)
-
-    def close(self):
-        for connection in self._connections:
-            connection.close()
-
-    def send_request(self, request, transport_state=None):
-        if transport_state is None:
-            connection_idx = self._get_next_connection_idx()
-        else:
-            connection_idx = transport_state.connection_idx
+    
+    def send_request(self, request):
+        # TODO: consider getting param of whether we should block or not (wait for connection to be free or raise exception)
+        connection = self._free_connections.get(block=True, timeout=None)
 
         # set the used connection on the request
-        setattr(request.transport, 'connection_idx', connection_idx)
+        setattr(request.transport, 'connection_used', connection)
 
         # get a connection for the request and send it
-        return self._send_request_on_connection(request, connection_idx)
+        try:
+            return self._send_request_on_connection(request, connection)
+        except BaseException as e:
+            self._free_connections.put(connection, block=True) 
+            raise e
+
 
     def wait_response(self, request, raise_for_status=None, num_retries=1):
-        connection_idx = request.transport.connection_idx
-        connection = self._connections[connection_idx]
+        connection = request.transport.connection_used
 
         while True:
             try:
@@ -77,7 +66,7 @@ class Transport(abstract.Transport):
                 status_code, headers = self._get_status_and_headers(response)
 
                 self.log('Rx',
-                         connection_idx=connection_idx,
+                         connection=connection,
                          status_code=status_code,
                          body=response_body)
 
@@ -96,74 +85,57 @@ class Transport(abstract.Transport):
                 if num_retries == 0:
                     self._logger.warn_with('Remote disconnected while waiting for response and ran out of retries',
                                            e=type(e),
-                                           connection_idx=connection_idx)
+                                           connection=connection)
 
                     raise e
 
                 self._logger.debug_with('Remote disconnected while waiting for response',
                                         retries_left=num_retries,
-                                        connection_idx=connection_idx)
+                                        connection=connection)
 
                 num_retries -= 1
 
-                # create a connection
-                connection = self._recreate_connection_at_index(connection_idx)
+                # make sure connections is closed (connection.connect is called automaticly when connection is closed)
+                connection.close()
 
                 # re-send the request on the connection
-                request = self._send_request_on_connection(request, connection_idx)
+                request = self._send_request_on_connection(request, connection)
             except BaseException as e:
                 self._logger.warn_with('Unhandled exception while waiting for response',
                                        e=type(e),
-                                       connection_idx=connection_idx)
+                                       connection=connection)
                 raise e
+            finally:
+                self._free_connections.put(connection, block=True)
 
-    def _send_request_on_connection(self, request, connection_idx):
+    def _send_request_on_connection(self, request, connection):
         path = request.encode_path()
 
         self.log('Tx',
-                 connection_idx=connection_idx,
+                 connection=connection,
                  method=request.method,
                  path=path,
                  headers=request.headers,
                  body=request.body)
 
-        connection = self._connections[connection_idx]
-
         try:
             connection.request(request.method, path, request.body, request.headers)
         except self._send_request_exceptions as e:
             self._logger.debug_with('Disconnected while attempting to send. Recreating connection', e=type(e))
-
-            connection = self._recreate_connection_at_index(connection_idx)
-
-            # re-request
+            
+            # re-request (connection.connect is called automaticly when connection is closed)
+            connection.close()
             connection.request(request.method, path, request.body, request.headers)
         except BaseException as e:
             self._logger.warn_with('Unhandled exception while sending request', e=type(e))
             raise e
 
         return request
-
-    def _recreate_connection_at_index(self, connection_idx):
-
-        # close the old connection
-        self._connections[connection_idx].close()
-
-        # create a new one and replace
-        connection = self._create_connection(self._host, self._ssl_context)
-        self._connections[connection_idx] = connection
-
-        return connection
-
+   
     def _create_connections(self, num_connections, host, ssl_context):
-        connections = []
-
-        for connection_idx in range(num_connections):
+        for _ in range(num_connections):
             connection = self._create_connection(host, ssl_context)
-            connection.connect()
-            connections.append(connection)
-
-        return connections
+            self._free_connections.put(connection, block=True)
 
     def _create_connection(self, host, ssl_context):
         if ssl_context is None:
@@ -183,15 +155,6 @@ class Transport(abstract.Transport):
             return endpoint[len('https://'):], ssl_context
 
         return endpoint, None
-
-    def _get_next_connection_idx(self):
-        connection_idx = self._next_connection_idx
-
-        self._next_connection_idx += 1
-        if self._next_connection_idx >= len(self._connections):
-            self._next_connection_idx = 0
-
-        return connection_idx
 
     def _get_status_and_headers_py2(self, response):
         return response.status, response.getheaders()
