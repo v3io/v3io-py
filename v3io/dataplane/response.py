@@ -3,9 +3,6 @@ import xml.etree.ElementTree
 
 import v3io.dataplane.transport
 
-class HttpResponseError(Exception):
-    """Exception raised on bad http status"""
-    pass
 
 class Response(object):
 
@@ -33,7 +30,7 @@ class Response(object):
 
         if (expected_statuses is None and self.status_code >= 300) \
                 or (expected_statuses and self.status_code not in expected_statuses):
-            raise HttpResponseError('Request failed with status {0}: {1}'.format(self.status_code, self.body))
+            raise RuntimeError('Request failed with status {0}: {1}'.format(self.status_code, self.body))
 
 
 class Responses(object):
@@ -50,4 +47,4 @@ class Responses(object):
 
     def raise_for_status(self):
         if not self.success:
-            raise HttpResponseError('Failed to put items')
+            raise RuntimeError('Failed to put items')
