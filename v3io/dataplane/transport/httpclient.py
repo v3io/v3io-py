@@ -100,6 +100,9 @@ class Transport(abstract.Transport):
 
                 # re-send the request on the connection
                 request = self._send_request_on_connection(request, connection)
+            except v3io.dataplane.response.HttpResponseError as response_error:
+                self._logger.warn_with('Response error: {}'.format(str(response_error)))
+                raise response_error
             except BaseException as e:
                 self._logger.warn_with('Unhandled exception while waiting for response',
                                        e=type(e),
