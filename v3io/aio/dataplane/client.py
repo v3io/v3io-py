@@ -23,8 +23,7 @@ class Client(object):
                  max_connections=None,
                  timeout=None,
                  logger_verbosity=None,
-                 transport_verbosity='info',
-                 retry_intervals = None):
+                 transport_verbosity='info'):
         """Creates a v3io client, used to access v3io
 
         Parameters
@@ -48,8 +47,6 @@ class Client(object):
             If set to 'DEBUG', transport will log lots of information at the cost of performance. It uses
             the "debug_with" logger interface, so wither a logger set to DEBUG level must be passed in 'logger' or
             'logger_verbosity' must be set to DEBUG
-        retry_intervals (Optional) : tuple of float
-            Tuple of intervals to use for exponential backoff in case of retries
 
         Return Value
         ----------
@@ -66,8 +63,7 @@ class Client(object):
                                                                          endpoint,
                                                                          max_connections,
                                                                          timeout,
-                                                                         transport_verbosity,
-                                                                         retry_intervals)
+                                                                         transport_verbosity)
 
         # create models
         self.kv, self.object, self.stream, self.container = self._create_models()
