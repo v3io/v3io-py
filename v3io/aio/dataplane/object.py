@@ -11,6 +11,32 @@ class Model(v3io.dataplane.model.Model):
         self._access_key = client._access_key
         self._transport = client._transport
 
+    async def head(self,
+                  container,
+                  path,
+                  access_key=None,
+                  raise_for_status=None):
+        """Retrieves system attributes of object from a container.
+
+        Parameters
+        ----------
+        container (Required) : str
+            The container on which to operate.
+        path (Required) : str
+            The path of the object
+        access_key (Optional) : str
+            The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
+
+        Return Value
+        ----------
+        A `Response` object, whose `headers` is populated with system attributes of the object.
+        """
+        return await self._transport.request(container,
+                                             access_key or self._access_key,
+                                             raise_for_status,
+                                             v3io.dataplane.request.encode_head_object,
+                                             locals())
+
     async def get(self,
                   container,
                   path,
