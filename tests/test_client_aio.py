@@ -231,6 +231,18 @@ class TestObject(Test):
 
         self.assertEqual(response.body, contents)
 
+        # get the head of the object
+        response = await self._client.object.head(container=self._container,
+                                           path=self._object_path)
+
+        self.assertIn(('Content-Length', str(len(contents))), response.headers.items())
+
+        # get the head of the dir-object
+        response = await self._client.object.head(container=self._container,
+                                           path=self._object_dir)
+
+        self.assertIn(('Content-Length', str(0)), response.headers.items())
+
         # delete the object
         await self._client.object.delete(container=self._container,
                                          path=self._object_path)
