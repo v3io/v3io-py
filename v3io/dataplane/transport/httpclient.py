@@ -22,6 +22,7 @@ import v3io.dataplane.request
 from . import abstract
 import queue
 
+
 class Transport(abstract.Transport):
 
     def __init__(self, logger, endpoint=None, max_connections=None, timeout=None, verbosity=None):
@@ -51,7 +52,7 @@ class Transport(abstract.Transport):
 
     def requires_access_key(self):
         return True
-    
+
     def send_request(self, request):
         # TODO: consider getting param of whether we should block or not (wait for connection to be free or raise exception)
         connection = self._free_connections.get(block=True, timeout=None)
@@ -63,9 +64,8 @@ class Transport(abstract.Transport):
         try:
             return self._send_request_on_connection(request, connection)
         except BaseException as e:
-            self._free_connections.put(connection, block=True) 
+            self._free_connections.put(connection, block=True)
             raise e
-
 
     def wait_response(self, request, raise_for_status=None, num_retries=1):
         connection = request.transport.connection_used
@@ -139,7 +139,7 @@ class Transport(abstract.Transport):
             connection.request(request.method, path, request.body, request.headers)
         except self._send_request_exceptions as e:
             self._logger.debug_with('Disconnected while attempting to send. Recreating connection', e=type(e))
-            
+
             # re-request (connection.connect is called automaticly when connection is closed)
             connection.close()
             connection.request(request.method, path, request.body, request.headers)
@@ -148,7 +148,7 @@ class Transport(abstract.Transport):
             raise e
 
         return request
-   
+
     def _create_connections(self, num_connections, host, ssl_context):
         for _ in range(num_connections):
             connection = self._create_connection(host, ssl_context)

@@ -17,9 +17,11 @@ import xml.etree.ElementTree
 
 import v3io.dataplane.transport
 
+
 class HttpResponseError(Exception):
     """Exception raised on bad http status"""
     pass
+
 
 class Response(object):
 
