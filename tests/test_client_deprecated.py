@@ -33,6 +33,9 @@ class Test(unittest.TestCase):
                                              transport_verbosity='DEBUG')
 
         self._container = 'bigdata'
+        self._test_parent_dir = os.environ.get("MATRIX_PYTHON_VERSION")
+        if self._test_parent_dir is None:
+            self._test_parent_dir = ''
 
     def tearDown(self):
         self._client.close()
@@ -60,7 +63,7 @@ class TestContainer(Test):
 
     def setUp(self):
         super(TestContainer, self).setUp()
-        self._path = 'v3io-py-test-container'
+        self._path = os.path.join(self._test_parent_dir, 'v3io-py-test-container')
 
         # clean up
         self._delete_dir(self._path)
@@ -110,7 +113,7 @@ class TestStream(Test):
     def setUp(self):
         super(TestStream, self).setUp()
 
-        self._path = 'v3io-py-test-stream'
+        self._path = os.path.join(self._test_parent_dir, 'v3io-py-test-stream')
 
         # clean up
         self._client.delete_stream(container=self._container,
@@ -223,7 +226,7 @@ class TestObject(Test):
     def setUp(self):
         super(TestObject, self).setUp()
 
-        self._object_dir = '/v3io-py-test-object'
+        self._object_dir = os.path.join(self._test_parent_dir, '/v3io-py-test-object')
         self._object_path = self._object_dir + '/object.txt'
 
         # clean up
@@ -338,7 +341,7 @@ class TestSchema(Test):
     def setUp(self):
         super(TestSchema, self).setUp()
 
-        self._schema_dir = '/v3io-py-test-schema'
+        self._schema_dir = os.path.join(self._test_parent_dir, '/v3io-py-test-schema')
         self._schema_path = os.path.join(self._schema_dir, '.#schema')
 
         # clean up
@@ -397,7 +400,7 @@ class TestEmd(Test):
     def setUp(self):
         super(TestEmd, self).setUp()
 
-        self._path = 'some_dir/v3io-py-test-emd'
+        self._path = os.path.join(self._test_parent_dir, 'some_dir/v3io-py-test-emd')
         self._delete_dir(v3io.common.helpers.url_join(self._path, 'my_table'))
         self._delete_dir(self._path)
 
@@ -734,7 +737,7 @@ class TestBatchRaiseForStatus(Test):
 
     def setUp(self):
         super(TestBatchRaiseForStatus, self).setUp()
-        self._object_dir = '/v3io-py-test-batch-raise'
+        self._object_dir = os.path.join(self._test_parent_dir, 'some_dir/v3io-py-test-batch-raise')
 
         # clean up
         self._delete_dir(self._object_dir)
@@ -790,7 +793,7 @@ class TestConnectonErrorRecovery(Test):
     def setUp(self):
         super(TestConnectonErrorRecovery, self).setUp()
 
-        self._object_dir = '/v3io-py-test-connection-error'
+        self._object_dir = os.path.join(self._test_parent_dir, '/v3io-py-test-connection-error')
         self._object_path = self._object_dir + '/object.txt'
 
         self._emd_path = 'some_dir/v3io-py-test-emd'

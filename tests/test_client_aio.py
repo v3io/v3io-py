@@ -29,6 +29,9 @@ class Test(unittest.IsolatedAsyncioTestCase):
                                                  transport_verbosity='DEBUG')
 
         self._container = 'bigdata'
+        self._test_parent_dir = os.environ.get("MATRIX_PYTHON_VERSION")
+        if self._test_parent_dir is None:
+            self._test_parent_dir = ''
 
     async def asyncTearDown(self):
         await self._client.close()
@@ -56,7 +59,7 @@ class TestContainer(Test):
 
     async def asyncSetUp(self):
         await super(TestContainer, self).asyncSetUp()
-        self._path = 'v3io-py-test-container'
+        self._path = os.path.join(self._test_parent_dir, 'v3io-py-test-container')
 
         # clean up
         await self._delete_dir(self._path)
@@ -102,7 +105,7 @@ class TestStream(Test):
     async def asyncSetUp(self):
         await super(TestStream, self).asyncSetUp()
 
-        self._path = 'v3io-py-test-stream'
+        self._path = os.path.join(self._test_parent_dir, 'v3io-py-test-stream')
 
         # clean up
         await self._client.stream.delete(container=self._container,
@@ -216,7 +219,7 @@ class TestObject(Test):
     async def asyncSetUp(self):
         await super(TestObject, self).asyncSetUp()
 
-        self._object_dir = '/v3io-py-test object'
+        self._object_dir = os.path.join(self._test_parent_dir, 'v3io-py-test-object')
         self._object_path = self._object_dir + '/obj ect.txt'
 
         # clean up
@@ -373,7 +376,7 @@ class TestKv(Test):
     async def asyncSetUp(self):
         await super(TestKv, self).asyncSetUp()
 
-        self._path = 'some_dir/v3io-py-test-emd'
+        self._path = os.path.join(self._test_parent_dir, 'some_dir/v3io-py-test-emd')
         await self._delete_dir(self._path)
 
     async def test_kv_array(self):
