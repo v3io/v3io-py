@@ -26,11 +26,11 @@ class Model(v3io.dataplane.model.Model):
         self._transport = client._transport
 
     def head(self,
-            container,
-            path,
-            access_key=None,
-            raise_for_status=None,
-            transport_actions=None):
+             container,
+             path,
+             access_key=None,
+             raise_for_status=None,
+             transport_actions=None):
         """Retrieves system attributes of object from a container.
 
         Parameters

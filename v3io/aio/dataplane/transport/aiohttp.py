@@ -22,7 +22,7 @@ import v3io.dataplane.transport
 
 class Transport(object):
 
-    def __init__(self, logger, endpoint=None, max_connections=None, timeout=None, verbosity=None, retry_intervals = None):
+    def __init__(self, logger, endpoint=None, max_connections=None, timeout=None, verbosity=None, retry_intervals=None):
         self._logger = logger
         self._endpoint = self._get_endpoint(endpoint)
         self._timeout = timeout
@@ -30,7 +30,7 @@ class Transport(object):
         self._connector = aiohttp.TCPConnector()
         self._client_session = aiohttp.ClientSession(connector=self._connector)
         # spend ~1 min in retries before raising the exception to the user
-        self.retry_intervals = retry_intervals or (0,0,0.1,0.3,1.0) + 12 * (5.0,)
+        self.retry_intervals = retry_intervals or (0, 0, 0.1, 0.3, 1.0) + 12 * (5.0,)
         self._set_log_method(verbosity)
 
     async def close(self):
@@ -87,7 +87,7 @@ class Transport(object):
                 self._logger.warn_with('Response error: {}'.format(str(response_error)))
                 raise response_error
             except aiohttp.ClientOSError:
-                client_os_error_retry_counter+=1
+                client_os_error_retry_counter += 1
                 if (client_os_error_retry_counter == len(self.retry_intervals)):
                     raise
 
