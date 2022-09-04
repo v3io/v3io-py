@@ -35,8 +35,8 @@ class Transport(abstract.Transport):
 
         # create the pool connection
         self._create_connections(self.max_connections,
-                                                     self._host,
-                                                     self._ssl_context)
+                                 self._host,
+                                 self._ssl_context)
 
         # python 2 and 3 have different exceptions
         if sys.version_info[0] >= 3:
@@ -57,13 +57,11 @@ class Transport(abstract.Transport):
         # TODO: consider getting param of whether we should block or not (wait for connection to be free or raise exception)
         connection = self._free_connections.get(block=True, timeout=None)
 
-        # set the used connection on the request
-        setattr(request.transport, 'connection_used', connection)
-
-        # get a connection for the request and send it
         try:
             return self._send_request_on_connection(request, connection)
         except BaseException as e:
+            connection.close()
+            connection = self._create_connection(self._host, self._ssl_context)
             self._free_connections.put(connection, block=True)
             raise e
 
@@ -95,37 +93,40 @@ class Transport(abstract.Transport):
                 # return the response
                 return response
 
-            except self._wait_response_exceptions as e:
+            except v3io.dataplane.response.HttpResponseError as response_error:
+                self._logger.warn_with('Response error: {}'.format(str(response_error)))
+                raise response_error
+            except BaseException as e:
                 if num_retries == 0:
-                    self._logger.warn_with('Remote disconnected while waiting for response and ran out of retries',
-                                           e=type(e),
-                                           connection=connection)
+                    self._logger.error_with('Remote disconnected while waiting for response and ran out of retries',
+                                            e=type(e),
+                                            e_msg=e,
+                                            response_body=response_body,
+                                            status_code=status_code,
+                                            headers=headers,
+                                            connection=connection)
 
                     raise e
 
                 self._logger.debug_with('Remote disconnected while waiting for response',
                                         retries_left=num_retries,
+                                        e=type(e),
+                                        e_msg=e,
                                         connection=connection)
 
                 num_retries -= 1
 
-                # make sure connections is closed (connection.connect is called automaticly when connection is closed)
                 connection.close()
+                connection = self._create_connection(self._host, self._ssl_context)
 
                 # re-send the request on the connection
                 request = self._send_request_on_connection(request, connection)
-            except v3io.dataplane.response.HttpResponseError as response_error:
-                self._logger.warn_with('Response error: {}'.format(str(response_error)))
-                raise response_error
-            except BaseException as e:
-                self._logger.warn_with('Unhandled exception while waiting for response',
-                                       e=type(e),
-                                       connection=connection)
-                raise e
             finally:
                 self._free_connections.put(connection, block=True)
 
     def _send_request_on_connection(self, request, connection):
+        setattr(request.transport, 'connection_used', connection)
+
         path = request.encode_path()
 
         self.log('Tx',
@@ -136,15 +137,17 @@ class Transport(abstract.Transport):
                  body=request.body)
 
         try:
-            connection.request(request.method, path, request.body, request.headers)
-        except self._send_request_exceptions as e:
-            self._logger.debug_with('Disconnected while attempting to send. Recreating connection', e=type(e))
-
-            # re-request (connection.connect is called automaticly when connection is closed)
-            connection.close()
-            connection.request(request.method, path, request.body, request.headers)
+            try:
+                connection.request(request.method, path, request.body, request.headers)
+            except self._send_request_exceptions as e:
+                self._logger.debug_with('Disconnected while attempting to send. Recreating connection and retrying',
+                                        e=type(e), e_msg=e, connection=connection)
+                connection.close()
+                connection = self._create_connection(self._host, self._ssl_context)
+                request.transport.connection_used = connection
+                connection.request(request.method, path, request.body, request.headers)
         except BaseException as e:
-            self._logger.warn_with('Unhandled exception while sending request', e=type(e))
+            self._logger.error_with('Unhandled exception while sending request', e=type(e), e_msg=e, connection=connection)
             raise e
 
         return request

@@ -29,15 +29,28 @@ class Response(object):
         self.status_code = status_code
         self.body = body
         self.headers = headers
-        self.output = None
+        self._output = output
+        self._parsed_output = None
 
-        if output and self.body:
+    @property
+    def output(self):
+        if self._parsed_output:
+            return self._parsed_output
+
+        if self._output and self.body:
             try:
-                parsed_output = ujson.loads(self.body)
+                # TODO: It's expensive to always try to parse as JSON first. Better use headers or a heuristic to decide the format.
+                try:
+                    parsed_output = ujson.loads(self.body)
+                except Exception:
+                    parsed_output = xml.etree.ElementTree.fromstring(self.body)
             except Exception:
-                parsed_output = xml.etree.ElementTree.fromstring(self.body)
+                raise HttpResponseError(f"Failed to parse response with status {self.status_code}, "
+                                        f"body {self.body}, headers={self.headers}")
 
-            self.output = output(parsed_output)
+            self._parsed_output = self._output(parsed_output)
+
+            return self._parsed_output
 
     def raise_for_status(self, expected_statuses=None):
         if expected_statuses == v3io.dataplane.transport.RaiseForStatus.never:
