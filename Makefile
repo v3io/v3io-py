@@ -28,19 +28,16 @@ debug-upload:
 clean_pyc:
 	find . -name '*.pyc' -exec rm {} \;
 
-.PHONY: flake8
-flake8:
+.PHONY: lint
+lint:
 	PIPENV_IGNORE_VIRTUALENVS=1 \
-	    pipenv run flake8 \
-	    	v3io
+	    pipenv run flake8 v3io
 
 .PHONY: test
-test: clean_pyc flake8
+test: clean_pyc
 	PIPENV_IGNORE_VIRTUALENVS=1 \
-	    pipenv run python -m pytest -v \
-		--disable-warnings \
-		--benchmark-disable \
-		tests
+	    pipenv run python -m unittest \
+		tests/test_*
 
 .PHONY: update-deps
 update-deps:
