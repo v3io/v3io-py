@@ -37,6 +37,7 @@ jobs:
     - name: Install dependencies
       run: |
         pipenv install --dev
+        pipenv install aiohttp=3.8.1
     - name: lint
       run: make lint
     - name: test
