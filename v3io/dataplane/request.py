@@ -62,6 +62,7 @@ class Request(object):
 
         return quote(self.path) + '?' + urlencode(self.query, quote_via=quote)
 
+
 #
 # Encoders
 #
@@ -106,8 +107,8 @@ def encode_get_container_contents(container_name, access_key, kwargs):
 #
 
 def encode_head_object(container_name, access_key, kwargs):
-
     return _encode('HEAD', container_name, access_key, kwargs['path'], None, None, None)
+
 
 def encode_get_object(container_name, access_key, kwargs):
     headers = None

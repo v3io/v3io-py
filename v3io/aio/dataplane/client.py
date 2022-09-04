@@ -38,7 +38,7 @@ class Client(object):
                  timeout=None,
                  logger_verbosity=None,
                  transport_verbosity='info',
-                 retry_intervals = None):
+                 retry_intervals=None):
         """Creates a v3io client, used to access v3io
 
         Parameters
