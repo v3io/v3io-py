@@ -137,16 +137,15 @@ class Transport(abstract.Transport):
                  body=request.body)
 
         try:
-            connection.request(request.method, path, request.body, request.headers)
-        except self._send_request_exceptions as e:
-            self._logger.warn_with('Disconnected while attempting to send. Recreating connection and retrying',
-                                   e=type(e), e_msg=e, connection=connection)
-
-            # re-request (connection.connect is called automaticly when connection is closed)
-            connection.close()
-            connection = self._create_connection(self._host, self._ssl_context)
-            request.transport.connection_used = connection
-            connection.request(request.method, path, request.body, request.headers)
+            try:
+                connection.request(request.method, path, request.body, request.headers)
+            except self._send_request_exceptions as e:
+                self._logger.debug_with('Disconnected while attempting to send. Recreating connection and retrying',
+                                        e=type(e), e_msg=e, connection=connection)
+                connection.close()
+                connection = self._create_connection(self._host, self._ssl_context)
+                request.transport.connection_used = connection
+                connection.request(request.method, path, request.body, request.headers)
         except BaseException as e:
             self._logger.error_with('Unhandled exception while sending request', e=type(e), e_msg=e, connection=connection)
             raise e
