@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.7, 3.8]
 
     steps:
     - name: Checkout
@@ -44,4 +44,5 @@ jobs:
       env:
         V3IO_API: ${{ secrets.V3IO_API }}
         V3IO_ACCESS_KEY: ${{ secrets.V3IO_ACCESS_KEY }}
+        MATRIX_PYTHON_VERSION: ${{ matrix.python-version }}
       run: make test
