@@ -98,7 +98,7 @@ class Transport(abstract.Transport):
                 raise response_error
             except BaseException as e:
                 if num_retries == 0:
-                    self._logger.error_with('Remote disconnected while waiting for response and ran out of retries',
+                    self._logger.error_with('Error occurred while waiting for response and ran out of retries',
                                             e=type(e),
                                             e_msg=e,
                                             response_body=response_body,
@@ -108,7 +108,7 @@ class Transport(abstract.Transport):
 
                     raise e
 
-                self._logger.debug_with('Remote disconnected while waiting for response',
+                self._logger.debug_with('Error occurred while waiting for response – retrying',
                                         retries_left=num_retries,
                                         e=type(e),
                                         e_msg=e,
