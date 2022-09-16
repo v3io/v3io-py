@@ -116,6 +116,8 @@ print(response.body.decode('utf-8'))
 v3io_client.object.delete(container='users', path='/my-object')
 ```
 
+For a detailed example, refer to the [v3io-objects notebook](examples/v3io-objects.ipynb). 
+
 ### Accessing key-values (NoSQL)
 Create a table, update a record and run a query.
 
@@ -163,6 +165,8 @@ for item in items_cursor.all():
     print(item)
 ```
 
+For a detailed example, refer to the [examples/v3io-kv notebook](examples/v3io-kv.ipynb). 
+
 ### Accessing streams
 Creates a stream with several partitions, writes records to it, reads the records and deletes the stream:
 
@@ -207,6 +211,8 @@ for record in response.output.records:
 # delete the stream
 v3io_client.stream.delete(container='users', stream_path='/my-test-stream')
 ```
+
+For a detailed example, refer to the [v3io-streams notebook](examples/v3io-streams.ipynb). 
 
 ## Support for asyncio (experimental)
 
