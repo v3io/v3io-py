@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from v3io.dataplane.transport import RaiseForStatus
+from v3io.dataplane.transport import RaiseForStatus  # noqa: F401
 
-from .client import Client
+from .client import Client  # noqa: F401

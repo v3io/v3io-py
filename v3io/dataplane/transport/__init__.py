@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .verifier import Transport
+from .verifier import Transport  # noqa: F401
 
 
 class RaiseForStatus(object):

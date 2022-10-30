@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .client import Client
-from .transport import RaiseForStatus
+from .client import Client  # noqa: F401
+from .transport import RaiseForStatus  # noqa: F401

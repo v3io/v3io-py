@@ -16,7 +16,7 @@
 # We only want to format and lint checked in python files
 CHECKED_IN_PYTHING_FILES := $(shell git ls-files | grep '\.py$$')
 
-FLAKE8_OPTIONS := --max-line-length 120 --extend-ignore E203,W503,F401,F403,E127
+FLAKE8_OPTIONS := --max-line-length 120 --extend-ignore E203,W503
 BLACK_OPTIONS := --line-length 120
 ISORT_OPTIONS := --profile black
 
