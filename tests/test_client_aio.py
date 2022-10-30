@@ -16,7 +16,6 @@ import array
 import datetime
 import json
 import os
-import sys
 import unittest
 
 import future.utils
@@ -26,7 +25,6 @@ import v3io.aio.dataplane
 import v3io.dataplane
 
 
-@unittest.skipIf(sys.version.startswith("3.7."), "IsolatedAsyncioTestCase was only added in 3.8")
 class Test(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self._client = v3io.aio.dataplane.Client(logger_verbosity="DEBUG", transport_verbosity="DEBUG")
