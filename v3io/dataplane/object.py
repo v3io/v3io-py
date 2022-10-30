@@ -12,25 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import v3io.dataplane.request
-import v3io.dataplane.output
-import v3io.dataplane.model
 import v3io.dataplane.kv_cursor
+import v3io.dataplane.model
+import v3io.dataplane.output
+import v3io.dataplane.request
 
 
 class Model(v3io.dataplane.model.Model):
-
     def __init__(self, client):
         self._client = client
         self._access_key = client._access_key
         self._transport = client._transport
 
-    def head(self,
-             container,
-             path,
-             access_key=None,
-             raise_for_status=None,
-             transport_actions=None):
+    def head(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Retrieves system attributes of object from a container.
 
         Parameters
@@ -46,21 +40,25 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `headers` is populated with system attributes of the object.
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_head_object,
-                                       locals())
-
-    def get(self,
+        return self._transport.request(
             container,
-            path,
-            access_key=None,
-            raise_for_status=None,
-            transport_actions=None,
-            offset=None,
-            num_bytes=None):
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_head_object,
+            locals(),
+        )
+
+    def get(
+        self,
+        container,
+        path,
+        access_key=None,
+        raise_for_status=None,
+        transport_actions=None,
+        offset=None,
+        num_bytes=None,
+    ):
         """Retrieves an object from a container.
 
         Parameters
@@ -80,21 +78,18 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `body` is populated with the body of the object.
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_get_object,
-                                       locals())
-
-    def put(self,
+        return self._transport.request(
             container,
-            path,
-            access_key=None,
-            raise_for_status=None,
-            transport_actions=None,
-            body=None,
-            append=None):
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_get_object,
+            locals(),
+        )
+
+    def put(
+        self, container, path, access_key=None, raise_for_status=None, transport_actions=None, body=None, append=None
+    ):
         """Adds a new object to a container, or appends data to an existing object. The option to append data is
         extension to the S3 PUT Object capabilities
 
@@ -115,12 +110,14 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_put_object,
-                                       locals())
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_put_object,
+            locals(),
+        )
 
     def delete(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Deletes an object from a container.
@@ -138,9 +135,11 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object.
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_delete_object,
-                                       locals())
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_delete_object,
+            locals(),
+        )

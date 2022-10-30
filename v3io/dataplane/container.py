@@ -12,29 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import v3io.dataplane.request
-import v3io.dataplane.output
-import v3io.dataplane.model
 import v3io.dataplane.kv_cursor
+import v3io.dataplane.model
+import v3io.dataplane.output
+import v3io.dataplane.request
 
 
 class Model(v3io.dataplane.model.Model):
-
     def __init__(self, client):
         self._client = client
         self._access_key = client._access_key
         self._transport = client._transport
 
-    def list(self,
-             container,
-             path,
-             access_key=None,
-             raise_for_status=None,
-             transport_actions=None,
-             get_all_attributes=None,
-             directories_only=None,
-             limit=None,
-             marker=None):
+    def list(
+        self,
+        container,
+        path,
+        access_key=None,
+        raise_for_status=None,
+        transport_actions=None,
+        get_all_attributes=None,
+        directories_only=None,
+        limit=None,
+        marker=None,
+    ):
         """Lists the containers contents.
 
         Parameters
@@ -62,10 +63,12 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `output` is `GetContainerContentsOutput`.
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_get_container_contents,
-                                       locals(),
-                                       v3io.dataplane.output.GetContainerContentsOutput)
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_get_container_contents,
+            locals(),
+            v3io.dataplane.output.GetContainerContentsOutput,
+        )

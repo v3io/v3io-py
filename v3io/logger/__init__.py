@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from v3io.logger.logger import Logger, HumanReadableFormatter
+from v3io.logger.logger import HumanReadableFormatter, Logger  # noqa: F401
