@@ -14,12 +14,10 @@
 #
 import array
 import datetime
-import json
 import os
 import unittest
 
 import future.utils
-import pytest
 
 import v3io.aio.dataplane
 import v3io.dataplane
@@ -287,61 +285,61 @@ class TestObject(Test):
         self.assertEqual(response.body.decode("utf-8"), "567")
 
 
-@pytest.mark.skip("TODO: why was this test commented out?")
-class TestSchema(Test):
-    async def asyncSetUp(self):
-        await super(TestSchema, self).asyncSetUp()
-
-        self._schema_dir = "/v3io-py-test-schemaa"
-        self._schema_path = os.path.join(self._schema_dir, ".%23schema")
-
-        # clean up
-        await self._delete_dir(self._schema_dir)
-
-    @pytest.mark.skip("TODO: why was this test commented out?")
-    async def test_create_schema(self):
-        await self._client.kv.create_schema(
-            container=self._container,
-            table_path=self._schema_dir,
-            key="key_field",
-            fields=[
-                {"name": "key_field", "type": "string", "nullable": False},
-                {"name": "data_field_0", "type": "long", "nullable": True},
-                {"name": "data_field_1", "type": "double", "nullable": True},
-            ],
-        )
-
-        # write to test the values in the UI (requires breaking afterwards)
-        items = {
-            "a": {"data_field_0": 30, "data_field_1": 100},
-            "b": {"data_field_0": 300, "data_field_1": 1000},
-            "c": {"data_field_0": 3000, "data_field_1": 10000},
-        }
-
-        for item_key, item_attributes in future.utils.viewitems(items):
-            await self._client.kv.put(
-                container=self._container, table_path=self._schema_dir, key=item_key, attributes=item_attributes
-            )
-
-        # verify the scehma
-        response = await self._client.object.get(
-            container=self._container, path=self._schema_path, raise_for_status=v3io.aio.dataplane.RaiseForStatus.never
-        )
-
-        expected = {
-            "hashingBucketNum": 0,
-            "key": "key_field",
-            "fields": [
-                {"name": "key_field", "type": "string", "nullable": False},
-                {"name": "data_field_0", "type": "long", "nullable": True},
-                {"name": "data_field_1", "type": "double", "nullable": True},
-            ],
-        }
-
-        self.assertEqual(
-            json.loads(response.body.decode("utf-8")),
-            expected,
-        )
+# class TestSchema(Test):
+#     async def asyncSetUp(self):
+#         await super(TestSchema, self).asyncSetUp()
+#
+#         self._schema_dir = "/v3io-py-test-schemaa"
+#         self._schema_path = os.path.join(self._schema_dir, ".%23schema")
+#
+#         # clean up
+#         await self._delete_dir(self._schema_dir)
+#
+#     async def test_create_schema(self):
+#         await self._client.kv.create_schema(
+#             container=self._container,
+#             table_path=self._schema_dir,
+#             key="key_field",
+#             fields=[
+#                 {"name": "key_field", "type": "string", "nullable": False},
+#                 {"name": "data_field_0", "type": "long", "nullable": True},
+#                 {"name": "data_field_1", "type": "double", "nullable": True},
+#             ],
+#         )
+#
+#         # write to test the values in the UI (requires breaking afterwards)
+#         items = {
+#             "a": {"data_field_0": 30, "data_field_1": 100},
+#             "b": {"data_field_0": 300, "data_field_1": 1000},
+#             "c": {"data_field_0": 3000, "data_field_1": 10000},
+#         }
+#
+#         for item_key, item_attributes in future.utils.viewitems(items):
+#             await self._client.kv.put(
+#                 container=self._container, table_path=self._schema_dir, key=item_key, attributes=item_attributes
+#             )
+#
+#         # verify the scehma
+#         response = await self._client.object.get(
+#             container=self.container,
+#             path=self._schema_path,
+#             raise_for_status=v3io.aio.dataplane.RaiseForStatus.never,
+#         )
+#
+#         expected = {
+#             "hashingBucketNum": 0,
+#             "key": "key_field",
+#             "fields": [
+#                 {"name": "key_field", "type": "string", "nullable": False},
+#                 {"name": "data_field_0", "type": "long", "nullable": True},
+#                 {"name": "data_field_1", "type": "double", "nullable": True},
+#             ],
+#         }
+#
+#         self.assertEqual(
+#             json.loads(response.body.decode("utf-8")),
+#             expected,
+#         )
 
 
 class TestKv(Test):
