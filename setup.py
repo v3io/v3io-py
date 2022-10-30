@@ -44,6 +44,9 @@ tests_require = load_deps("dev-requirements.txt")
 with open("README.md") as fp:
     long_desc = fp.read()
 
+extras_require = {
+    "aiohttp": ["aiohttp~=3.8"],
+}
 
 setup(
     name="v3io",
@@ -65,6 +68,7 @@ setup(
         "v3io.logger",
     ],
     install_requires=install_requires,
+    extras_require=extras_require,
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
