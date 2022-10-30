@@ -287,6 +287,7 @@ class TestObject(Test):
         self.assertEqual(response.body.decode("utf-8"), "567")
 
 
+@pytest.mark.skip("TODO: why was this test commented out?")
 class TestSchema(Test):
     async def asyncSetUp(self):
         await super(TestSchema, self).asyncSetUp()
