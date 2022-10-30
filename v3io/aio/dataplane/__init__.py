@@ -12,5 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .client import Client
 from v3io.dataplane.transport import RaiseForStatus
+
+from .client import Client

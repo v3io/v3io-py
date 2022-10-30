@@ -1,0 +1,5 @@
+black~=22.0
+flake8~=5.0
+flake8-bugbear~=22.9
+isort~=5.7
+pytest~=5.4.3

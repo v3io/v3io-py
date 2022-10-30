@@ -14,56 +14,52 @@
 #
 import os
 
-import v3io.dataplane.request
-import v3io.dataplane.output
-import v3io.dataplane.model
 import v3io.aio.dataplane.kv_cursor
+import v3io.dataplane.model
+import v3io.dataplane.output
+import v3io.dataplane.request
 
 
 class Model(v3io.dataplane.model.Model):
-
     def __init__(self, client):
         self._client = client
         self._access_key = client._access_key
         self._transport = client._transport
 
-    def new_cursor(self,
-                   container,
-                   table_path,
-                   access_key=None,
-                   raise_for_status=None,
-                   attribute_names='*',
-                   filter_expression=None,
-                   marker=None,
-                   sharding_key=None,
-                   limit=None,
-                   segment=None,
-                   total_segments=None,
-                   sort_key_range_start=None,
-                   sort_key_range_end=None):
-        return v3io.aio.dataplane.kv_cursor.Cursor(self._client,
-                                                   container,
-                                                   access_key or self._access_key,
-                                                   table_path,
-                                                   raise_for_status,
-                                                   attribute_names,
-                                                   filter_expression,
-                                                   marker,
-                                                   sharding_key,
-                                                   limit,
-                                                   segment,
-                                                   total_segments,
-                                                   sort_key_range_start,
-                                                   sort_key_range_end)
+    def new_cursor(
+        self,
+        container,
+        table_path,
+        access_key=None,
+        raise_for_status=None,
+        attribute_names="*",
+        filter_expression=None,
+        marker=None,
+        sharding_key=None,
+        limit=None,
+        segment=None,
+        total_segments=None,
+        sort_key_range_start=None,
+        sort_key_range_end=None,
+    ):
+        return v3io.aio.dataplane.kv_cursor.Cursor(
+            self._client,
+            container,
+            access_key or self._access_key,
+            table_path,
+            raise_for_status,
+            attribute_names,
+            filter_expression,
+            marker,
+            sharding_key,
+            limit,
+            segment,
+            total_segments,
+            sort_key_range_start,
+            sort_key_range_end,
+        )
 
-    async def put(self,
-                  container,
-                  table_path,
-                  key,
-                  attributes,
-                  access_key=None,
-                  raise_for_status=None,
-                  condition=None):
+    async def put(self, container, table_path, key, attributes, access_key=None, raise_for_status=None, condition=None):
         """Creates an item with the provided attributes. If an item with the same name (primary key) already exists in
         the specified table, the existing item is completely overwritten (replaced with a new item). If the item or
         table do not exist, the operation creates them.
@@ -103,23 +99,27 @@ class Model(v3io.dataplane.model.Model):
         A `Response` object.
         """
 
-        return await self._transport.request(container,
-                                             access_key or self._access_key,
-                                             raise_for_status,
-                                             v3io.dataplane.request.encode_put_item,
-                                             locals())
+        return await self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            v3io.dataplane.request.encode_put_item,
+            locals(),
+        )
 
-    async def update(self,
-                     container,
-                     table_path,
-                     key,
-                     access_key=None,
-                     raise_for_status=None,
-                     attributes=None,
-                     expression=None,
-                     condition=None,
-                     update_mode=None,
-                     alternate_expression=None):
+    async def update(
+        self,
+        container,
+        table_path,
+        key,
+        access_key=None,
+        raise_for_status=None,
+        attributes=None,
+        expression=None,
+        condition=None,
+        update_mode=None,
+        alternate_expression=None,
+    ):
         """Updates the attributes of a table item. If the specified item or table don't exist,
         the operation creates them.
 
@@ -162,19 +162,15 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Responses` object.
         """
-        return await self._transport.request(container,
-                                             access_key or self._access_key,
-                                             raise_for_status,
-                                             v3io.dataplane.request.encode_update_item,
-                                             locals())
+        return await self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            v3io.dataplane.request.encode_update_item,
+            locals(),
+        )
 
-    async def get(self,
-                  container,
-                  table_path,
-                  key,
-                  access_key=None,
-                  raise_for_status=None,
-                  attribute_names='*'):
+    async def get(self, container, table_path, key, access_key=None, raise_for_status=None, attribute_names="*"):
         """Retrieves the requested attributes of a table item.
 
         See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/nosql-web-api/getitem/.
@@ -196,27 +192,31 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `output` is `GetItemOutput`.
         """
-        return await self._transport.request(container,
-                                             access_key or self._access_key,
-                                             raise_for_status,
-                                             v3io.dataplane.request.encode_get_item,
-                                             locals(),
-                                             v3io.dataplane.output.GetItemOutput)
+        return await self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            v3io.dataplane.request.encode_get_item,
+            locals(),
+            v3io.dataplane.output.GetItemOutput,
+        )
 
-    async def scan(self,
-                   container,
-                   table_path,
-                   access_key=None,
-                   raise_for_status=None,
-                   attribute_names='*',
-                   filter_expression=None,
-                   marker=None,
-                   sharding_key=None,
-                   limit=None,
-                   segment=None,
-                   total_segments=None,
-                   sort_key_range_start=None,
-                   sort_key_range_end=None):
+    async def scan(
+        self,
+        container,
+        table_path,
+        access_key=None,
+        raise_for_status=None,
+        attribute_names="*",
+        filter_expression=None,
+        marker=None,
+        sharding_key=None,
+        limit=None,
+        segment=None,
+        total_segments=None,
+        sort_key_range_start=None,
+        sort_key_range_end=None,
+    ):
         """Retrieves (reads) attributes of multiple items in a table or in a data container's root directory,
         according to the specified criteria.
 
@@ -272,15 +272,17 @@ class Model(v3io.dataplane.model.Model):
         Return Value
         ----------
         A `Response` object, whose `output` is `GetItemsOutput`.
-        """
+        """  # noqa
         table_path = self._ensure_path_ends_with_slash(table_path)
 
-        return await self._transport.request(container,
-                                             access_key or self._access_key,
-                                             raise_for_status,
-                                             v3io.dataplane.request.encode_get_items,
-                                             locals(),
-                                             v3io.dataplane.output.GetItemsOutput)
+        return await self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            v3io.dataplane.request.encode_get_items,
+            locals(),
+            v3io.dataplane.output.GetItemsOutput,
+        )
 
     async def delete(self, container, table_path, key, access_key=None, raise_for_status=None, transport_actions=None):
         """Deletes an item.
@@ -300,19 +302,11 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object.
         """
-        return self._client.delete_object(container,
-                                          os.path.join(table_path, key),
-                                          access_key,
-                                          raise_for_status,
-                                          transport_actions)
+        return self._client.delete_object(
+            container, os.path.join(table_path, key), access_key, raise_for_status, transport_actions
+        )
 
-    async def create_schema(self,
-                            container,
-                            table_path,
-                            access_key=None,
-                            raise_for_status=None,
-                            key=None,
-                            fields=None):
+    async def create_schema(self, container, table_path, access_key=None, raise_for_status=None, key=None, fields=None):
         """Creates a KV schema file
 
         Parameters
@@ -349,15 +343,17 @@ class Model(v3io.dataplane.model.Model):
         A `Response` object
         """
         put_object_args = locals()
-        put_object_args['path'] = os.path.join(put_object_args['table_path'], '.#schema')
-        put_object_args['offset'] = 0
-        put_object_args['append'] = None
-        put_object_args['body'] = self._client._get_schema_contents(key, fields)
-        del (put_object_args['key'])
-        del (put_object_args['fields'])
+        put_object_args["path"] = os.path.join(put_object_args["table_path"], ".#schema")
+        put_object_args["offset"] = 0
+        put_object_args["append"] = None
+        put_object_args["body"] = self._client._get_schema_contents(key, fields)
+        del put_object_args["key"]
+        del put_object_args["fields"]
 
-        return await self._transport.request(container,
-                                             access_key or self._access_key,
-                                             raise_for_status,
-                                             v3io.dataplane.request.encode_put_object,
-                                             put_object_args)
+        return await self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            v3io.dataplane.request.encode_put_object,
+            put_object_args,
+        )

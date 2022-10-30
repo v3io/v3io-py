@@ -13,22 +13,23 @@
 # limitations under the License.
 #
 class Cursor(object):
-
-    def __init__(self,
-                 context,
-                 container_name,
-                 access_key,
-                 table_path,
-                 raise_for_status=None,
-                 attribute_names='*',
-                 filter_expression=None,
-                 marker=None,
-                 sharding_key=None,
-                 limit=None,
-                 segment=None,
-                 total_segments=None,
-                 sort_key_range_start=None,
-                 sort_key_range_end=None):
+    def __init__(
+        self,
+        context,
+        container_name,
+        access_key,
+        table_path,
+        raise_for_status=None,
+        attribute_names="*",
+        filter_expression=None,
+        marker=None,
+        sharding_key=None,
+        limit=None,
+        segment=None,
+        total_segments=None,
+        sort_key_range_start=None,
+        sort_key_range_end=None,
+    ):
         self._context = context
         self._container_name = container_name
         self._access_key = access_key
@@ -79,20 +80,22 @@ class Cursor(object):
         self.marker = self._current_response.output.next_marker if self._current_response else None
 
         # get the next batch
-        self._current_response = self._context.kv.scan(self._container_name,
-                                                       self.table_path,
-                                                       self._access_key,
-                                                       self.raise_for_status,
-                                                       None,
-                                                       self.attribute_names,
-                                                       self.filter_expression,
-                                                       self.marker,
-                                                       self.sharding_key,
-                                                       calculated_limit,
-                                                       self.segment,
-                                                       self.total_segments,
-                                                       self.sort_key_range_start,
-                                                       self.sort_key_range_end)
+        self._current_response = self._context.kv.scan(
+            self._container_name,
+            self.table_path,
+            self._access_key,
+            self.raise_for_status,
+            None,
+            self.attribute_names,
+            self.filter_expression,
+            self.marker,
+            self.sharding_key,
+            calculated_limit,
+            self.segment,
+            self.total_segments,
+            self.sort_key_range_start,
+            self.sort_key_range_end,
+        )
 
         # raise if there was an issue
         self._current_response.raise_for_status(self.raise_for_status)

@@ -16,8 +16,8 @@ from .verifier import Transport
 
 
 class RaiseForStatus(object):
-    never = 'never'
-    always = 'always'
+    never = "never"
+    always = "always"
 
 
 class Actions(object):
