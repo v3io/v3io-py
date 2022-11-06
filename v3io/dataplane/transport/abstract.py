@@ -55,7 +55,10 @@ class Transport(object):
         return self.wait_response(inflight_request)
 
     def send_request(self, request):
-        return request
+        pass
+
+    def wait_response(self, request, raise_for_status=None, num_retries=1):
+        pass
 
     @staticmethod
     def _get_endpoint(endpoint):

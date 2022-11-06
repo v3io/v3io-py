@@ -82,11 +82,17 @@ class Transport(abstract.Transport):
 
     def wait_response(self, request, raise_for_status=None, num_retries=1):
         connection = request.transport.connection_used
+        is_retry = False
 
         while True:
+            response_body = None
+            status_code = None
+            headers = None
             try:
+                if is_retry:
+                    request = self._send_request_on_connection(request, connection)
+                    connection = request.transport.connection_used
 
-                # read the response
                 response = connection.getresponse()
                 response_body = response.read()
 
@@ -96,16 +102,19 @@ class Transport(abstract.Transport):
 
                 response = v3io.dataplane.response.Response(request.output, status_code, headers, response_body)
 
-                # enforce raise for status
+                self._free_connections.put(connection, block=True)
+
                 response.raise_for_status(request.raise_for_status or raise_for_status)
 
-                # return the response
                 return response
 
             except v3io.dataplane.response.HttpResponseError as response_error:
-                self._logger.warn_with("Response error: {}".format(str(response_error)))
+                self._logger.warn_with(f"Response error: {response_error}")
                 raise response_error
             except BaseException as e:
+                connection.close()
+                connection = self._create_connection(self._host, self._ssl_context)
+
                 if num_retries == 0:
                     self._logger.error_with(
                         "Error occurred while waiting for response and ran out of retries",
@@ -114,9 +123,8 @@ class Transport(abstract.Transport):
                         response_body=response_body,
                         status_code=status_code,
                         headers=headers,
-                        connection=connection,
                     )
-
+                    self._free_connections.put(connection, block=True)
                     raise e
 
                 self._logger.debug_with(
@@ -124,18 +132,10 @@ class Transport(abstract.Transport):
                     retries_left=num_retries,
                     e=type(e),
                     e_msg=e,
-                    connection=connection,
                 )
 
-                num_retries -= 1
-
-                connection.close()
-                connection = self._create_connection(self._host, self._ssl_context)
-
-                # re-send the request on the connection
-                request = self._send_request_on_connection(request, connection)
-            finally:
-                self._free_connections.put(connection, block=True)
+            num_retries -= 1
+            is_retry = True
 
     def _send_request_on_connection(self, request, connection):
         request.transport.connection_used = connection
