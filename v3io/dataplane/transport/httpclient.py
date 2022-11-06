@@ -56,8 +56,12 @@ class Transport(abstract.Transport):
             self._get_status_and_headers = self._get_status_and_headers_py2
 
     def close(self):
+        connections = []
         while not self._free_connections.empty():
             conn = self._free_connections.get()
+            connections.append(conn)
+        self._logger.debug(f"Closing all {len(connections)} v3io transport connections")
+        for conn in connections:
             conn.close()
 
     def requires_access_key(self):
