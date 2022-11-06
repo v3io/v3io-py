@@ -21,9 +21,6 @@ class Transport(abstract.Transport):
         self._request_verifiers = request_verifiers
         self._current_request_index = 0
 
-    def close(self):
-        pass
-
     def wait_response(self, request, raise_for_status=None):
         if self._current_request_index > len(self._request_verifiers):
             raise IndexError(
