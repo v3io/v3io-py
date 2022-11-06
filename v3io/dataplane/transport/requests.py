@@ -41,7 +41,7 @@ class Transport(abstract.Transport):
 
         return request
 
-    def wait_response(self, request, raise_for_status=None):
+    def wait_response(self, request, raise_for_status=None, num_retries=1):
 
         # create a response
         response = v3io.dataplane.response.Response(
