@@ -12,39 +12,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# We only want to format and lint checked in python files
+CHECKED_IN_PYTHING_FILES := $(shell git ls-files | grep '\.py$$')
+
+FLAKE8_OPTIONS := --max-line-length 120 --extend-ignore E203,W503
+BLACK_OPTIONS := --line-length 120
+ISORT_OPTIONS := --profile black
+
 .PHONY: all
 all:
 	$(error please pick a target)
 
-.PHONY: upload
-upload:
-	pipenv run python pypi_upload.py
+.PHONY: fmt
+fmt:
+	@echo "Running black fmt..."
+	python -m black $(BLACK_OPTIONS) $(CHECKED_IN_PYTHING_FILES)
+	python -m isort $(ISORT_OPTIONS) $(CHECKED_IN_PYTHING_FILES)
 
-.PHONY: debug-upload
-debug-upload:
-	pipenv run python pypi_upload.py -t
+.PHONY: lint
+lint: flake8 fmt-check
+
+.PHONY: fmt-check
+fmt-check:
+	@echo "Running black+isort fmt check..."
+	python -m black $(BLACK_OPTIONS) --check --diff $(CHECKED_IN_PYTHING_FILES)
+	python -m isort --check --diff $(ISORT_OPTIONS) $(CHECKED_IN_PYTHING_FILES)
+
+.PHONY: flake8
+flake8:
+	@echo "Running flake8 lint..."
+	python -m flake8 $(FLAKE8_OPTIONS) $(CHECKED_IN_PYTHING_FILES)
 
 .PHONY: clean_pyc
 clean_pyc:
 	find . -name '*.pyc' -exec rm {} \;
 
-.PHONY: lint
-lint:
-	PIPENV_IGNORE_VIRTUALENVS=1 \
-	    pipenv run flake8 v3io
-
 .PHONY: test
 test: clean_pyc
-	PIPENV_IGNORE_VIRTUALENVS=1 \
-	    pipenv run python -m unittest \
-		tests/test_*
+	python -m unittest tests/test_*
 
-.PHONY: update-deps
-update-deps:
-	PIPENV_IGNORE_VIRTUALENVS=1 \
-	    pipenv update
+.PHONY: env
+env:
+	python -m pip install -r requirements.txt
 
-.PHONY: sync-deps
-sync-deps:
-	PIPENV_IGNORE_VIRTUALENVS=1 \
-	    pipenv sync --dev
+.PHONY: dev-env
+dev-env: env
+	python -m pip install -r dev-requirements.txt
+
+.PHONY: set-version
+set-version:
+	python set-version.py

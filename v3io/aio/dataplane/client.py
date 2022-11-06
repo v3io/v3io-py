@@ -14,31 +14,33 @@
 #
 import os
 import sys
+
 import ujson
 
-import v3io.dataplane.transport.requests
-import v3io.dataplane.transport.httpclient
-import v3io.dataplane.request
-import v3io.dataplane.batch
-import v3io.dataplane.response
-import v3io.dataplane.output
-import v3io.dataplane.kv_cursor
 import v3io.aio.dataplane.transport.aiohttp
 import v3io.common.helpers
+import v3io.dataplane.batch
+import v3io.dataplane.kv_cursor
+import v3io.dataplane.output
+import v3io.dataplane.request
+import v3io.dataplane.response
+import v3io.dataplane.transport.httpclient
+import v3io.dataplane.transport.requests
 import v3io.logger
 
 
 class Client(object):
-
-    def __init__(self,
-                 logger=None,
-                 endpoint=None,
-                 access_key=None,
-                 max_connections=None,
-                 timeout=None,
-                 logger_verbosity=None,
-                 transport_verbosity='info',
-                 retry_intervals=None):
+    def __init__(
+        self,
+        logger=None,
+        endpoint=None,
+        access_key=None,
+        max_connections=None,
+        timeout=None,
+        logger_verbosity=None,
+        transport_verbosity="info",
+        retry_intervals=None,
+    ):
         """Creates a v3io client, used to access v3io
 
         Parameters
@@ -70,18 +72,16 @@ class Client(object):
         A `Client` object
         """
         self._logger = logger or self._create_logger(logger_verbosity)
-        self._access_key = access_key or os.environ.get('V3IO_ACCESS_KEY')
+        self._access_key = access_key or os.environ.get("V3IO_ACCESS_KEY")
 
         if not self._access_key:
-            raise ValueError('Access key must be provided in Client() arguments or in the '
-                             'V3IO_ACCESS_KEY environment variable')
+            raise ValueError(
+                "Access key must be provided in Client() arguments or in the " "V3IO_ACCESS_KEY environment variable"
+            )
 
-        self._transport = v3io.aio.dataplane.transport.aiohttp.Transport(self._logger,
-                                                                         endpoint,
-                                                                         max_connections,
-                                                                         timeout,
-                                                                         transport_verbosity,
-                                                                         retry_intervals)
+        self._transport = v3io.aio.dataplane.transport.aiohttp.Transport(
+            self._logger, endpoint, max_connections, timeout, transport_verbosity, retry_intervals
+        )
 
         # create models
         self.kv, self.object, self.stream, self.container = self._create_models()
@@ -90,27 +90,25 @@ class Client(object):
         await self._transport.close()
 
     def _create_logger(self, logger_verbosity):
-        logger = v3io.logger.Logger(level=logger_verbosity or 'INFO')
-        logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
+        logger = v3io.logger.Logger(level=logger_verbosity or "INFO")
+        logger.set_handler("stdout", sys.stdout, v3io.logger.HumanReadableFormatter())
 
         return logger
 
     @staticmethod
     def _get_schema_contents(key, fields):
-        return ujson.dumps({
-            'hashingBucketNum': 0,
-            'key': key,
-            'fields': fields
-        })
+        return ujson.dumps({"hashingBucketNum": 0, "key": key, "fields": fields})
 
     def _create_models(self):
-        import v3io.aio.dataplane.object
-        import v3io.aio.dataplane.kv
-        import v3io.aio.dataplane.stream
         import v3io.aio.dataplane.container
+        import v3io.aio.dataplane.kv
+        import v3io.aio.dataplane.object
+        import v3io.aio.dataplane.stream
 
         # create models
-        return v3io.aio.dataplane.kv.Model(self), \
-               v3io.aio.dataplane.object.Model(self), \
-               v3io.aio.dataplane.stream.Model(self), \
-               v3io.aio.dataplane.container.Model(self)
+        return (
+            v3io.aio.dataplane.kv.Model(self),
+            v3io.aio.dataplane.object.Model(self),
+            v3io.aio.dataplane.stream.Model(self),
+            v3io.aio.dataplane.container.Model(self),
+        )

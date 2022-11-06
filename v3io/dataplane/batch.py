@@ -18,7 +18,6 @@ import v3io.dataplane.transport
 
 
 class Batch(object):
-
     def __init__(self, client):
         self._client = client
         self._encoded_requests = []
@@ -31,55 +30,53 @@ class Batch(object):
         self.container = lambda: None
 
         for client_call in [
-            'get_containers',
-            'get_container_contents',
-            'get_object',
-            'put_object',
-            'delete_object',
-            'put_item',
-            'update_item',
-            'get_item',
-            'get_items',
-            'create_stream',
-            'delete_stream',
-            'describe_stream',
-            'seek_shard',
-            'put_records',
-            'get_records',
+            "get_containers",
+            "get_container_contents",
+            "get_object",
+            "put_object",
+            "delete_object",
+            "put_item",
+            "update_item",
+            "get_item",
+            "get_items",
+            "create_stream",
+            "delete_stream",
+            "describe_stream",
+            "seek_shard",
+            "put_records",
+            "get_records",
         ]:
             setattr(self, client_call, functools.partial(self._call_client, client_call))
 
         for model_name, model_call in [
-            ('kv', 'put'),
-            ('kv', 'get'),
-            ('kv', 'scan'),
-            ('kv', 'update'),
-            ('kv', 'delete'),
-            ('object', 'put'),
-            ('object', 'get'),
-            ('object', 'delete'),
-            ('stream', 'create'),
-            ('stream', 'update'),
-            ('stream', 'delete'),
-            ('stream', 'describe'),
-            ('stream', 'seek'),
-            ('stream', 'put_records'),
-            ('stream', 'get_records'),
-            ('container', 'get'),
-            ('container', 'list'),
+            ("kv", "put"),
+            ("kv", "get"),
+            ("kv", "scan"),
+            ("kv", "update"),
+            ("kv", "delete"),
+            ("object", "put"),
+            ("object", "get"),
+            ("object", "delete"),
+            ("stream", "create"),
+            ("stream", "update"),
+            ("stream", "delete"),
+            ("stream", "describe"),
+            ("stream", "seek"),
+            ("stream", "put_records"),
+            ("stream", "get_records"),
+            ("container", "get"),
+            ("container", "list"),
         ]:
-            setattr(getattr(self, model_name),
-                    model_call,
-                    functools.partial(self._call_model, model_name, model_call))
+            setattr(getattr(self, model_name), model_call, functools.partial(self._call_model, model_name, model_call))
 
     def _call_client(self, name, *args, **kw_args):
-        kw_args['transport_actions'] = self._transport_actions
+        kw_args["transport_actions"] = self._transport_actions
         request = getattr(self._client, name)(*args, **kw_args)
 
         self._encoded_requests.append(request)
 
     def _call_model(self, model_name, model_call, *args, **kw_args):
-        kw_args['transport_actions'] = self._transport_actions
+        kw_args["transport_actions"] = self._transport_actions
 
         # get the model (kv, object, ...)
         model = getattr(self._client, model_name)

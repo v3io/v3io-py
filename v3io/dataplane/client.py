@@ -13,33 +13,34 @@
 # limitations under the License.
 #
 import os
-import ujson
 import sys
 
 import future.utils
+import ujson
 
-import v3io.dataplane.transport.requests
-import v3io.dataplane.transport.httpclient
-import v3io.dataplane.request
-import v3io.dataplane.batch
-import v3io.dataplane.response
-import v3io.dataplane.output
-import v3io.dataplane.kv_cursor
 import v3io.common.helpers
+import v3io.dataplane.batch
+import v3io.dataplane.kv_cursor
+import v3io.dataplane.output
+import v3io.dataplane.request
+import v3io.dataplane.response
+import v3io.dataplane.transport.httpclient
+import v3io.dataplane.transport.requests
 import v3io.logger
 
 
 class Client(object):
-
-    def __init__(self,
-                 logger=None,
-                 endpoint=None,
-                 access_key=None,
-                 max_connections=None,
-                 timeout=None,
-                 transport_kind='httpclient',
-                 logger_verbosity=None,
-                 transport_verbosity='info'):
+    def __init__(
+        self,
+        logger=None,
+        endpoint=None,
+        access_key=None,
+        max_connections=None,
+        timeout=None,
+        transport_kind="httpclient",
+        logger_verbosity=None,
+        transport_verbosity="info",
+    ):
         """Creates a v3io client, used to access v3io
 
         Parameters
@@ -73,25 +74,24 @@ class Client(object):
         A `Client` object
         """
         self._logger = logger or self._create_logger(logger_verbosity)
-        self._access_key = access_key or os.environ.get('V3IO_ACCESS_KEY')
+        self._access_key = access_key or os.environ.get("V3IO_ACCESS_KEY")
 
         # get the transport class. if it's a string, create according to the kind. if it's a class, just
         # use that as the transport. this allows passing custom transports for testing and such
         if isinstance(transport_kind, str):
             transport_cls = getattr(v3io.dataplane.transport, transport_kind)
 
-            self._transport = transport_cls.Transport(self._logger,
-                                                      endpoint,
-                                                      max_connections,
-                                                      timeout,
-                                                      transport_verbosity)
+            self._transport = transport_cls.Transport(
+                self._logger, endpoint, max_connections, timeout, transport_verbosity
+            )
 
         else:
             self._transport = transport_kind
 
         if self._transport.requires_access_key() and not self._access_key:
-            raise ValueError('Access key must be provided in Client() arguments or in the '
-                             'V3IO_ACCESS_KEY environment variable')
+            raise ValueError(
+                "Access key must be provided in Client() arguments or in the " "V3IO_ACCESS_KEY environment variable"
+            )
 
         # create a default "batch" object
         self.batch = self.create_batch()
@@ -124,24 +124,28 @@ class Client(object):
         A `Response` object, whose `output` is `GetContainersOutput`.
         """
 
-        return self._transport.request(None,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_get_containers,
-                                       locals(),
-                                       v3io.dataplane.output.GetContainersOutput)
+        return self._transport.request(
+            None,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_get_containers,
+            locals(),
+            v3io.dataplane.output.GetContainersOutput,
+        )
 
-    def get_container_contents(self,
-                               container,
-                               path,
-                               access_key=None,
-                               raise_for_status=None,
-                               transport_actions=None,
-                               get_all_attributes=None,
-                               directories_only=None,
-                               limit=None,
-                               marker=None):
+    def get_container_contents(
+        self,
+        container,
+        path,
+        access_key=None,
+        raise_for_status=None,
+        transport_actions=None,
+        get_all_attributes=None,
+        directories_only=None,
+        limit=None,
+        marker=None,
+    ):
         """Lists the containers contents.
 
         DEPRECATED: use container.get_contents
@@ -171,26 +175,30 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `GetContainerContentsOutput`.
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_get_container_contents,
-                                       locals(),
-                                       v3io.dataplane.output.GetContainerContentsOutput)
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_get_container_contents,
+            locals(),
+            v3io.dataplane.output.GetContainerContentsOutput,
+        )
 
     #
     # Object
     #
 
-    def get_object(self,
-                   container,
-                   path,
-                   access_key=None,
-                   raise_for_status=None,
-                   transport_actions=None,
-                   offset=None,
-                   num_bytes=None):
+    def get_object(
+        self,
+        container,
+        path,
+        access_key=None,
+        raise_for_status=None,
+        transport_actions=None,
+        offset=None,
+        num_bytes=None,
+    ):
         """Retrieves an object from a container.
 
         DEPRECATED: use object.get
@@ -212,21 +220,18 @@ class Client(object):
         ----------
         A `Response` object, whose `body` is populated with the body of the object.
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_get_object,
-                                       locals())
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_get_object,
+            locals(),
+        )
 
-    def put_object(self,
-                   container,
-                   path,
-                   access_key=None,
-                   raise_for_status=None,
-                   transport_actions=None,
-                   body=None,
-                   append=None):
+    def put_object(
+        self, container, path, access_key=None, raise_for_status=None, transport_actions=None, body=None, append=None
+    ):
         """Adds a new object to a container, or appends data to an existing object. The option to append data is
         extension to the S3 PUT Object capabilities
 
@@ -249,12 +254,14 @@ class Client(object):
         ----------
         A `Response` object
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_put_object,
-                                       locals())
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_put_object,
+            locals(),
+        )
 
     def delete_object(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Deletes an object from a container.
@@ -274,54 +281,62 @@ class Client(object):
         ----------
         A `Response` object.
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_delete_object,
-                                       locals())
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_delete_object,
+            locals(),
+        )
 
     #
     # KV
     #
 
-    def new_items_cursor(self,
-                         container,
-                         path,
-                         access_key=None,
-                         raise_for_status=None,
-                         attribute_names='*',
-                         filter_expression=None,
-                         marker=None,
-                         sharding_key=None,
-                         limit=None,
-                         segment=None,
-                         total_segments=None,
-                         sort_key_range_start=None,
-                         sort_key_range_end=None):
-        return v3io.dataplane.kv_cursor.Cursor(self,
-                                               container,
-                                               access_key or self._access_key,
-                                               path,
-                                               raise_for_status,
-                                               attribute_names,
-                                               filter_expression,
-                                               marker,
-                                               sharding_key,
-                                               limit,
-                                               segment,
-                                               total_segments,
-                                               sort_key_range_start,
-                                               sort_key_range_end)
+    def new_items_cursor(
+        self,
+        container,
+        path,
+        access_key=None,
+        raise_for_status=None,
+        attribute_names="*",
+        filter_expression=None,
+        marker=None,
+        sharding_key=None,
+        limit=None,
+        segment=None,
+        total_segments=None,
+        sort_key_range_start=None,
+        sort_key_range_end=None,
+    ):
+        return v3io.dataplane.kv_cursor.Cursor(
+            self,
+            container,
+            access_key or self._access_key,
+            path,
+            raise_for_status,
+            attribute_names,
+            filter_expression,
+            marker,
+            sharding_key,
+            limit,
+            segment,
+            total_segments,
+            sort_key_range_start,
+            sort_key_range_end,
+        )
 
-    def put_item(self,
-                 container,
-                 path,
-                 attributes,
-                 access_key=None,
-                 raise_for_status=None,
-                 transport_actions=None,
-                 condition=None):
+    def put_item(
+        self,
+        container,
+        path,
+        attributes,
+        access_key=None,
+        raise_for_status=None,
+        transport_actions=None,
+        condition=None,
+    ):
         """Creates an item with the provided attributes. If an item with the same name (primary key) already exists in
         the specified table, the existing item is completely overwritten (replaced with a new item). If the item or
         table do not exist, the operation creates them.
@@ -360,12 +375,14 @@ class Client(object):
         ----------
         A `Response` object.
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_put_item,
-                                       locals())
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_put_item,
+            locals(),
+        )
 
     def put_items(self, container, path, items, access_key=None, raise_for_status=None, condition=None):
         """A helper to put several items, calling put_item for each.
@@ -398,29 +415,33 @@ class Client(object):
 
         for item_path, item_attributes in future.utils.viewitems(items):
             # create a put item input
-            response = self.put_item(container,
-                                     v3io.common.helpers.url_join(path, item_path),
-                                     item_attributes,
-                                     access_key=access_key,
-                                     condition=condition,
-                                     raise_for_status=raise_for_status)
+            response = self.put_item(
+                container,
+                v3io.common.helpers.url_join(path, item_path),
+                item_attributes,
+                access_key=access_key,
+                condition=condition,
+                raise_for_status=raise_for_status,
+            )
 
             # add the response
             responses.add_response(response)
 
         return responses
 
-    def update_item(self,
-                    container,
-                    path,
-                    access_key=None,
-                    raise_for_status=None,
-                    transport_actions=None,
-                    attributes=None,
-                    expression=None,
-                    condition=None,
-                    update_mode=None,
-                    alternate_expression=None):
+    def update_item(
+        self,
+        container,
+        path,
+        access_key=None,
+        raise_for_status=None,
+        transport_actions=None,
+        attributes=None,
+        expression=None,
+        condition=None,
+        update_mode=None,
+        alternate_expression=None,
+    ):
         """Updates the attributes of a table item. If the specified item or table don't exist,
         the operation creates them.
 
@@ -463,20 +484,18 @@ class Client(object):
         ----------
         A `Responses` object.
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_update_item,
-                                       locals())
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_update_item,
+            locals(),
+        )
 
-    def get_item(self,
-                 container,
-                 path,
-                 access_key=None,
-                 raise_for_status=None,
-                 transport_actions=None,
-                 attribute_names='*'):
+    def get_item(
+        self, container, path, access_key=None, raise_for_status=None, transport_actions=None, attribute_names="*"
+    ):
         """Retrieves the requested attributes of a table item.
 
         DEPRECATED. Use kv.get
@@ -498,30 +517,34 @@ class Client(object):
         ----------
         A `Response` object, whose `output` is `GetItemOutput`.
         """
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_get_item,
-                                       locals(),
-                                       v3io.dataplane.output.GetItemOutput)
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_get_item,
+            locals(),
+            v3io.dataplane.output.GetItemOutput,
+        )
 
-    def get_items(self,
-                  container,
-                  path,
-                  access_key=None,
-                  raise_for_status=None,
-                  transport_actions=None,
-                  table_name=None,
-                  attribute_names='*',
-                  filter_expression=None,
-                  marker=None,
-                  sharding_key=None,
-                  limit=None,
-                  segment=None,
-                  total_segments=None,
-                  sort_key_range_start=None,
-                  sort_key_range_end=None):
+    def get_items(
+        self,
+        container,
+        path,
+        access_key=None,
+        raise_for_status=None,
+        transport_actions=None,
+        table_name=None,
+        attribute_names="*",
+        filter_expression=None,
+        marker=None,
+        sharding_key=None,
+        limit=None,
+        segment=None,
+        total_segments=None,
+        sort_key_range_start=None,
+        sort_key_range_end=None,
+    ):
         """Retrieves (reads) attributes of multiple items in a table or in a data container's root directory,
         according to the specified criteria.
 
@@ -581,16 +604,18 @@ class Client(object):
         Return Value
         ----------
         A `Response` object, whose `output` is `GetItemsOutput`.
-        """
+        """  # noqa
         path = self._ensure_path_ends_with_slash(path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_get_items,
-                                       locals(),
-                                       v3io.dataplane.output.GetItemsOutput)
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_get_items,
+            locals(),
+            v3io.dataplane.output.GetItemsOutput,
+        )
 
     def delete_item(self, container, path, access_key=None, raise_for_status=None, transport_actions=None):
         """Deletes an item.
@@ -616,14 +641,16 @@ class Client(object):
     # Stream
     #
 
-    def create_stream(self,
-                      container,
-                      path,
-                      shard_count,
-                      access_key=None,
-                      raise_for_status=None,
-                      transport_actions=None,
-                      retention_period_hours=None):
+    def create_stream(
+        self,
+        container,
+        path,
+        shard_count,
+        access_key=None,
+        raise_for_status=None,
+        transport_actions=None,
+        retention_period_hours=None,
+    ):
         """Creates and configures a new stream. The configuration includes the stream's shard count and retention
         period. The new stream is available immediately upon its creation.
 
@@ -651,20 +678,18 @@ class Client(object):
         """
         path = self._ensure_path_ends_with_slash(path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_create_stream,
-                                       locals())
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_create_stream,
+            locals(),
+        )
 
-    def update_stream(self,
-                      container,
-                      path,
-                      shard_count,
-                      access_key=None,
-                      raise_for_status=None,
-                      transport_actions=None):
+    def update_stream(
+        self, container, path, shard_count, access_key=None, raise_for_status=None, transport_actions=None
+    ):
         """Updates a stream's configuration by increasing its shard count. The changes are applied immediately.
 
         DEPRECATED. Use stream.update
@@ -688,12 +713,14 @@ class Client(object):
         """
         path = self._ensure_path_ends_with_slash(path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_update_stream,
-                                       locals())
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_update_stream,
+            locals(),
+        )
 
     def delete_stream(self, container, path, access_key=None, raise_for_status=None):
         """Deletes a stream object along with all of its shards.
@@ -715,10 +742,7 @@ class Client(object):
         """
         path = self._ensure_path_ends_with_slash(path)
 
-        response = self.get_container_contents(container,
-                                               path,
-                                               access_key,
-                                               raise_for_status)
+        response = self.get_container_contents(container, path, access_key, raise_for_status)
 
         # nothing to do
         if response.status_code == 404:
@@ -749,24 +773,28 @@ class Client(object):
         """
         path = self._ensure_path_ends_with_slash(path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_describe_stream,
-                                       locals(),
-                                       v3io.dataplane.output.DescribeStreamOutput)
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_describe_stream,
+            locals(),
+            v3io.dataplane.output.DescribeStreamOutput,
+        )
 
-    def seek_shard(self,
-                   container,
-                   path,
-                   seek_type,
-                   access_key=None,
-                   raise_for_status=None,
-                   transport_actions=None,
-                   starting_sequence_number=None,
-                   timestamp_sec=None,
-                   timestamp_nsec=None):
+    def seek_shard(
+        self,
+        container,
+        path,
+        seek_type,
+        access_key=None,
+        raise_for_status=None,
+        transport_actions=None,
+        starting_sequence_number=None,
+        timestamp_sec=None,
+        timestamp_nsec=None,
+    ):
         """Returns the requested location within the specified stream shard, for use in a subsequent GetRecords
         operation. The operation supports different seek types, as outlined in the Stream Record Consumption
         overview and in the description of the Type request parameter below.
@@ -815,13 +843,15 @@ class Client(object):
         """
         path = self._ensure_path_ends_with_slash(path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_seek_shard,
-                                       locals(),
-                                       v3io.dataplane.output.SeekShardOutput)
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_seek_shard,
+            locals(),
+            v3io.dataplane.output.SeekShardOutput,
+        )
 
     def put_records(self, container, path, records, access_key=None, raise_for_status=None, transport_actions=None):
         """Adds records to a stream.
@@ -882,22 +912,19 @@ class Client(object):
         """
         path = self._ensure_path_ends_with_slash(path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_put_records,
-                                       locals(),
-                                       v3io.dataplane.output.PutRecordsOutput)
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_put_records,
+            locals(),
+            v3io.dataplane.output.PutRecordsOutput,
+        )
 
-    def get_records(self,
-                    container,
-                    path,
-                    location,
-                    access_key=None,
-                    raise_for_status=None,
-                    transport_actions=None,
-                    limit=None):
+    def get_records(
+        self, container, path, location, access_key=None, raise_for_status=None, transport_actions=None, limit=None
+    ):
         """Retrieves (consumes) records from a stream shard.
 
         DEPRECATED. Use stream.get
@@ -925,26 +952,23 @@ class Client(object):
         """
         path = self._ensure_path_ends_with_slash(path)
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_get_records,
-                                       locals(),
-                                       v3io.dataplane.output.GetRecordsOutput)
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_get_records,
+            locals(),
+            v3io.dataplane.output.GetRecordsOutput,
+        )
 
     #
     # Helpers
     #
 
-    def create_schema(self,
-                      container,
-                      path,
-                      access_key=None,
-                      raise_for_status=None,
-                      transport_actions=None,
-                      key=None,
-                      fields=None):
+    def create_schema(
+        self, container, path, access_key=None, raise_for_status=None, transport_actions=None, key=None, fields=None
+    ):
         """Creates a KV schema file
 
         DEPRECATED. Use kv.create_schema
@@ -983,49 +1007,49 @@ class Client(object):
         A `Response` object
         """
         put_object_args = locals()
-        put_object_args['path'] = os.path.join(put_object_args['path'], '.#schema')
-        put_object_args['offset'] = 0
-        put_object_args['append'] = None
-        put_object_args['body'] = self._get_schema_contents(key, fields)
-        del (put_object_args['key'])
-        del (put_object_args['fields'])
+        put_object_args["path"] = os.path.join(put_object_args["path"], ".#schema")
+        put_object_args["offset"] = 0
+        put_object_args["append"] = None
+        put_object_args["body"] = self._get_schema_contents(key, fields)
+        del put_object_args["key"]
+        del put_object_args["fields"]
 
-        return self._transport.request(container,
-                                       access_key or self._access_key,
-                                       raise_for_status,
-                                       transport_actions,
-                                       v3io.dataplane.request.encode_put_object,
-                                       put_object_args)
+        return self._transport.request(
+            container,
+            access_key or self._access_key,
+            raise_for_status,
+            transport_actions,
+            v3io.dataplane.request.encode_put_object,
+            put_object_args,
+        )
 
     @staticmethod
     def _ensure_path_ends_with_slash(path):
-        if not path.endswith('/'):
-            return path + '/'
+        if not path.endswith("/"):
+            return path + "/"
 
         return path
 
     @staticmethod
     def _get_schema_contents(key, fields):
-        return ujson.dumps({
-            'hashingBucketNum': 0,
-            'key': key,
-            'fields': fields
-        })
+        return ujson.dumps({"hashingBucketNum": 0, "key": key, "fields": fields})
 
     def _create_logger(self, logger_verbosity):
-        logger = v3io.logger.Logger(level=logger_verbosity or 'INFO')
-        logger.set_handler('stdout', sys.stdout, v3io.logger.HumanReadableFormatter())
+        logger = v3io.logger.Logger(level=logger_verbosity or "INFO")
+        logger.set_handler("stdout", sys.stdout, v3io.logger.HumanReadableFormatter())
 
         return logger
 
     def _create_models(self):
+        import v3io.dataplane.container
         import v3io.dataplane.kv
         import v3io.dataplane.object
         import v3io.dataplane.stream
-        import v3io.dataplane.container
 
         # create models
-        return v3io.dataplane.kv.Model(self), \
-               v3io.dataplane.object.Model(self), \
-               v3io.dataplane.stream.Model(self), \
-               v3io.dataplane.container.Model(self)
+        return (
+            v3io.dataplane.kv.Model(self),
+            v3io.dataplane.object.Model(self),
+            v3io.dataplane.stream.Model(self),
+            v3io.dataplane.container.Model(self),
+        )

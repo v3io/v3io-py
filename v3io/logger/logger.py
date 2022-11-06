@@ -16,27 +16,24 @@ import logging
 
 
 class HumanReadableFormatter(logging.Formatter):
-
     def __init__(self):
         super(HumanReadableFormatter, self).__init__()
 
     def format(self, record):
-        record_with = getattr(record, 'with', {})
+        record_with = getattr(record, "with", {})
         if record_with:
-            more = ': {0}'.format(record_with)
+            more = ": {0}".format(record_with)
         else:
-            more = ''
+            more = ""
 
-        return '{0} [{1}] {2}{3}'.format(self.formatTime(record, self.datefmt),
-                                         record.levelname.lower(),
-                                         record.getMessage(),
-                                         more)
+        return "{0} [{1}] {2}{3}".format(
+            self.formatTime(record, self.datefmt), record.levelname.lower(), record.getMessage(), more
+        )
 
 
 class Logger(object):
-
-    def __init__(self, level='DEBUG'):
-        self._logger = logging.getLogger('root')
+    def __init__(self, level="DEBUG"):
+        self._logger = logging.getLogger("root")
         self._logger.setLevel(level)
         self._handlers = {}
 
@@ -46,7 +43,7 @@ class Logger(object):
         if handler_name in self._handlers:
 
             # log that we're removing it
-            self.info_with('Replacing logger output')
+            self.info_with("Replacing logger output")
 
             self._logger.removeHandler(self._handlers[handler_name])
 
@@ -75,13 +72,13 @@ class Logger(object):
         self._logger.error(message, *args)
 
     def debug_with(self, message, *args, **kw_args):
-        self._logger.debug(message, *args, extra={'with': kw_args})
+        self._logger.debug(message, *args, extra={"with": kw_args})
 
     def info_with(self, message, *args, **kw_args):
-        self._logger.info(message, *args, extra={'with': kw_args})
+        self._logger.info(message, *args, extra={"with": kw_args})
 
     def warn_with(self, message, *args, **kw_args):
-        self._logger.warning(message, *args, extra={'with': kw_args})
+        self._logger.warning(message, *args, extra={"with": kw_args})
 
     def error_with(self, message, *args, **kw_args):
-        self._logger.error(message, *args, extra={'with': kw_args})
+        self._logger.error(message, *args, extra={"with": kw_args})
