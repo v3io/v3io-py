@@ -76,17 +76,19 @@ class TestContainer(Test):
         self.assertEqual(404, response.status_code)
         self.assertIn("No such file", str(response.body))
 
-    def test_get_container_contents(self):
+    def test_get_container_contents_valid(self):
         body = "If you cannot do great things, do small things in a great way."
+        file_number = 5
+        dir_number = 4
 
-        for object_index in range(5):
+        for object_index in range(file_number):
             self._client.object.put(
                 container=self._container,
                 path=os.path.join(self._path, "object-{0}.txt".format(object_index)),
                 body=body,
             )
 
-        for object_index in range(5):
+        for object_index in range(dir_number):
             self._client.object.put(
                 container=self._container, path=os.path.join(self._path, "dir-{0}/".format(object_index))
             )
@@ -95,11 +97,11 @@ class TestContainer(Test):
             container=self._container, path=self._path, get_all_attributes=True, directories_only=True
         )
         self.assertEqual(0, len(response.output.contents))
-        self.assertNotEqual(0, len(response.output.common_prefixes))
+        self.assertEqual(dir_number, len(response.output.common_prefixes))
 
         response = self._client.container.list(container=self._container, path=self._path, get_all_attributes=True)
-        self.assertNotEqual(0, len(response.output.contents))
-        self.assertNotEqual(0, len(response.output.common_prefixes))
+        self.assertEqual(file_number, len(response.output.contents))
+        self.assertEqual(dir_number, len(response.output.common_prefixes))
 
         # clean up
         self._delete_dir(self._path)
