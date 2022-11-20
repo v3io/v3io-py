@@ -33,8 +33,11 @@ class Transport(abstract.Transport):
         self._session.close()
 
     def send_request(self, request):
+
+        path = request.encode_path()
+
         # call the encoder to get the response
-        http_response = self._http_request(request.method, request.path, request.headers, request.body)
+        http_response = self._http_request(request.method, path, request.headers, request.body)
 
         # set http response
         request.transport.http_response = http_response

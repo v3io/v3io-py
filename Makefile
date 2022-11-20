@@ -50,7 +50,7 @@ clean_pyc:
 
 .PHONY: test
 test: clean_pyc
-	python -m unittest tests/test_*
+	python -m unittest discover -s tests
 
 .PHONY: env
 env:
