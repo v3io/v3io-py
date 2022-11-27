@@ -73,7 +73,7 @@ class Transport(object):
             except v3io.dataplane.response.HttpResponseError as response_error:
                 self._logger.warn_with("Response error: {}".format(str(response_error)))
                 raise response_error
-            except aiohttp.ClientOSError:
+            except aiohttp.ClientConnectionError:
                 client_os_error_retry_counter += 1
                 if client_os_error_retry_counter == len(self.retry_intervals):
                     raise
