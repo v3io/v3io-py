@@ -15,7 +15,7 @@
 import array
 import base64
 import datetime
-import os
+from pathlib import PurePosixPath
 
 import future.utils
 
@@ -146,7 +146,7 @@ def encode_put_item(container_name, access_key, kwargs):
         "PUT",
         container_name,
         access_key,
-        kwargs.get("path") or os.path.join(kwargs["table_path"], kwargs["key"]),
+        kwargs.get("path") or str(PurePosixPath(kwargs["table_path"], kwargs["key"])),
         None,
         {"X-v3io-function": "PutItem"},
         body,
@@ -181,7 +181,7 @@ def encode_update_item(container_name, access_key, kwargs):
         http_method,
         container_name,
         access_key,
-        kwargs.get("path") or os.path.join(kwargs["table_path"], kwargs["key"]),
+        kwargs.get("path") or str(PurePosixPath(kwargs["table_path"], kwargs["key"])),
         None,
         {"X-v3io-function": function_name},
         body,
@@ -195,7 +195,7 @@ def encode_get_item(container_name, access_key, kwargs):
         "PUT",
         container_name,
         access_key,
-        kwargs.get("path") or os.path.join(kwargs["table_path"], kwargs["key"]),
+        kwargs.get("path") or str(PurePosixPath(kwargs["table_path"], kwargs["key"])),
         None,
         {"X-v3io-function": "GetItem"},
         body,
