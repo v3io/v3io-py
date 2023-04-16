@@ -12,16 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-def url_join(base, *parts):
-    result = base
+from functools import reduce
 
-    if result[0] != "/":
-        result = "/" + base
 
-    for part in parts:
-        if part[0] != "/":
-            result += "/" + part
-        else:
-            result += part
+def _join_slash(left, right):
+    return left.rstrip("/") + "/" + right.lstrip("/")
 
-    return result
+
+def url_join(*parts):
+    """join parts by pairs with a single slash, leaving left-part leading and right-part trailing slashes."""
+    return reduce(_join_slash, parts) if parts else ""

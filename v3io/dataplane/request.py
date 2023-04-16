@@ -15,9 +15,10 @@
 import array
 import base64
 import datetime
-from pathlib import PurePosixPath
 
 import future.utils
+
+from v3io.common.helpers import url_join
 
 try:
     from urllib.parse import quote, urlencode
@@ -146,7 +147,7 @@ def encode_put_item(container_name, access_key, kwargs):
         "PUT",
         container_name,
         access_key,
-        kwargs.get("path") or str(PurePosixPath(kwargs["table_path"], kwargs["key"])),
+        kwargs.get("path") or url_join(kwargs["table_path"], kwargs["key"]),
         None,
         {"X-v3io-function": "PutItem"},
         body,
@@ -181,7 +182,7 @@ def encode_update_item(container_name, access_key, kwargs):
         http_method,
         container_name,
         access_key,
-        kwargs.get("path") or str(PurePosixPath(kwargs["table_path"], kwargs["key"])),
+        kwargs.get("path") or url_join(kwargs["table_path"], kwargs["key"]),
         None,
         {"X-v3io-function": function_name},
         body,
@@ -195,7 +196,7 @@ def encode_get_item(container_name, access_key, kwargs):
         "PUT",
         container_name,
         access_key,
-        kwargs.get("path") or str(PurePosixPath(kwargs["table_path"], kwargs["key"])),
+        kwargs.get("path") or url_join(kwargs["table_path"], kwargs["key"]),
         None,
         {"X-v3io-function": "GetItem"},
         body,
@@ -385,7 +386,7 @@ def encode_get_records(container_name, access_key, kwargs):
 
 def _encode(method, container_name, access_key, path, query, headers, body):
     if path is not None:
-        path = v3io.common.helpers.url_join(container_name, path)
+        path = v3io.common.helpers.url_join("/", container_name, path)
     else:
         path = container_name
 

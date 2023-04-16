@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-
 import v3io.aio.dataplane.kv_cursor
 import v3io.dataplane.model
 import v3io.dataplane.output
 import v3io.dataplane.request
+from v3io.common.helpers import url_join
 
 
 class Model(v3io.dataplane.model.Model):
@@ -303,7 +302,7 @@ class Model(v3io.dataplane.model.Model):
         A `Response` object.
         """
         return self._client.delete_object(
-            container, os.path.join(table_path, key), access_key, raise_for_status, transport_actions
+            container, url_join(table_path, key), access_key, raise_for_status, transport_actions
         )
 
     async def create_schema(self, container, table_path, access_key=None, raise_for_status=None, key=None, fields=None):
@@ -343,7 +342,7 @@ class Model(v3io.dataplane.model.Model):
         A `Response` object
         """
         put_object_args = locals()
-        put_object_args["path"] = os.path.join(put_object_args["table_path"], ".#schema")
+        put_object_args["path"] = url_join(put_object_args["table_path"], ".#schema")
         put_object_args["offset"] = 0
         put_object_args["append"] = None
         put_object_args["body"] = self._client._get_schema_contents(key, fields)

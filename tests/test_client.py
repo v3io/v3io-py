@@ -22,11 +22,11 @@ import unittest.mock
 
 import future.utils
 
-import v3io.common.helpers
 import v3io.dataplane
 import v3io.dataplane.output
 import v3io.dataplane.response
 import v3io.logger
+from v3io.common.helpers import url_join
 
 
 class Test(unittest.TestCase):
@@ -64,7 +64,7 @@ class Test(unittest.TestCase):
 class TestContainer(Test):
     def setUp(self):
         super(TestContainer, self).setUp()
-        self._path = os.path.join(self._test_parent_dir, "v3io-py-test-container")
+        self._path = url_join(self._test_parent_dir, "v3io-py-test-container")
 
         # clean up
         self._delete_dir(self._path)
@@ -84,13 +84,13 @@ class TestContainer(Test):
         for object_index in range(file_number):
             self._client.object.put(
                 container=self._container,
-                path=os.path.join(self._path, "object-{0}.txt".format(object_index)),
+                path=url_join(self._path, "object-{0}.txt".format(object_index)),
                 body=body,
             )
 
         for object_index in range(dir_number):
             self._client.object.put(
-                container=self._container, path=os.path.join(self._path, "dir-{0}/".format(object_index))
+                container=self._container, path=url_join(self._path, "dir-{0}/".format(object_index))
             )
 
         response = self._client.container.list(
@@ -111,7 +111,7 @@ class TestStream(Test):
     def setUp(self):
         super(TestStream, self).setUp()
 
-        self._path = os.path.join(self._test_parent_dir, "v3io-py-test-stream")
+        self._path = url_join(self._test_parent_dir, "v3io-py-test-stream")
 
         # clean up
         self._client.stream.delete(container=self._container, stream_path=self._path, raise_for_status=[200, 204, 404])
@@ -136,7 +136,7 @@ class TestStream(Test):
         # write several "consumer group state" files
         for cg_id in range(3):
             self._client.object.put(
-                container=self._container, path=os.path.join(self._path, "cg{}-state.json".format(cg_id))
+                container=self._container, path=url_join(self._path, "cg{}-state.json".format(cg_id))
             )
 
         # check that the stream doesn't exist
@@ -209,7 +209,7 @@ class TestObject(Test):
     def setUp(self):
         super(TestObject, self).setUp()
 
-        self._object_dir = os.path.join(self._test_parent_dir, "v3io-py-test-object")
+        self._object_dir = url_join(self._test_parent_dir, "v3io-py-test-object")
         self._object_path = self._object_dir + "/obj ect.txt"
 
         # clean up
@@ -315,8 +315,8 @@ class TestSchema(Test):
     def setUp(self):
         super(TestSchema, self).setUp()
 
-        self._schema_dir = os.path.join(self._test_parent_dir, "v3io-py-test-schema")
-        self._schema_path = os.path.join(self._schema_dir, ".#schema")
+        self._schema_dir = url_join(self._test_parent_dir, "v3io-py-test-schema")
+        self._schema_path = url_join(self._schema_dir, ".#schema")
 
         # clean up
         self._delete_dir(self._schema_dir)
@@ -371,7 +371,7 @@ class TestKv(Test):
     def setUp(self):
         super(TestKv, self).setUp()
 
-        self._path = os.path.join(self._test_parent_dir, "some_dir/v3io-py-test-emd")
+        self._path = url_join(self._test_parent_dir, "some_dir/v3io-py-test-emd")
         self._delete_dir(self._path)
 
     def test_kv_array(self):
@@ -681,7 +681,7 @@ class TestConnectonErrorRecovery(Test):
     def setUp(self):
         super(TestConnectonErrorRecovery, self).setUp()
 
-        self._object_dir = os.path.join(self._test_parent_dir, "v3io-py-test-connection-error")
+        self._object_dir = url_join(self._test_parent_dir, "v3io-py-test-connection-error")
         self._object_path = self._object_dir + "/object.txt"
 
         self._kv_path = "some_dir/v3io-py-test-emd"
@@ -761,7 +761,7 @@ class TestCustomTransport(unittest.TestCase):
         def _verify_object_get(request):
             # verify some stuff from the request
             self.assertEqual(request.container, container_name)
-            self.assertEqual(request.path, os.path.join(os.sep, container_name, "some/path"))
+            self.assertEqual(request.path, url_join(os.sep, container_name, "some/path"))
 
             # return a mocked response
             return unittest.mock.MagicMock(status_code=200, body="some body")
@@ -769,7 +769,7 @@ class TestCustomTransport(unittest.TestCase):
         def _verify_kv_get(request):
             # verify some stuff from the request
             self.assertEqual(request.container, container_name)
-            self.assertEqual(request.path, os.path.join(os.sep, container_name, "some/table/path/some_item_key"))
+            self.assertEqual(request.path, url_join(os.sep, container_name, "some/table/path/some_item_key"))
 
             # prepare and output mock
             output = unittest.mock.MagicMock(item={"some_key": "some_value"})
