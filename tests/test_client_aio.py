@@ -375,7 +375,7 @@ class TestKv(Test):
 
     async def test_kv_values(self):
         def _get_int_array():
-            int_array = array.array("l")
+            int_array = array.array("q")
             for value in range(10):
                 int_array.append(value)
 

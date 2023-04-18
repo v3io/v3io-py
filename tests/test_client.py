@@ -399,7 +399,7 @@ class TestKv(Test):
 
     def test_kv_values(self):
         def _get_int_array():
-            int_array = array.array("l")
+            int_array = array.array("q")
             for value in range(10):
                 int_array.append(value)
 
@@ -587,7 +587,7 @@ class TestKv(Test):
             v1 = list(v1)
 
         if v1 != v2:
-            self.fail("Values dont match")
+            self.fail(f"Values don't match: {v1} vs {v2}")
 
     def _compare_item_types(self, v1, v2):
         if isinstance(v1, array.array):
@@ -761,7 +761,7 @@ class TestCustomTransport(unittest.TestCase):
         def _verify_object_get(request):
             # verify some stuff from the request
             self.assertEqual(request.container, container_name)
-            self.assertEqual(request.path, url_join(os.sep, container_name, "some/path"))
+            self.assertEqual(request.path, url_join("/", container_name, "some/path"))
 
             # return a mocked response
             return unittest.mock.MagicMock(status_code=200, body="some body")
@@ -769,7 +769,7 @@ class TestCustomTransport(unittest.TestCase):
         def _verify_kv_get(request):
             # verify some stuff from the request
             self.assertEqual(request.container, container_name)
-            self.assertEqual(request.path, url_join(os.sep, container_name, "some/table/path/some_item_key"))
+            self.assertEqual(request.path, url_join("/", container_name, "some/table/path/some_item_key"))
 
             # prepare and output mock
             output = unittest.mock.MagicMock(item={"some_key": "some_value"})
