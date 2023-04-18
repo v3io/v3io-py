@@ -99,3 +99,11 @@ def test_connection_closed_on_error(fail_request_after, fail_getresponse_after):
     client.close()
     for conn in mock_transport.mock_connections:
         assert conn.times_closed == 1
+
+
+def test_error_on_use_after_close():
+    client = v3io.dataplane.Client()
+    client.object.get("doesntexist", "doesntexist", raise_for_status=v3io.dataplane.RaiseForStatus.never)
+    client.close()
+    with pytest.raises(RuntimeError):
+        client.object.get("doesntexist", "doesntexist", raise_for_status=v3io.dataplane.RaiseForStatus.never)

@@ -56,10 +56,16 @@ class Transport(abstract.Transport):
             self._get_status_and_headers = self._get_status_and_headers_py2
 
     def close(self):
+        # Ignore redundant calls to close
+        if not self._free_connections:
+            return
+
         connections = []
         while not self._free_connections.empty():
             conn = self._free_connections.get()
             connections.append(conn)
+        # In case anyone tries to reuse this object, we want them to get an error and not hang
+        self._free_connections = None
         self._logger.debug(f"Closing all {len(connections)} v3io transport connections")
         for conn in connections:
             conn.close()
@@ -68,6 +74,9 @@ class Transport(abstract.Transport):
         return True
 
     def send_request(self, request):
+        if not self._free_connections:
+            raise RuntimeError("Cannot send request on a closed client")
+
         # TODO: consider getting param of whether we should block or
         #       not (wait for connection to be free or raise exception)
         connection = self._free_connections.get(block=True, timeout=None)
