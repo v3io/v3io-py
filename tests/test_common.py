@@ -19,14 +19,14 @@ from v3io.common.helpers import url_join
 
 class Test(unittest.TestCase):
     def test_url_join(self):
-        self.assertEqual(url_join("a", "b"), "a/b")  # add just exactly one "/" between parts
-        self.assertEqual(url_join("/", "a", "b"), "/a/b")
-        self.assertEqual(url_join("/", "a", "/b"), "/a/b")
-        self.assertEqual(url_join("/", "/a", "b"), "/a/b")
-        self.assertEqual(url_join("/", "/a", "/b"), "/a/b")
-        self.assertEqual(url_join("/", "/a/", "b"), "/a/b")
-        self.assertEqual(url_join("/", "/a/", "/b"), "/a/b")
-        self.assertEqual(url_join("a", "b"), "a/b")  # keep suffix "/" exist/not-exist invariant
-        self.assertEqual(url_join("a", "b/"), "a/b/")
-        self.assertEqual(url_join("a", "b//"), "a/b//")
-        self.assertEqual(url_join("a", "b//", "/"), "a/b//")  # suffix "/" count (if > 0) may change (but we don"t care)
+        self.assertEqual("a/b", url_join("a", "b"))  # add just exactly one "/" between parts
+        self.assertEqual("/a/b", url_join("/", "a", "b"))
+        self.assertEqual("/a/b", url_join("/", "a", "/b"))
+        self.assertEqual("/a/b", url_join("/", "/a", "b"))
+        self.assertEqual("/a/b", url_join("/", "/a", "/b"))
+        self.assertEqual("/a/b", url_join("/", "/a/", "b"))
+        self.assertEqual("/a/b", url_join("/", "/a/", "/b"))
+        self.assertEqual("a/b", url_join("a", "b"))  # keep suffix "/" exist/not-exist invariant
+        self.assertEqual("a/b/", url_join("a", "b/"))
+        self.assertEqual("a/b//", url_join("a", "b//"))
+        self.assertEqual("a/b//", url_join("a", "b//", "/"))  # suffix "/" count (if > 0) may change (but we don"t care)
