@@ -143,7 +143,6 @@ class TestStream(Test):
         self.assertFalse(await self._stream_exists())
 
     async def test_stream(self):
-
         # create a stream w/8 shards
         await self._client.stream.create(container=self._container, stream_path=self._path, shard_count=8)
 
@@ -499,7 +498,6 @@ class TestKv(Test):
         self.assertEqual(10, response.output.item["age"])
 
     async def test_limit(self):
-
         for idx in range(100):
             await self._client.kv.put(
                 container=self._container,
@@ -518,7 +516,6 @@ class TestKv(Test):
         self.assertEqual(len(received_items), 30)
 
     async def _delete_items(self, path, items):
-
         # delete items
         for item_key, _ in future.utils.viewitems(items):
             await self._client.kv.delete(container=self._container, table_path=path, key=item_key)

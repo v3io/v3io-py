@@ -57,7 +57,6 @@ class Cursor(object):
 
         # check if we already reached the limit we were asked for
         if self.limit is not None:
-
             # if we already passed the limit, stop here
             if self._total_items_read >= self.limit:
                 return None

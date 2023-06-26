@@ -33,7 +33,6 @@ class Transport(abstract.Transport):
         self._session.close()
 
     def send_request(self, request):
-
         path = request.encode_path()
 
         # call the encoder to get the response
@@ -45,7 +44,6 @@ class Transport(abstract.Transport):
         return request
 
     def wait_response(self, request, raise_for_status=None, num_retries=1):
-
         # create a response
         response = v3io.dataplane.response.Response(
             request.output,
