@@ -149,7 +149,6 @@ class TestStream(Test):
         self.assertFalse(self._stream_exists())
 
     def test_stream(self):
-
         # create a stream w/8 shards
         self._client.stream.create(container=self._container, stream_path=self._path, shard_count=8)
 
@@ -565,7 +564,6 @@ class TestKv(Test):
             self.assertEqual(200, response.status_code)
 
     def _delete_items(self, path, items):
-
         # delete items
         for item_key, _ in future.utils.viewitems(items):
             self._client.kv.delete(container=self._container, table_path=path, key=item_key)
@@ -650,7 +648,6 @@ class TestBatchRaiseForStatus(Test):
         responses = self._client.batch.wait()
 
         for object_idx in range(num_objects):
-
             # inject an error
             if object_idx == err_idx:
                 object_idx = 10
@@ -661,7 +658,6 @@ class TestBatchRaiseForStatus(Test):
 
         # do it again, only this time don't raise
         for object_idx in range(num_objects):
-
             # inject an error
             if object_idx == 1:
                 object_idx = 10
@@ -692,7 +688,6 @@ class TestConnectonErrorRecovery(Test):
 
     @unittest.skip("Manually executed")
     def test_object(self):
-
         for i in range(100):
             body = "iteration {}".format(i)
 

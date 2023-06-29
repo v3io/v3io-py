@@ -39,7 +39,6 @@ class Transport(object):
         await self._connector.close()
 
     async def request(self, container, access_key, raise_for_status, encoder, encoder_args, output=None):
-
         # allocate a request
         request = v3io.dataplane.request.Request(container, access_key, raise_for_status, encoder, encoder_args, output)
 
@@ -55,7 +54,6 @@ class Transport(object):
                 async with self._client_session.request(
                     request.method, self._endpoint + "/" + path, headers=request.headers, data=request.body, ssl=False
                 ) as http_response:
-
                     # get contents
                     contents = await http_response.content.read()
 
@@ -82,7 +80,6 @@ class Transport(object):
 
     @staticmethod
     def _get_endpoint(endpoint):
-
         if endpoint is None:
             endpoint = os.environ.get("V3IO_API")
 

@@ -70,7 +70,6 @@ class Container(object):
 
 class GetContainersOutput(Output):
     def __init__(self, root):
-
         # got an error code
         if isinstance(root, dict):
             self.error = root
@@ -90,7 +89,6 @@ class GetContainersOutput(Output):
 
 class ContainerContent(object):
     def __init__(self, child):
-
         # got an error code
         if isinstance(child, dict):
             self.error = child
@@ -115,7 +113,6 @@ class ContainerContent(object):
 
 class ContainerCommonPrefix(object):
     def __init__(self, child):
-
         # got an error code
         if isinstance(child, dict):
             self.error = child
@@ -138,7 +135,6 @@ class ContainerCommonPrefix(object):
 
 class GetContainerContentsOutput(Output):
     def __init__(self, root):
-
         # got an error code
         if isinstance(root, dict):
             self.error = root

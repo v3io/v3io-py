@@ -37,7 +37,6 @@ class Transport(object):
         pass
 
     def request(self, container, access_key, raise_for_status, transport_actions, encoder, encoder_args, output=None):
-
         # default to sending/receiving
         transport_actions = transport_actions or v3io.dataplane.transport.Actions.send_and_receive
 
@@ -62,7 +61,6 @@ class Transport(object):
 
     @staticmethod
     def _get_endpoint(endpoint):
-
         if endpoint is None:
             endpoint = os.environ.get("V3IO_API")
 

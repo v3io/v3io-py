@@ -100,12 +100,10 @@ class Batch(object):
             raise e
 
     def _wait(self, raise_for_status=None):
-
         responses = []
 
         # while we can send requests - send them
         while self._encoded_requests and len(self._inflight_requests) < self._transport.max_connections:
-
             # send the request
             request = self._transport.send_request(self._encoded_requests.pop(0))
 
@@ -114,7 +112,6 @@ class Batch(object):
 
         # start creating responses
         while self._inflight_requests:
-
             # get an inflight request
             inflight_request = self._inflight_requests.pop(0)
 
@@ -126,7 +123,6 @@ class Batch(object):
 
             # if there's a pending request, send it on the connection that we just read from
             if self._encoded_requests:
-
                 # send the request
                 request = self._transport.send_request(self._encoded_requests.pop(0))
 

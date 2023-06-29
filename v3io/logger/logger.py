@@ -33,31 +33,25 @@ class HumanReadableFormatter(logging.Formatter):
 
 class Logger(object):
     def __init__(self, level="DEBUG"):
-        self._logger = logging.getLogger("root")
+        self._logger = logging.getLogger("v3io_py")
         self._logger.setLevel(level)
-        self._handlers = {}
 
     def set_handler(self, handler_name, file, formatter):
-
         # check if there's a handler by this name
-        if handler_name in self._handlers:
-
-            # log that we're removing it
-            self.info_with("Replacing logger output")
-
-            self._logger.removeHandler(self._handlers[handler_name])
+        for handler in self._logger.handlers:
+            if handler.name == handler_name:
+                self._logger.removeHandler(handler)
+                break
 
         # create a stream handler from the file
         stream_handler = logging.StreamHandler(file)
+        stream_handler.name = handler_name
 
         # set the formatter
         stream_handler.setFormatter(formatter)
 
         # add the handler to the logger
         self._logger.addHandler(stream_handler)
-
-        # save as the named output
-        self._handlers[handler_name] = stream_handler
 
     def debug(self, message, *args):
         self._logger.debug(message, *args)

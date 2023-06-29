@@ -415,7 +415,7 @@ def _to_base64(input):
 def _dict_to_typed_attributes(d):
     typed_attributes = {}
 
-    for (key, value) in future.utils.viewitems(d):
+    for key, value in future.utils.viewitems(d):
         attribute_type = type(value)
         type_value = None
 
