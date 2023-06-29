@@ -33,7 +33,7 @@ class HumanReadableFormatter(logging.Formatter):
 
 class Logger(object):
     def __init__(self, level="DEBUG"):
-        self._logger = logging.getLogger("root")
+        self._logger = logging.getLogger("v3io_py")
         self._logger.setLevel(level)
 
     def set_handler(self, handler_name, file, formatter):
