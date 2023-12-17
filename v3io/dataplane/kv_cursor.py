@@ -19,6 +19,7 @@ class Cursor(object):
         container_name,
         access_key,
         table_path,
+        table_name,
         raise_for_status=None,
         attribute_names="*",
         filter_expression=None,
@@ -42,6 +43,7 @@ class Cursor(object):
         # get items params
         self.raise_for_status = raise_for_status
         self.table_path = table_path
+        self.table_name = table_name
         self.attribute_names = attribute_names
         self.filter_expression = filter_expression
         self.marker = marker
@@ -83,6 +85,7 @@ class Cursor(object):
         self._current_response = self._context.kv.scan(
             self._container_name,
             self.table_path,
+            self.table_name,
             self._access_key,
             self.raise_for_status,
             None,

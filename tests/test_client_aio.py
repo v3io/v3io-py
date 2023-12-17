@@ -484,6 +484,18 @@ class TestKv(Test):
         for item in received_items:
             self.assertLess(15, item["age"])
 
+        received_items = await self._client.kv.new_cursor(
+            container=self._container,
+            table_path="",
+            table_name=self._path,
+            attribute_names=["age", "feature"],
+            filter_expression="age > 15",
+        ).all()
+
+        self.assertEqual(2, len(received_items))
+        for item in received_items:
+            self.assertLess(15, item["age"])
+
         #
         # Increment age
         #
