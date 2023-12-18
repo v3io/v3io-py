@@ -232,7 +232,7 @@ class Model(v3io.dataplane.model.Model):
         table_path (Required) : str
             The full path of the table
         table_name (Optional) : str
-            The name the table - using GetItems TableName (if used, table_path must be an empty string). Allows for specifying all tables with '/*'
+            The name of the table. Allows for specifying all tables with '/*'. If used, table_path must be an empty
         access_key (Optional) : str
             The access key with which to authenticate. Defaults to the V3IO_ACCESS_KEY env.
         attribute_names (Optional) : []str or '*'
