@@ -256,7 +256,6 @@ class Model(v3io.dataplane.model.Model):
         table_path (Required) : str
             The full path of the table
         table_name (Optional) : str
-```suggestion
             The name of the table. Allows for specifying all tables with '/*'. If used, table_path must be an empty
             string.
         access_key (Optional) : str
