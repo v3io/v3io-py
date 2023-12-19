@@ -112,7 +112,7 @@ class Client(object):
     def get_containers(self, access_key=None, raise_for_status=None, transport_actions=None):
         """Lists the containers that are visible to the user who sent the request, according to its tenant.
 
-        DEPRECATED: use container.get
+        DEPRECATED: use container.list
 
         Parameters
         ----------
@@ -856,7 +856,7 @@ class Client(object):
     def put_records(self, container, path, records, access_key=None, raise_for_status=None, transport_actions=None):
         """Adds records to a stream.
 
-        DEPRECATED. Use stream.put
+        DEPRECATED. Use stream.put_records
 
         You can optionally assign a record to specific stream shard by specifying a related shard ID, or associate
         the record with a specific partition key to ensure that similar records are assigned to the same shard.
@@ -927,7 +927,7 @@ class Client(object):
     ):
         """Retrieves (consumes) records from a stream shard.
 
-        DEPRECATED. Use stream.get
+        DEPRECATED. Use stream.get_records
 
         See https://www.iguazio.com/docs/latest-release/data-layer/reference/web-apis/streaming-web-api/getrecords/.
 
