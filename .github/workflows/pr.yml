@@ -36,7 +36,10 @@ jobs:
 
   test:
     name: Tests
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, Linux ]
+    container:
+      image: python:3.9.18
+
     steps:
       - uses: actions/checkout@v3
         with:
