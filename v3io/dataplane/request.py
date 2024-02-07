@@ -30,7 +30,6 @@ import v3io.common.helpers
 import v3io.dataplane.kv_array
 import v3io.dataplane.kv_timestamp
 
-
 #
 # Request
 #
