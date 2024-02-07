@@ -105,7 +105,9 @@ def encode_get_object(container_name, access_key, kwargs):
 
     # if the append flag is passed, add a range header
     # offset=0 also requires a range because we may only have the size.
-    if offset is not None:
+    num_bytes = kwargs.get("num_bytes")
+    if offset or num_bytes:
+        offset = offset or 0
         range_value = "bytes=" + str(offset)
 
         num_bytes = kwargs.get("num_bytes")
