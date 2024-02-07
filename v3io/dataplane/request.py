@@ -30,6 +30,7 @@ import v3io.common.helpers
 import v3io.dataplane.kv_array
 import v3io.dataplane.kv_timestamp
 
+
 #
 # Request
 #
@@ -100,7 +101,6 @@ def encode_head_object(container_name, access_key, kwargs):
 
 def encode_get_object(container_name, access_key, kwargs):
     headers = None
-
     offset = kwargs.get("offset")
     num_bytes = kwargs.get("num_bytes")
 
