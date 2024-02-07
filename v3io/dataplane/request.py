@@ -109,7 +109,6 @@ def encode_get_object(container_name, access_key, kwargs):
         offset = offset or 0
         range_value = "bytes=" + str(offset)
 
-        num_bytes = kwargs.get("num_bytes")
         if num_bytes:
             range_value += "-" + str(offset + num_bytes - 1)
 
