@@ -228,11 +228,14 @@ class TestObject(Test):
 
         # get the object contents
         response = self._client.object.get(container=self._container, path=self._object_path)
-
         if not isinstance(response.body, str):
             response.body = response.body.decode("utf-8")
-
         self.assertEqual(response.body, contents)
+
+        response = self._client.object.get(container=self._container, path=self._object_path, offset=0, num_bytes=10)
+        if not isinstance(response.body, str):
+            response.body = response.body.decode("utf-8")
+        self.assertEqual(response.body, contents[0:10])
 
         # get the head of the object
         response = self._client.object.head(container=self._container, path=self._object_path)
