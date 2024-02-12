@@ -74,7 +74,7 @@ class Response(object):
             expected_statuses and self.status_code not in expected_statuses
         ):
             raise HttpResponseError(
-                "Request failed with status {0}: {1}".format(self.status_code, self.body), error_status=self.status_code
+                "Request failed with status {0}: {1}".format(self.status_code, self.body), status_code=self.status_code
             )
 
 
