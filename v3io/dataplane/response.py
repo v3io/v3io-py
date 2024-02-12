@@ -22,9 +22,12 @@ import v3io.dataplane.transport
 class HttpResponseError(Exception):
     """Exception raised on bad http status"""
 
-    def __init__(self, message="", error_status=None):
+    def __init__(self, message, status_code):
         super().__init__(message)
-        self.status = error_status
+        self.status_code = status_code
+
+    def __repr__(self):
+        return f"HttpResponseError('{self}', {self.status_code})"
 
 
 class Response(object):
