@@ -4,6 +4,8 @@ import pytest
 
 import v3io.dataplane.client
 import v3io.dataplane.transport.httpclient
+from v3io.dataplane.object import Model
+from v3io.dataplane.response import HttpResponseError
 
 
 class MockResponse:
@@ -107,3 +109,14 @@ def test_error_on_use_after_close():
     client.close()
     with pytest.raises(RuntimeError):
         client.object.get("doesntexist", "doesntexist", raise_for_status=v3io.dataplane.RaiseForStatus.never)
+
+
+@pytest.mark.parametrize("object_functions", [Model.get, Model.put, Model.delete])
+def test_raise_http_response_error(object_functions):
+    client = v3io.dataplane.Client(
+        transport_kind="httpclient",
+    )
+    with pytest.raises(HttpResponseError) as response_error:
+        object_functions(client.object, "not-exists", "path/to/object")
+    assert response_error.value.status == 404
+    assert "Container not found" in str(response_error.value)
