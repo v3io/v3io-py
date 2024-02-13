@@ -111,7 +111,7 @@ def test_error_on_use_after_close():
         client.object.get("doesntexist", "doesntexist", raise_for_status=v3io.dataplane.RaiseForStatus.never)
 
 
-@pytest.mark.parametrize("object_functions", [Model.get, Model.put, Model.delete])
+@pytest.mark.parametrize("object_function", [Model.get, Model.put, Model.delete])
 def test_raise_http_response_error(object_functions):
     client = v3io.dataplane.Client(
         transport_kind="httpclient",
