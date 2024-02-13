@@ -22,7 +22,12 @@ import v3io.dataplane.transport
 class HttpResponseError(Exception):
     """Exception raised on bad http status"""
 
-    pass
+    def __init__(self, message, status_code):
+        super().__init__(message)
+        self.status_code = status_code
+
+    def __repr__(self):
+        return f"HttpResponseError('{self}', {self.status_code})"
 
 
 class Response(object):
@@ -49,7 +54,8 @@ class Response(object):
             except Exception:
                 raise HttpResponseError(
                     f"Failed to parse response with status {self.status_code}, "
-                    f"body {self.body}, headers={self.headers}"
+                    f"body {self.body}, headers={self.headers}",
+                    self.status_code,
                 )
 
             self._parsed_output = self._output(parsed_output)
@@ -67,7 +73,9 @@ class Response(object):
         if (expected_statuses is None and self.status_code >= 300) or (
             expected_statuses and self.status_code not in expected_statuses
         ):
-            raise HttpResponseError("Request failed with status {0}: {1}".format(self.status_code, self.body))
+            raise HttpResponseError(
+                "Request failed with status {0}: {1}".format(self.status_code, self.body), status_code=self.status_code
+            )
 
 
 class Responses(object):
