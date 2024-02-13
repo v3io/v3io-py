@@ -112,10 +112,10 @@ def test_error_on_use_after_close():
 
 
 @pytest.mark.parametrize("object_function", [Model.get, Model.put, Model.delete])
-def test_raise_http_response_error(object_functions):
+def test_raise_http_response_error(object_function):
     client = v3io.dataplane.Client(
         transport_kind="httpclient",
     )
     with pytest.raises(HttpResponseError, match="Container not found") as response_error:
-        object_functions(client.object, "not-exists", "path/to/object")
+        object_function(client.object, "not-exists", "path/to/object")
     assert response_error.value.status_code == 404
