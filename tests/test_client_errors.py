@@ -116,7 +116,6 @@ def test_raise_http_response_error(object_functions):
     client = v3io.dataplane.Client(
         transport_kind="httpclient",
     )
-    with pytest.raises(HttpResponseError) as response_error:
+    with pytest.raises(HttpResponseError, match="Container not found") as response_error:
         object_functions(client.object, "not-exists", "path/to/object")
     assert response_error.value.status_code == 404
-    assert "Container not found" in str(response_error.value)
