@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-
 import v3io.dataplane.kv_cursor
 import v3io.dataplane.model
 import v3io.dataplane.output
 import v3io.dataplane.request
+from v3io.common.helpers import url_join
 
 
 class Model(v3io.dataplane.model.Model):
@@ -217,7 +216,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `output` is `SeekShardOutput`.
         """
-        stream_path = self._ensure_path_ends_with_slash(os.path.join(stream_path, str(shard_id)))
+        stream_path = self._ensure_path_ends_with_slash(url_join(stream_path, str(shard_id)))
 
         return self._transport.request(
             container,
@@ -332,7 +331,7 @@ class Model(v3io.dataplane.model.Model):
         ----------
         A `Response` object, whose `output` is `GetRecordsOutput`.
         """
-        stream_path = self._ensure_path_ends_with_slash(os.path.join(stream_path, str(shard_id)))
+        stream_path = self._ensure_path_ends_with_slash(url_join(stream_path, str(shard_id)))
 
         return self._transport.request(
             container,

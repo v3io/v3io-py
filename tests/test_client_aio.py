@@ -21,6 +21,7 @@ import future.utils
 
 import v3io.aio.dataplane
 import v3io.dataplane
+from v3io.common.helpers import url_join
 
 
 class Test(unittest.IsolatedAsyncioTestCase):
@@ -56,7 +57,7 @@ class Test(unittest.IsolatedAsyncioTestCase):
 class TestContainer(Test):
     async def asyncSetUp(self):
         await super(TestContainer, self).asyncSetUp()
-        self._path = os.path.join(self._test_parent_dir, "v3io-py-test-container")
+        self._path = url_join(self._test_parent_dir, "v3io-py-test-container")
 
         # clean up
         await self._delete_dir(self._path)
@@ -74,13 +75,13 @@ class TestContainer(Test):
         for object_index in range(5):
             await self._client.object.put(
                 container=self._container,
-                path=os.path.join(self._path, "object-{0}.txt".format(object_index)),
+                path=url_join(self._path, "object-{0}.txt".format(object_index)),
                 body=body,
             )
 
         for object_index in range(5):
             await self._client.object.put(
-                container=self._container, path=os.path.join(self._path, "dir-{0}/".format(object_index))
+                container=self._container, path=url_join(self._path, "dir-{0}/".format(object_index))
             )
 
         response = await self._client.container.list(
@@ -103,7 +104,7 @@ class TestStream(Test):
     async def asyncSetUp(self):
         await super(TestStream, self).asyncSetUp()
 
-        self._path = os.path.join(self._test_parent_dir, "v3io-py-test-stream")
+        self._path = url_join(self._test_parent_dir, "v3io-py-test-stream")
 
         # clean up
         await self._client.stream.delete(
@@ -130,7 +131,7 @@ class TestStream(Test):
         # write several "consumer group state" files
         for cg_id in range(3):
             await self._client.object.put(
-                container=self._container, path=os.path.join(self._path, "cg{}-state.json".format(cg_id))
+                container=self._container, path=url_join(self._path, "cg{}-state.json".format(cg_id))
             )
 
         # check that the stream doesn't exist
@@ -206,7 +207,7 @@ class TestObject(Test):
     async def asyncSetUp(self):
         await super(TestObject, self).asyncSetUp()
 
-        self._object_dir = os.path.join(self._test_parent_dir, "v3io-py-test-object")
+        self._object_dir = url_join(self._test_parent_dir, "v3io-py-test-object")
         self._object_path = self._object_dir + "/obj ect.txt"
 
         # clean up
@@ -289,7 +290,7 @@ class TestObject(Test):
 #         await super(TestSchema, self).asyncSetUp()
 #
 #         self._schema_dir = "/v3io-py-test-schemaa"
-#         self._schema_path = os.path.join(self._schema_dir, ".%23schema")
+#         self._schema_path = url_join(self._schema_dir, ".%23schema")
 #
 #         # clean up
 #         await self._delete_dir(self._schema_dir)
@@ -345,7 +346,7 @@ class TestKv(Test):
     async def asyncSetUp(self):
         await super(TestKv, self).asyncSetUp()
 
-        self._path = os.path.join(self._test_parent_dir, "some_dir/v3io-py-test-emd")
+        self._path = url_join(self._test_parent_dir, "some_dir/v3io-py-test-emd")
         await self._delete_dir(self._path)
 
     async def test_kv_array(self):
@@ -373,7 +374,7 @@ class TestKv(Test):
 
     async def test_kv_values(self):
         def _get_int_array():
-            int_array = array.array("l")
+            int_array = array.array("q")
             for value in range(10):
                 int_array.append(value)
 

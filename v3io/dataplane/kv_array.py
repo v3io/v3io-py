@@ -24,7 +24,7 @@ OPERAND_TYPE_DOUBLE = 261
 
 
 def encode_list(list_value):
-    typecode = "l"
+    typecode = "q"
     if len(list_value) and isinstance(list_value[0], float):
         typecode = "d"
 
@@ -33,7 +33,7 @@ def encode_list(list_value):
 
 def encode_array(array_value, typecode):
     num_items = len(array_value)
-    operand_type = OPERAND_TYPE_LONG if typecode == "l" else OPERAND_TYPE_DOUBLE
+    operand_type = OPERAND_TYPE_LONG if typecode == "q" else OPERAND_TYPE_DOUBLE
 
     encoded_array = ITEM_HEADER_MAGIC_AND_VERSION + struct.pack(
         "II" + typecode * num_items, num_items * 8, operand_type, *array_value
@@ -57,7 +57,7 @@ def decode(encoded_array):
     unpacked_header = struct.unpack("II", header)
 
     # get the typecode and number of items
-    typecode = "l" if unpacked_header[1] == OPERAND_TYPE_LONG else "d"
+    typecode = "q" if unpacked_header[1] == OPERAND_TYPE_LONG else "d"
     num_items = int(unpacked_header[0] / 8)
 
     # decode the values

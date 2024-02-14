@@ -18,7 +18,6 @@ import sys
 import future.utils
 import ujson
 
-import v3io.common.helpers
 import v3io.dataplane.batch
 import v3io.dataplane.kv_cursor
 import v3io.dataplane.output
@@ -27,6 +26,7 @@ import v3io.dataplane.response
 import v3io.dataplane.transport.httpclient
 import v3io.dataplane.transport.requests
 import v3io.logger
+from v3io.common.helpers import url_join
 
 
 class Client(object):
@@ -417,7 +417,7 @@ class Client(object):
             # create a put item input
             response = self.put_item(
                 container,
-                v3io.common.helpers.url_join(path, item_path),
+                url_join("/", path, item_path),
                 item_attributes,
                 access_key=access_key,
                 condition=condition,
@@ -1007,7 +1007,7 @@ class Client(object):
         A `Response` object
         """
         put_object_args = locals()
-        put_object_args["path"] = os.path.join(put_object_args["path"], ".#schema")
+        put_object_args["path"] = url_join(put_object_args["path"], ".#schema")
         put_object_args["offset"] = 0
         put_object_args["append"] = None
         put_object_args["body"] = self._get_schema_contents(key, fields)

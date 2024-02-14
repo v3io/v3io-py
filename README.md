@@ -266,7 +266,7 @@ def test_verifier_transport(self):
 
         # verify some stuff from the request
         self.assertEqual(request.container, container_name)
-        self.assertEqual(request.path, os.path.join(os.sep, container_name, 'some/path'))
+        self.assertEqual(request.path, url_join(os.sep, container_name, 'some/path'))
 
         # return a mocked response
         return unittest.mock.MagicMock(status_code=200,
@@ -276,7 +276,7 @@ def test_verifier_transport(self):
 
         # verify some stuff from the request
         self.assertEqual(request.container, container_name)
-        self.assertEqual(request.path, os.path.join(os.sep, container_name, 'some/table/path/some_item_key'))
+        self.assertEqual(request.path, url_join(os.sep, container_name, 'some/table/path/some_item_key'))
 
         # prepare and output mock
         output = unittest.mock.MagicMock(item={
