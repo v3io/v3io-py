@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 import http.client
+import mmap
 import queue
 import socket
 import ssl
@@ -166,6 +167,11 @@ class Transport(abstract.Transport):
                     connection=connection,
                 )
                 connection.close()
+                if isinstance(request.body, mmap.mmap):
+                    # If the first connection fails, the pointer of the body might move at the size
+                    # of the first connection blocksize.
+                    # We need to reset the position of the pointer in order to send the whole file.
+                    request.body.seek(0)
                 connection = self._create_connection(self._host, self._ssl_context)
                 request.transport.connection_used = connection
                 connection.request(request.method, path, request.body, request.headers)
