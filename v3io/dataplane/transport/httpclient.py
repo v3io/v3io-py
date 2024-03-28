@@ -155,7 +155,7 @@ class Transport(abstract.Transport):
             "Tx", connection=connection, method=request.method, path=path, headers=request.headers, body=request.body
         )
         starting_offset = 0
-        if request.body is not None and hasattr(request.body, "seek") and hasattr(request.body, "tell"):
+        if request.body and hasattr(request.body, "seek") and hasattr(request.body, "tell"):
             starting_offset = request.body.tell()
         try:
             try:
