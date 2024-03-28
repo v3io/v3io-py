@@ -154,7 +154,9 @@ class Transport(abstract.Transport):
         self.log(
             "Tx", connection=connection, method=request.method, path=path, headers=request.headers, body=request.body
         )
-
+        starting_offset = 0
+        if request.body and hasattr(request.body, "seek") and hasattr(request.body, "tell"):
+            starting_offset = request.body.tell()
         try:
             try:
                 connection.request(request.method, path, request.body, request.headers)
@@ -166,6 +168,11 @@ class Transport(abstract.Transport):
                     connection=connection,
                 )
                 connection.close()
+                if request.body and hasattr(request.body, "seek") and hasattr(request.body, "tell"):
+                    # If the first connection fails, the pointer of the body might move at the size
+                    # of the first connection blocksize.
+                    # We need to reset the position of the pointer in order to send the whole file.
+                    request.body.seek(starting_offset)
                 connection = self._create_connection(self._host, self._ssl_context)
                 request.transport.connection_used = connection
                 connection.request(request.method, path, request.body, request.headers)
