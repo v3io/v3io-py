@@ -73,9 +73,14 @@ class Response(object):
         if (expected_statuses is None and self.status_code >= 300) or (
             expected_statuses and self.status_code not in expected_statuses
         ):
-            raise HttpResponseError(
-                "Request failed with status {0}: {1}".format(self.status_code, self.body), status_code=self.status_code
-            )
+            if 308 <= self.status_code < 400:
+                location = self.headers.get("Location")
+                error_message = "Request failed due to a Permanent Redirect."
+                if location:
+                    error_message += f" Please change URL to: {location}"
+            else:
+                error_message = f"Request failed with status {self.status_code}: {self.body}"
+            raise HttpResponseError(error_message, status_code=self.status_code)
 
 
 class Responses(object):
