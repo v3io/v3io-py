@@ -16,7 +16,6 @@ import http.client
 import queue
 import socket
 import ssl
-import sys
 
 import v3io.dataplane.request
 import v3io.dataplane.response

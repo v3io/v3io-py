@@ -13,7 +13,6 @@
 # limitations under the License.
 #
 import datetime
-import sys
 
 # used only n py2
 BASE_DATETIME = datetime.datetime(1970, 1, 1)
