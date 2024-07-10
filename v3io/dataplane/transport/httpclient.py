@@ -25,6 +25,9 @@ from . import abstract
 
 
 class Transport(abstract.Transport):
+    _connection_timeout_seconds = 20
+    _request_max_retries = 2
+
     def __init__(self, logger, endpoint=None, max_connections=None, timeout=None, verbosity=None):
         super(Transport, self).__init__(logger, endpoint, max_connections, timeout, verbosity)
 
@@ -36,24 +39,19 @@ class Transport(abstract.Transport):
         # create the pool connection
         self._create_connections(self.max_connections, self._host, self._ssl_context)
 
-        # python 2 and 3 have different exceptions
-        if sys.version_info[0] >= 3:
-            self._wait_response_exceptions = (
-                http.client.RemoteDisconnected,
-                ConnectionResetError,
-                ConnectionRefusedError,
-                http.client.ResponseNotReady,
-            )
-            self._send_request_exceptions = (
-                BrokenPipeError,
-                http.client.CannotSendRequest,
-                http.client.RemoteDisconnected,
-            )
-            self._get_status_and_headers = self._get_status_and_headers_py3
-        else:
-            self._wait_response_exceptions = (http.client.BadStatusLine, socket.error)
-            self._send_request_exceptions = (http.client.CannotSendRequest, http.client.BadStatusLine)
-            self._get_status_and_headers = self._get_status_and_headers_py2
+        self._wait_response_exceptions = (
+            http.client.RemoteDisconnected,
+            ConnectionResetError,
+            ConnectionRefusedError,
+            http.client.ResponseNotReady,
+        )
+        self._send_request_exceptions = (
+            BrokenPipeError,
+            http.client.CannotSendRequest,
+            http.client.RemoteDisconnected,
+            socket.timeout,
+        )
+        self._get_status_and_headers = self._get_status_and_headers_py3
 
     def close(self):
         # Ignore redundant calls to close
@@ -154,20 +152,27 @@ class Transport(abstract.Transport):
         self.log(
             "Tx", connection=connection, method=request.method, path=path, headers=request.headers, body=request.body
         )
+
         starting_offset = 0
         is_body_seekable = request.body and hasattr(request.body, "seek") and hasattr(request.body, "tell")
         if is_body_seekable:
             starting_offset = request.body.tell()
-        try:
+
+        retries_left = self._request_max_retries
+        while True:
             try:
                 connection.request(request.method, path, request.body, request.headers)
+                break
             except self._send_request_exceptions as e:
                 self._logger.debug_with(
-                    "Disconnected while attempting to send. Recreating connection and retrying",
+                    f"Disconnected while attempting to send request – "
+                    f"{retries_left} out of {self._request_max_retries} retries left.",
                     e=type(e),
                     e_msg=e,
-                    connection=connection,
                 )
+                if retries_left == 0:
+                    raise
+                retries_left -= 1
                 connection.close()
                 if is_body_seekable:
                     # If the first connection fails, the pointer of the body might move at the size
@@ -176,12 +181,11 @@ class Transport(abstract.Transport):
                     request.body.seek(starting_offset)
                 connection = self._create_connection(self._host, self._ssl_context)
                 request.transport.connection_used = connection
-                connection.request(request.method, path, request.body, request.headers)
-        except BaseException as e:
-            self._logger.error_with(
-                "Unhandled exception while sending request", e=type(e), e_msg=e, connection=connection
-            )
-            raise e
+            except BaseException as e:
+                self._logger.error_with(
+                    "Unhandled exception while sending request", e=type(e), e_msg=e, connection=connection
+                )
+                raise e
 
         return request
 
@@ -192,9 +196,9 @@ class Transport(abstract.Transport):
 
     def _create_connection(self, host, ssl_context):
         if ssl_context is None:
-            return http.client.HTTPConnection(host)
+            return http.client.HTTPConnection(host, timeout=self._connection_timeout_seconds)
 
-        return http.client.HTTPSConnection(host, context=ssl_context)
+        return http.client.HTTPSConnection(host, timeout=self._connection_timeout_seconds, context=ssl_context)
 
     def _parse_endpoint(self, endpoint):
         if endpoint.startswith("http://"):
