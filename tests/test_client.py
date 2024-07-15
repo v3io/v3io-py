@@ -27,6 +27,7 @@ import v3io.dataplane
 import v3io.dataplane.output
 import v3io.dataplane.response
 import v3io.logger
+from v3io.dataplane.kv_large_string import LARGE_STRING_MIN_SIZE
 
 
 class Test(unittest.TestCase):
@@ -431,6 +432,7 @@ class TestKv(Test):
                 "array_with_ints": _get_int_array(),
                 "array_with_floats": _get_float_array(),
                 "now": datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc),
+                "large_string": "a" * 10 * LARGE_STRING_MIN_SIZE,
             }
         }
 

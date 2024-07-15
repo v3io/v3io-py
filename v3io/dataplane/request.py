@@ -29,6 +29,10 @@ import ujson
 import v3io.common.helpers
 import v3io.dataplane.kv_array
 import v3io.dataplane.kv_timestamp
+from v3io.dataplane.kv_large_string import (
+    LARGE_STRING_MIN_SIZE,
+    string_to_large_bstring,
+)
 
 #
 # Request
@@ -419,12 +423,14 @@ def _dict_to_typed_attributes(d):
         attribute_type = type(value)
         type_value = None
 
-        if isinstance(value, future.utils.text_type):
-            type_key = "S"
-            type_value = value
-        elif isinstance(value, future.utils.string_types):
-            type_key = "S"
+        if isinstance(value, future.utils.text_type) or isinstance(value, future.utils.string_types):
             type_value = str(value)
+            if len(value) > LARGE_STRING_MIN_SIZE:
+                type_key = "B"
+                type_value = string_to_large_bstring(type_value)
+                type_value = base64.b64encode(type_value)
+            else:
+                type_key = "S"
         elif attribute_type in [int, float]:
             type_key = "N"
             type_value = str(value)
