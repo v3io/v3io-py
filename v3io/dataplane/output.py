@@ -18,7 +18,6 @@ import future.utils
 
 import v3io.dataplane.kv_array
 import v3io.dataplane.kv_timestamp
-from v3io.dataplane.kv_large_string import is_large_bstring, large_bstring_to_string
 
 
 class Output(object):
@@ -34,14 +33,12 @@ class Output(object):
                         decoded_attribute = float(attribute_value)
                 elif attribute_type == "B":
                     decoded_attribute = base64.b64decode(attribute_value)
-                    if is_large_bstring(decoded_attribute):
-                        decoded_attribute = large_bstring_to_string(decoded_attribute)
-                    else:
-                        # try to decode as an array
-                        try:
-                            decoded_attribute = v3io.dataplane.kv_array.decode(decoded_attribute)
-                        except BaseException:
-                            pass
+
+                    # try to decode as an array
+                    try:
+                        decoded_attribute = v3io.dataplane.kv_array.decode(decoded_attribute)
+                    except BaseException:
+                        pass
 
                 elif attribute_type == "S":
                     if type(attribute_value) in [float, int]:
