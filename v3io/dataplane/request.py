@@ -29,10 +29,6 @@ import ujson
 import v3io.common.helpers
 import v3io.dataplane.kv_array
 import v3io.dataplane.kv_timestamp
-from v3io.dataplane.kv_large_string import (
-    LARGE_STRING_MIN_SIZE,
-    string_to_large_bstring,
-)
 
 #
 # Request
@@ -418,19 +414,29 @@ def _to_base64(input):
 
 def _dict_to_typed_attributes(d):
     typed_attributes = {}
-
+    max_string_length = 61199
     for key, value in future.utils.viewitems(d):
         attribute_type = type(value)
         type_value = None
 
-        if isinstance(value, future.utils.text_type) or isinstance(value, future.utils.string_types):
+        if isinstance(value, future.utils.text_type):
+            type_key = "S"
+            type_value = value
+            if len(value) > max_string_length:
+                raise AttributeError(
+                    "Attribute {0} is too long({1} bytes) when max is {2} bytes".format(
+                        key, len(value), max_string_length
+                    )
+                )
+        elif isinstance(value, future.utils.string_types):
+            type_key = "S"
             type_value = str(value)
-            if len(value) > LARGE_STRING_MIN_SIZE:
-                type_key = "B"
-                type_value = string_to_large_bstring(type_value)
-                type_value = base64.b64encode(type_value)
-            else:
-                type_key = "S"
+            if len(type_value) > max_string_length:
+                raise AttributeError(
+                    "Attribute {0} is too long({1} bytes) when max is {2} bytes".format(
+                        key, len(value), max_string_length
+                    )
+                )
         elif attribute_type in [int, float]:
             type_key = "N"
             type_value = str(value)

@@ -27,7 +27,6 @@ import v3io.dataplane
 import v3io.dataplane.output
 import v3io.dataplane.response
 import v3io.logger
-from v3io.dataplane.kv_large_string import LARGE_STRING_MIN_SIZE
 
 
 class Test(unittest.TestCase):
@@ -432,7 +431,6 @@ class TestKv(Test):
                 "array_with_ints": _get_int_array(),
                 "array_with_floats": _get_float_array(),
                 "now": datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc),
-                "large_string": "a" * 10 * LARGE_STRING_MIN_SIZE,
             }
         }
 
@@ -447,6 +445,15 @@ class TestKv(Test):
 
         for key in item[item_key]:
             self._compare_item_types(item[item_key][key], response.output.item[key])
+
+        item = {item_key: {"large_string": "a" * 61200}}
+        try:
+            self._client.kv.put(
+                container=self._container, table_path=self._path, key=item_key, attributes=item[item_key]
+            )
+            self.fail("Large string should have raised an exception")
+        except AttributeError:
+            pass
 
     def test_kv(self):
         items = {
