@@ -15,7 +15,7 @@
 import os
 import sys
 
-import ujson
+import orjson
 
 import v3io.aio.dataplane.transport.aiohttp
 import v3io.common.helpers
@@ -97,7 +97,7 @@ class Client(object):
 
     @staticmethod
     def _get_schema_contents(key, fields):
-        return ujson.dumps({"hashingBucketNum": 0, "key": key, "fields": fields})
+        return orjson.dumps({"hashingBucketNum": 0, "key": key, "fields": fields})
 
     def _create_models(self):
         import v3io.aio.dataplane.container

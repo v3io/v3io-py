@@ -14,7 +14,7 @@
 #
 import xml.etree.ElementTree
 
-import ujson
+import orjson
 
 import v3io.dataplane.transport
 
@@ -48,7 +48,7 @@ class Response(object):
                 # TODO: It's expensive to always try to parse as JSON first. Better
                 #       use headers or a heuristic to decide the format.
                 try:
-                    parsed_output = ujson.loads(self.body)
+                    parsed_output = orjson.loads(self.body)
                 except Exception:
                     parsed_output = xml.etree.ElementTree.fromstring(self.body)
             except Exception:

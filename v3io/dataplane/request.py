@@ -24,7 +24,7 @@ try:
 except BaseException:
     from urllib import urlencode, quote
 
-import ujson
+import orjson
 
 import v3io.common.helpers
 import v3io.dataplane.kv_array
@@ -415,7 +415,7 @@ def _to_base64(input):
     if isinstance(input, str):
         input = input.encode("utf-8")
 
-    return base64.b64encode(input)
+    return base64.b64encode(input).decode("utf-8")
 
 
 def _dict_to_typed_attributes(d):
@@ -448,7 +448,7 @@ def _dict_to_typed_attributes(d):
             type_value = str(value)
         elif attribute_type in [bytes, bytearray]:
             type_key = "B"
-            type_value = base64.b64encode(value)
+            type_value = base64.b64encode(value).decode("utf-8")
         elif isinstance(value, bool):
             type_key = "BOOL"
             type_value = value
@@ -477,7 +477,7 @@ def _resolve_body_and_headers(access_key, headers, body):
     if not isinstance(body, dict):
         return headers, body
 
-    body = ujson.dumps(body, reject_bytes=False)
+    body = orjson.dumps(body)
     headers["Content-Type"] = "application/json"
 
     return headers, body
