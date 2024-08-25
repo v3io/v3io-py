@@ -117,13 +117,19 @@ def encode_get_object(container_name, access_key, kwargs):
 
 
 def encode_put_object(container_name, access_key, kwargs):
-    headers = None
+    headers = {
+        "Content-Type": "application-octet-stream",
+    }
 
     # if the append flag is passed, add a range header
     if kwargs["append"]:
         headers = {"Range": "-1"}
 
-    return _encode("PUT", container_name, access_key, kwargs["path"], None, headers, kwargs["body"])
+    body = kwargs["body"]
+    if isinstance(body, str):
+        body = body.encode("utf-8")
+
+    return _encode("PUT", container_name, access_key, kwargs["path"], None, headers, body)
 
 
 def encode_delete_object(container_name, access_key, kwargs):

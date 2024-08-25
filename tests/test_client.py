@@ -215,7 +215,8 @@ class TestObject(Test):
         self._delete_dir(self._object_dir)
 
     def test_object(self):
-        contents = "vegans are better than everyone"
+        body = "this unicode character Ě triggers ML-7498"
+        body_bytes = body.encode("utf-8")
 
         response = self._client.object.get(
             container=self._container, path=self._object_path, raise_for_status=v3io.dataplane.RaiseForStatus.never
@@ -223,29 +224,25 @@ class TestObject(Test):
 
         self.assertEqual(404, response.status_code)
 
-        # put contents to some object
-        self._client.object.put(container=self._container, path=self._object_path, body=contents)
+        # put body to some object
+        self._client.object.put(container=self._container, path=self._object_path, body=body)
 
-        # get the object contents
+        # get the object body
         response = self._client.object.get(container=self._container, path=self._object_path)
-        if not isinstance(response.body, str):
-            response.body = response.body.decode("utf-8")
-        self.assertEqual(response.body, contents)
+        self.assertEqual(response.body, body_bytes)
 
         response = self._client.object.get(container=self._container, path=self._object_path, offset=0, num_bytes=10)
-        if not isinstance(response.body, str):
-            response.body = response.body.decode("utf-8")
-        self.assertEqual(response.body, contents[0:10])
+        self.assertEqual(response.body, body_bytes[0:10])
 
         # get the head of the object
         response = self._client.object.head(container=self._container, path=self._object_path)
 
-        self.assertIn(("Content-Length", str(len(contents))), response.headers.items())
+        self.assertIn(("Content-Length", str(len(body_bytes))), response.headers.items())
 
         # get the head of the dir-object
         response = self._client.object.head(container=self._container, path=self._object_dir)
 
-        self.assertIn(("Content-Length", str(0)), response.headers.items())
+        self.assertIn(("Content-Length", "0"), response.headers.items())
 
         # delete the object
         self._client.object.delete(container=self._container, path=self._object_path)
