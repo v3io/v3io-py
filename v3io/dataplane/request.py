@@ -477,7 +477,7 @@ def _resolve_body_and_headers(access_key, headers, body):
     if not isinstance(body, dict):
         return headers, body
 
-    body = orjson.dumps(body, reject_bytes=False)
+    body = orjson.dumps(body)
     headers["Content-Type"] = "application/json"
 
     return headers, body
