@@ -24,7 +24,7 @@ try:
 except BaseException:
     from urllib import urlencode, quote
 
-import ujson
+import orjson
 
 import v3io.common.helpers
 import v3io.dataplane.kv_array
@@ -477,7 +477,7 @@ def _resolve_body_and_headers(access_key, headers, body):
     if not isinstance(body, dict):
         return headers, body
 
-    body = ujson.dumps(body, reject_bytes=False)
+    body = orjson.dumps(body, reject_bytes=False)
     headers["Content-Type"] = "application/json"
 
     return headers, body

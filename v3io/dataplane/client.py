@@ -16,7 +16,7 @@ import os
 import sys
 
 import future.utils
-import ujson
+import orjson
 
 import v3io.common.helpers
 import v3io.dataplane.batch
@@ -1032,7 +1032,7 @@ class Client(object):
 
     @staticmethod
     def _get_schema_contents(key, fields):
-        return ujson.dumps({"hashingBucketNum": 0, "key": key, "fields": fields})
+        return orjson.dumps({"hashingBucketNum": 0, "key": key, "fields": fields})
 
     def _create_logger(self, logger_verbosity):
         logger = v3io.logger.Logger(level=logger_verbosity or "INFO")
