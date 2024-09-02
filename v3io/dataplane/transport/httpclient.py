@@ -38,12 +38,6 @@ class Transport(abstract.Transport):
         # create the pool connection
         self._create_connections(self.max_connections, self._host, self._ssl_context)
 
-        self._wait_response_exceptions = (
-            http.client.RemoteDisconnected,
-            ConnectionResetError,
-            ConnectionRefusedError,
-            http.client.ResponseNotReady,
-        )
         self._send_request_exceptions = (
             BrokenPipeError,
             http.client.CannotSendRequest,
