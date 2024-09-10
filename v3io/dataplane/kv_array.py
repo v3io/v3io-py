@@ -39,7 +39,7 @@ def encode_array(array_value, typecode):
         "II" + typecode * num_items, num_items * 8, operand_type, *array_value
     )
 
-    return base64.b64encode(encoded_array).decode("utf-8")
+    return base64.b64encode(encoded_array)
 
 
 def decode(encoded_array):
