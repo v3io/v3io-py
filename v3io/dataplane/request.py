@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
 import array
 import base64
 import datetime
@@ -422,7 +422,6 @@ def _dict_to_typed_attributes(d):
     typed_attributes = {}
     max_string_length = 61199
     for key, value in future.utils.viewitems(d):
-        attribute_type = type(value)
         type_value = None
 
         if isinstance(value, future.utils.text_type):
@@ -443,10 +442,10 @@ def _dict_to_typed_attributes(d):
                         key, len(value), max_string_length
                     )
                 )
-        elif attribute_type in [int, float]:
+        elif isinstance(attribute_type, (int, float)):
             type_key = "N"
             type_value = str(value)
-        elif attribute_type in [bytes, bytearray]:
+        elif isinstance(value, (bytes, bytearray)):
             type_key = "B"
             type_value = base64.b64encode(value).decode("utf-8")
         elif isinstance(value, bool):
@@ -462,7 +461,7 @@ def _dict_to_typed_attributes(d):
             type_key = "TS"
             type_value = v3io.dataplane.kv_timestamp.encode(value)
         else:
-            raise AttributeError("Attribute {0} has unsupported type {1}".format(key, attribute_type))
+            raise AttributeError(f"Attribute '{key}' has unsupported type '{type(value)}'")
 
         typed_attributes[key] = {type_key: type_value}
 
