@@ -442,7 +442,7 @@ def _dict_to_typed_attributes(d):
                         key, len(value), max_string_length
                     )
                 )
-        elif isinstance(attribute_type, (int, float)):
+        elif isinstance(value, (int, float)):
             type_key = "N"
             type_value = str(value)
         elif isinstance(value, (bytes, bytearray)):
