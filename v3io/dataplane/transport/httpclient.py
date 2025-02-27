@@ -12,15 +12,134 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import gc
 import http.client
+import json
 import queue
 import socket
 import ssl
+import sys
+import threading
+import time
+import traceback
 
 import v3io.dataplane.request
 import v3io.dataplane.response
 
 from . import abstract
+
+
+def get_connection_pool_stats(transport):
+    """Collect comprehensive statistics about the connection pool state."""
+    pool_stats = {
+        "timestamp": time.time(),
+        "free_connections_size": transport._free_connections.qsize() if transport._free_connections else 0,
+        "free_connections_empty": transport._free_connections.empty() if transport._free_connections else True,
+        "max_connections": transport.max_connections,
+        "active_thread_count": threading.active_count(),
+        "ssl_version": ssl.OPENSSL_VERSION,
+        "python_version": sys.version,
+    }
+
+    # Get details about all HTTPConnection objects
+    connection_objects = []
+    for obj in gc.get_objects():
+        if isinstance(obj, http.client.HTTPConnection) or isinstance(obj, http.client.HTTPSConnection):
+            conn_info = {
+                "host": getattr(obj, "host", "unknown"),
+                "port": getattr(obj, "port", "unknown"),
+                "timeout": getattr(obj, "timeout", "unknown"),
+                "has_sock": hasattr(obj, "sock") and obj.sock is not None,
+            }
+
+            # Capture SSL socket details if available
+            if hasattr(obj, "sock") and obj.sock is not None and isinstance(obj.sock, ssl.SSLSocket):
+                try:
+                    sock = obj.sock
+                    conn_info["ssl_socket"] = {
+                        "cipher": sock.cipher(),
+                        "version": sock.version(),
+                        "compression": sock.compression(),
+                        "pending": sock.pending(),
+                        "fileno": sock.fileno() if hasattr(sock, "fileno") else None,
+                    }
+                except Exception as e:
+                    conn_info["ssl_socket_error"] = str(e)
+
+            connection_objects.append(conn_info)
+
+    pool_stats["connection_objects"] = connection_objects
+
+    # Get OS resource info
+    try:
+        import resource
+
+        rusage = resource.getrusage(resource.RUSAGE_SELF)
+        pool_stats["resource_usage"] = {
+            "max_rss": rusage.ru_maxrss,
+            "page_faults": rusage.ru_minflt,
+            "block_input": rusage.ru_inblock,
+            "block_output": rusage.ru_oublock,
+        }
+    except ImportError:
+        pool_stats["resource_usage"] = "resource module not available"
+
+    # Get socket statistics if available
+    try:
+        pool_stats["socket_count"] = len(socket._connection_list) if hasattr(socket, "_connection_list") else "unknown"
+    except Exception:
+        pool_stats["socket_count"] = "error getting socket count"
+
+    return pool_stats
+
+
+# Add this function to dump request details directly to the log
+def log_full_request_details(request, logger):
+    """
+    Log complete details of a request including headers and body directly to the logger
+    """
+    try:
+        # Create log sections with clear separation
+        logger.error(" ==================== SSL ERROR - FULL REQUEST DUMP ====================")
+
+        # Basic request info
+        logger.error(" REQUEST DETAILS:")
+        logger.error(f" - Method: {request.method}")
+        logger.error(f" - Path: {request.encode_path()}")
+
+        # All headers
+        logger.error(" HEADERS:")
+        for header_name, header_value in request.headers.items():
+            # Mask sensitive headers
+            if header_name.lower() in ["authorization", "x-v3io-session-key"]:
+                logger.error(f" - {header_name}: [REDACTED]")
+            else:
+                logger.error(f" - {header_name}: {header_value}")
+
+        # Body content
+        if request.body:
+            # If body is bytes, decode if possible
+            if isinstance(request.body, bytes):
+                # try:
+                #     body_str = request.body.decode("utf-8")
+                #     logger.error(f" {body_str}")
+                # except UnicodeDecodeError:
+                logger.error(f" [BODY data, length: {len(request.body)} bytes]")
+                import base64
+
+                hex_dump = base64.b64encode(request.body[:4096])
+                logger.error(f" Hex dump (first 4096 bytes): {hex_dump}")
+            elif isinstance(request.body, str):
+                logger.error(f" {request.body}")
+            else:
+                # For file-like objects or other types
+                logger.error(f" [Body of type {type(request.body)}, cannot display directly]")
+        else:
+            logger.error(" [No body]")
+
+        logger.error(" ====================== END OF REQUEST DUMP ======================")
+    except Exception as e:
+        logger.error(f" Error logging request details: {str(e)}")
 
 
 class Transport(abstract.Transport):
@@ -45,6 +164,10 @@ class Transport(abstract.Transport):
             socket.timeout,
         )
         self._get_status_and_headers = self._get_status_and_headers_py3
+
+        # Log initial connection pool state
+        pool_stats = get_connection_pool_stats(self)
+        self._log(f"Initial connection pool state: {json.dumps(pool_stats)}")
 
     def close(self):
         # Ignore redundant calls to close
@@ -103,7 +226,6 @@ class Transport(abstract.Transport):
                 response = v3io.dataplane.response.Response(request.output, status_code, headers, response_body)
 
                 self._free_connections.put(connection, block=True)
-
                 response.raise_for_status(request.raise_for_status or raise_for_status)
 
                 return response
@@ -142,6 +264,15 @@ class Transport(abstract.Transport):
 
         path = request.encode_path()
 
+        # Log request details
+        request_info = {
+            "method": request.method,
+            "path": path,
+            "headers": dict(request.headers),
+            "body_size": len(request.body) if request.body else 0,
+            "connection": {"host": connection.host, "port": connection.port, "timeout": connection.timeout},
+        }
+
         self.log(
             "Tx", connection=connection, method=request.method, path=path, headers=request.headers, body=request.body
         )
@@ -153,7 +284,16 @@ class Transport(abstract.Transport):
 
         retries_left = self._request_max_retries
         while True:
+            sock_info_before_request = {}
             try:
+                if hasattr(connection, "sock") and connection.sock and isinstance(connection.sock, ssl.SSLSocket):
+                    sock = connection.sock
+                    sock_info_before_request = {
+                        "cipher": sock.cipher(),
+                        "version": sock.version(),
+                        "compression": sock.compression(),
+                        "pending": sock.pending(),
+                    }
                 connection.request(request.method, path, request.body, request.headers)
                 break
             except self._send_request_exceptions as e:
@@ -174,6 +314,41 @@ class Transport(abstract.Transport):
                     request.body.seek(starting_offset)
                 connection = self._create_connection(self._host, self._ssl_context)
                 request.transport.connection_used = connection
+            except ssl.SSLError as e:
+                log_full_request_details(request, self._logger)
+                # Detailed SSL error logging
+                ssl_error_info = {
+                    "error_type": "SSLError",
+                    "error_message": str(e),
+                    "error_code": e.errno if hasattr(e, "errno") else None,
+                    "ssl_lib": e.library if hasattr(e, "library") else None,
+                    "ssl_func": e.reason if hasattr(e, "reason") else None,
+                    "traceback": traceback.format_exc(),
+                    "sock_info_before_request": json.dumps(sock_info_before_request),
+                }
+
+                # Get socket state if available
+                if hasattr(connection, "sock") and connection.sock:
+                    try:
+                        sock = connection.sock
+                        ssl_error_info["socket_state"] = {
+                            "fileno": sock.fileno() if hasattr(sock, "fileno") else None,
+                            "blocking": sock.getblocking() if hasattr(sock, "getblocking") else None,
+                            "timeout": sock.gettimeout() if hasattr(sock, "gettimeout") else None,
+                        }
+                    except Exception as sock_e:
+                        ssl_error_info["socket_state_error"] = str(sock_e)
+
+                # Get connection pool stats
+                try:
+                    ssl_error_info["pool_stats"] = get_connection_pool_stats(self)
+                except Exception as pool_e:
+                    ssl_error_info["pool_stats_error"] = str(pool_e)
+
+                ssl_error_info["request_info"] = request_info
+
+                self._logger.error(f" SSL Error: {json.dumps(ssl_error_info)}")
+                raise e
             except BaseException as e:
                 self._logger.error_with(
                     "Unhandled exception while sending request", e=type(e), e_msg=e, connection=connection
