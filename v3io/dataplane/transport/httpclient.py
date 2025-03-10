@@ -81,7 +81,7 @@ class Transport(abstract.Transport):
 
         # Get a connection from the pool (thread-safe operation)
         try:
-            connection = self._free_connections.get(block=True, timeout=30)  # Add timeout to prevent deadlocks
+            connection = self._free_connections.get(block=True, timeout=30)
         except queue.Empty as e:
             raise RuntimeError("Timed out waiting for an available connection") from e
 
@@ -132,10 +132,11 @@ class Transport(abstract.Transport):
                     if not self._closed:
                         try:
                             self._free_connections.put(connection, block=False)
-                        except queue.Full:
-                            # If queue is full, close the extra connection
+                        except Exception as e:
+                            self._logger.warn_with(
+                                "Failed to return connection to pool", exception=str(e), connection_id=id(connection)
+                            )
                             connection.close()
-
                 response.raise_for_status(request.raise_for_status or raise_for_status)
                 return response
 
@@ -146,7 +147,10 @@ class Transport(abstract.Transport):
                     if not self._closed:
                         try:
                             self._free_connections.put(connection, block=False)
-                        except queue.Full:
+                        except Exception as e:
+                            self._logger.warn_with(
+                                "Failed to return connection to pool", exception=str(e), connection_id=id(connection)
+                            )
                             connection.close()
                 raise response_error
             except BaseException as e:
@@ -173,7 +177,12 @@ class Transport(abstract.Transport):
                         if not self._closed:
                             try:
                                 self._free_connections.put(connection, block=False)
-                            except queue.Full:
+                            except Exception as e:
+                                self._logger.warn_with(
+                                    "Failed to return connection to pool",
+                                    exception=str(e),
+                                    connection_id=id(connection),
+                                )
                                 connection.close()
 
                     raise e
