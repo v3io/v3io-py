@@ -75,7 +75,7 @@ class Transport(abstract.Transport):
         try:
             return self._send_request_on_connection(request, connection)
         except BaseException as e:
-            connection.close()
+            request.transport.connection_used.close()
             connection = self._create_connection(self._host, self._ssl_context)
             self._free_connections.put(connection, block=True)
             raise e
