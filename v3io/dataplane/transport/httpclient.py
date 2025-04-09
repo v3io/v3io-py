@@ -22,10 +22,11 @@ import v3io.dataplane.response
 
 from . import abstract
 
+_connection_timeout_seconds = 20
+_request_max_retries = 2
+
 
 class Transport(abstract.Transport):
-    _connection_timeout_seconds = 20
-    _request_max_retries = 2
 
     def __init__(self, logger, endpoint=None, max_connections=None, timeout=None, verbosity=None):
         super(Transport, self).__init__(logger, endpoint, max_connections, timeout, verbosity)
@@ -45,6 +46,26 @@ class Transport(abstract.Transport):
             socket.timeout,
         )
         self._get_status_and_headers = self._get_status_and_headers_py3
+
+    @classmethod
+    def get_connection_timeout(cls):
+        global _connection_timeout_seconds
+        return _connection_timeout_seconds
+
+    @classmethod
+    def set_connection_timeout(cls, timeout):
+        global _connection_timeout_seconds
+        _connection_timeout_seconds = timeout
+
+    @classmethod
+    def set_request_max_retries(cls, retries):
+        global _request_max_retries
+        _request_max_retries = retries
+
+    @classmethod
+    def get_request_max_retries(cls):
+        global _request_max_retries
+        return _request_max_retries
 
     def close(self):
         # Ignore redundant calls to close
@@ -151,7 +172,7 @@ class Transport(abstract.Transport):
         if is_body_seekable:
             starting_offset = request.body.tell()
 
-        retries_left = self._request_max_retries
+        retries_left = Transport.get_request_max_retries()
         while True:
             try:
                 connection.request(request.method, path, request.body, request.headers)
@@ -159,7 +180,7 @@ class Transport(abstract.Transport):
             except self._send_request_exceptions as e:
                 self._logger.debug_with(
                     f"Disconnected while attempting to send request – "
-                    f"{retries_left} out of {self._request_max_retries} retries left.",
+                    f"{retries_left} out of {Transport.get_request_max_retries()} retries left.",
                     e=type(e),
                     e_msg=e,
                 )
@@ -189,9 +210,9 @@ class Transport(abstract.Transport):
 
     def _create_connection(self, host, ssl_context):
         if ssl_context is None:
-            return http.client.HTTPConnection(host, timeout=self._connection_timeout_seconds)
+            return http.client.HTTPConnection(host, timeout=Transport.get_connection_timeout())
 
-        return http.client.HTTPSConnection(host, timeout=self._connection_timeout_seconds, context=ssl_context)
+        return http.client.HTTPSConnection(host, timeout=Transport.get_connection_timeout(), context=ssl_context)
 
     def _parse_endpoint(self, endpoint):
         if endpoint.startswith("http://"):
