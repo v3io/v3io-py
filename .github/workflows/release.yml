@@ -46,4 +46,4 @@ jobs:
         run: |
           export TWINE_USERNAME=__token__
           export TWINE_PASSWORD=${{ secrets.PYPI_TOKEN }}
-          python -m twine upload dist/storey-*.whl
+          python -m twine upload dist/v3io-*.whl
