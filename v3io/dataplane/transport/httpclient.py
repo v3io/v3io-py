@@ -16,6 +16,7 @@ import http.client
 import queue
 import socket
 import ssl
+import threading
 
 import v3io.dataplane.request
 import v3io.dataplane.response
@@ -35,6 +36,7 @@ class Transport(abstract.Transport):
 
         # based on scheme, create a host and context for _create_connection
         self._host, self._ssl_context = self._parse_endpoint(self._endpoint)
+        self._ssl_context_lock = threading.Lock()
 
         # create the pool connection
         self._create_connections(self.max_connections, self._host, self._ssl_context)
@@ -44,6 +46,7 @@ class Transport(abstract.Transport):
             http.client.CannotSendRequest,
             http.client.RemoteDisconnected,
             socket.timeout,
+            ssl.SSLError,
         )
         self._get_status_and_headers = self._get_status_and_headers_py3
 
@@ -193,6 +196,14 @@ class Transport(abstract.Transport):
                     # of the first connection blocksize.
                     # We need to reset the position of the pointer in order to send the whole file.
                     request.body.seek(starting_offset)
+                # ML-9894
+                if isinstance(e, ssl.SSLError):
+                    ssl_context_before_lock = self._ssl_context
+                    with self._ssl_context_lock:
+                        # Only if it wasn't changed concurrently
+                        if self._ssl_context is ssl_context_before_lock:
+                            self._logger.info(f"Replacing SSL context due to SSLError: {e}")
+                            self._ssl_context = self._create_ssl_context()
                 connection = self._create_connection(self._host, self._ssl_context)
                 request.transport.connection_used = connection
             except BaseException as e:
@@ -214,16 +225,18 @@ class Transport(abstract.Transport):
 
         return http.client.HTTPSConnection(host, timeout=Transport.get_connection_timeout(), context=ssl_context)
 
+    def _create_ssl_context(self):
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        return ssl_context
+
     def _parse_endpoint(self, endpoint):
         if endpoint.startswith("http://"):
             return endpoint[len("http://") :], None
 
         if endpoint.startswith("https://"):
-            ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
-
-            return endpoint[len("https://") :], ssl_context
+            return endpoint[len("https://") :], self._create_ssl_context()
 
         return endpoint, None
 
