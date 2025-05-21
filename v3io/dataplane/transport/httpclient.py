@@ -202,6 +202,7 @@ class Transport(abstract.Transport):
                     with self._ssl_context_lock:
                         # Only if it wasn't changed concurrently
                         if self._ssl_context is ssl_context_before_lock:
+                            self._logger.info(f"Replacing SSL context due to SSLError: {e}")
                             self._ssl_context = self._create_ssl_context()
                 connection = self._create_connection(self._host, self._ssl_context)
                 request.transport.connection_used = connection
