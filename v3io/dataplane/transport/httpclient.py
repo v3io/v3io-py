@@ -199,11 +199,14 @@ class Transport(abstract.Transport):
                 # ML-9894
                 if isinstance(e, ssl.SSLError):
                     ssl_context_before_lock = self._ssl_context
-                    with self._ssl_context_lock:
-                        # Only if it wasn't changed concurrently
-                        if self._ssl_context is ssl_context_before_lock:
-                            self._logger.info(f"Replacing SSL context due to SSLError: {e}")
-                            self._ssl_context = self._create_ssl_context()
+                    # Only replace shared SSL context if it hasn't been replaced already due to the same error
+                    # on another connection.
+                    if ssl_context_before_lock is connection._context:
+                        with self._ssl_context_lock:
+                            # Only if it wasn't changed concurrently
+                            if self._ssl_context is ssl_context_before_lock:
+                                self._logger.info(f"Replacing SSL context due to SSLError: {e}")
+                                self._ssl_context = self._create_ssl_context()
                 connection = self._create_connection(self._host, self._ssl_context)
                 request.transport.connection_used = connection
             except BaseException as e:
