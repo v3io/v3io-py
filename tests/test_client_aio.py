@@ -17,8 +17,6 @@ import datetime
 import os
 import unittest
 
-import future.utils
-
 import v3io.aio.dataplane
 import v3io.dataplane
 
@@ -313,7 +311,7 @@ class TestObject(Test):
 #             "c": {"data_field_0": 3000, "data_field_1": 10000},
 #         }
 #
-#         for item_key, item_attributes in future.utils.viewitems(items):
+#         for item_key, item_attributes in items.items():
 #             await self._client.kv.put(
 #                 container=self._container, table_path=self._schema_dir, key=item_key, attributes=item_attributes
 #             )
@@ -428,7 +426,7 @@ class TestKv(Test):
             "tina": {"age": 14, "feature": "butts"},
         }
 
-        for item_key, item_attributes in future.utils.viewitems(items):
+        for item_key, item_attributes in items.items():
             await self._client.kv.put(
                 container=self._container, table_path=self._path, key=item_key, attributes=item_attributes
             )
@@ -529,7 +527,7 @@ class TestKv(Test):
 
     async def _delete_items(self, path, items):
         # delete items
-        for item_key, _ in future.utils.viewitems(items):
+        for item_key, _ in items.items():
             await self._client.kv.delete(container=self._container, table_path=path, key=item_key)
 
         # delete dir

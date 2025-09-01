@@ -17,8 +17,6 @@ import base64
 import datetime
 import os
 
-import future.utils
-
 try:
     from urllib.parse import quote, urlencode
 except BaseException:
@@ -421,11 +419,11 @@ def _to_base64(input):
 def _dict_to_typed_attributes(d):
     typed_attributes = {}
     max_string_length = 61199
-    for key, value in future.utils.viewitems(d):
+    for key, value in d.items():
         attribute_type = type(value)
         type_value = None
 
-        if isinstance(value, future.utils.text_type):
+        if isinstance(value, str):
             type_key = "S"
             type_value = value
             if len(value) > max_string_length:
@@ -434,7 +432,7 @@ def _dict_to_typed_attributes(d):
                         key, len(value), max_string_length
                     )
                 )
-        elif isinstance(value, future.utils.string_types):
+        elif isinstance(value, str):
             type_key = "S"
             type_value = str(value)
             if len(type_value) > max_string_length:

@@ -14,8 +14,6 @@
 #
 import base64
 
-import future.utils
-
 import v3io.dataplane.kv_array
 import v3io.dataplane.kv_timestamp
 
@@ -24,8 +22,8 @@ class Output(object):
     def _decode_typed_attributes(self, typed_attributes):
         decoded_attributes = {}
 
-        for attribute_key, typed_attribute_value in future.utils.viewitems(typed_attributes):
-            for attribute_type, attribute_value in future.utils.viewitems(typed_attribute_value):
+        for attribute_key, typed_attribute_value in typed_attributes.items():
+            for attribute_type, attribute_value in typed_attribute_value.items():
                 if attribute_type == "N":
                     try:
                         decoded_attribute = int(attribute_value)

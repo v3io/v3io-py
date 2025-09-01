@@ -15,7 +15,6 @@
 import os
 import sys
 
-import future.utils
 import orjson
 
 import v3io.common.helpers
@@ -413,7 +412,7 @@ class Client(object):
         """
         responses = v3io.dataplane.response.Responses()
 
-        for item_path, item_attributes in future.utils.viewitems(items):
+        for item_path, item_attributes in items.items():
             # create a put item input
             response = self.put_item(
                 container,
