@@ -20,8 +20,6 @@ import time
 import unittest
 import unittest.mock
 
-import future.utils
-
 import v3io.common.helpers
 import v3io.dataplane
 import v3io.dataplane.output
@@ -340,7 +338,7 @@ class TestSchema(Test):
             "c": {"data_field_0": 3000, "data_field_1": 10000},
         }
 
-        for item_key, item_attributes in future.utils.viewitems(items):
+        for item_key, item_attributes in items.items():
             self._client.kv.put(
                 container=self._container, table_path=self._schema_dir, key=item_key, attributes=item_attributes
             )
@@ -460,7 +458,7 @@ class TestKv(Test):
             "tina": {"age": 14, "feature": "butts"},
         }
 
-        for item_key, item_attributes in future.utils.viewitems(items):
+        for item_key, item_attributes in items.items():
             self._client.kv.put(
                 container=self._container, table_path=self._path, key=item_key, attributes=item_attributes
             )
@@ -566,7 +564,7 @@ class TestKv(Test):
         }
 
         # put the item in a batch
-        for item_key, item_attributes in future.utils.viewitems(items):
+        for item_key, item_attributes in items.items():
             self._client.batch.kv.put(
                 container=self._container, table_path=self._path, key=item_key, attributes=item_attributes
             )
@@ -586,7 +584,7 @@ class TestKv(Test):
 
     def _delete_items(self, path, items):
         # delete items
-        for item_key, _ in future.utils.viewitems(items):
+        for item_key, _ in items.items():
             self._client.kv.delete(container=self._container, table_path=path, key=item_key)
 
         # delete dir
@@ -737,7 +735,7 @@ class TestConnectonErrorRecovery(Test):
         }
 
         # put the item in a batch
-        for item_key, item_attributes in future.utils.viewitems(items):
+        for item_key, item_attributes in items.items():
             self._client.batch.put_item(
                 container=self._container,
                 path=v3io.common.helpers.url_join(self._kv_path, item_key),
