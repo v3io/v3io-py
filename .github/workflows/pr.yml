@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-name: CI
+name: CI-PR
 
-on: pull_request_target
+on: 
+  pull_request_target:
+  workflow_dispatch:
 
 jobs:
   fail-if-unsafe:
@@ -49,6 +51,9 @@ jobs:
     if: ${{ contains( github.event.pull_request.labels.*.name, 'safe-to-test') }}
     container:
       image: python:3.9.18
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN_PUBLIC }}
 
     steps:
       - uses: actions/checkout@v3
